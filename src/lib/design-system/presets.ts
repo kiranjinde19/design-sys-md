@@ -35,7 +35,7 @@ const DEFAULT_ROLES = {
 
 const SAAS_CLEAN: DesignSystemSettings = {
   schemaVersion: SETTINGS_SCHEMA_VERSION,
-  colors: { brand: "#4F46E5", neutralTone: "cool", roles: DEFAULT_ROLES },
+  colors: { brand: "#4F46E5", secondary: null, neutralTone: "cool", roles: DEFAULT_ROLES },
   typography: {
     headingFont: "Inter",
     bodyFont: "Inter",
@@ -56,7 +56,7 @@ const SAAS_CLEAN: DesignSystemSettings = {
 
 const BLANK_SLATE: DesignSystemSettings = {
   schemaVersion: SETTINGS_SCHEMA_VERSION,
-  colors: { brand: "#404040", neutralTone: "pure", roles: DEFAULT_ROLES },
+  colors: { brand: "#404040", secondary: null, neutralTone: "pure", roles: DEFAULT_ROLES },
   typography: {
     headingFont: "Inter",
     bodyFont: "Inter",

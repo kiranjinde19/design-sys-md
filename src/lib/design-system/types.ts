@@ -62,6 +62,8 @@ export type DividerStyle = "hairline" | "dotted" | "spacing-only" | "gradient-fa
 export interface ColorSettings {
   /** One hex color, e.g. "#4F46E5". Placed at step 600 of the brand scale. */
   brand: string;
+  /** Optional second brand color. null means the product uses one brand color only. */
+  secondary: string | null;
   neutralTone: NeutralTone;
   /** Which swatch plays which role. Primary, surface and background are draggable later. */
   roles: Record<ColorRoleName, ColorRef>;
@@ -172,9 +174,12 @@ export interface ContrastPair {
 
 export interface ColorTokens {
   brand: ColorScale;
+  /** Only present when the user chose a secondary color. */
+  secondary: ColorScale | null;
   neutral: ColorScale;
   semantic: Record<SemanticName, ColorScale>;
-  roles: Record<ColorRoleTokenName, string>;
+  /** secondary and secondaryForeground only exist when a secondary color is chosen. */
+  roles: Record<ColorRoleTokenName, string> & { secondary?: string; secondaryForeground?: string };
   contrastPairs: ContrastPair[];
 }
 

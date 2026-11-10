@@ -17,7 +17,7 @@ const BUTTON_VARIANTS: ButtonVariant[] = ["primary", "secondary", "tertiary", "d
 const BUTTON_STATES: ButtonState[] = ["default", "hover", "pressed", "disabled", "loading"];
 const INPUT_STATES: InputState[] = ["default", "hover", "focus", "error", "disabled"];
 
-export function DebugComponents() {
+export function DebugComponents({ part }: { part: "buttons" | "signature" }) {
   const { tokens } = useDesignSystem();
   const { controls, colors, typography, borders, signature, icons, spacing, radius } = tokens;
   const body = typography.sizes.find((size) => size.name === "base")!;
@@ -35,6 +35,8 @@ export function DebugComponents() {
 
   return (
     <>
+      {part === "buttons" ? (
+        <>
       <Section
         title="Buttons"
         description={`Secondary is ${controls.secondaryStyle}. Every state is derived from the brand color. Focus ring comes from the signature details.`}
@@ -128,6 +130,8 @@ export function DebugComponents() {
         </div>
       </Section>
 
+        </>
+      ) : (
       <Section title="Signature details" description="The seven chosen moves, shown on small samples.">
         <style>{`
           ${cta.keyframes ?? ""}
@@ -216,6 +220,7 @@ export function DebugComponents() {
           . Icons: {icons.style}, {icons.strokeWidth}px stroke, {icons.strokeLinecap} ends.
         </p>
       </Section>
+      )}
     </>
   );
 }

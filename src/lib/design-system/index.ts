@@ -2,7 +2,7 @@
 
 export * from "./types";
 export { generateTokens, createDesignSystem } from "./generate";
-export { generateScale, generateBrandScale, generateNeutralScale, generateSemanticScales, generateColors, WHITE, BLACK } from "./colors";
+export { generateScale, generateBrandScale, generateNeutralScale, generateSemanticScales, generateColors, suggestSecondaryColors, WHITE, BLACK } from "./colors";
 export { checkContrast, contrastRatio, pickReadableText } from "./contrast";
 export { normalizeHex } from "./color-math";
 export { generateTypography, FONT_CATALOG } from "./typography";

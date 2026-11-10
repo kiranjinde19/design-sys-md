@@ -16,7 +16,7 @@ function ScaleRow({ name, scale }: { name: string; scale: ColorScale }) {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-medium capitalize">{name}</h3>
+      <h3 className="text-sm font-medium first-letter:uppercase">{name}</h3>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:grid-cols-10">
         {SCALE_STEPS.map((step) => {
           const hex = scale[step];
@@ -50,6 +50,9 @@ export function DebugColors() {
       description="Each swatch shows how white text and dark ink text would read on it. AA is the standard to aim for."
     >
       <ScaleRow name="Brand (step 600 is your exact color)" scale={colors.brand} />
+      {colors.secondary ? (
+        <ScaleRow name="Secondary (step 600 is your exact color)" scale={colors.secondary} />
+      ) : null}
       <ScaleRow name="Neutral" scale={colors.neutral} />
       {(Object.keys(colors.semantic) as (keyof typeof colors.semantic)[]).map((name) => (
         <ScaleRow key={name} name={name} scale={colors.semantic[name]} />

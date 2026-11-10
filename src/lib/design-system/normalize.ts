@@ -89,6 +89,8 @@ export function normalizeSettings(input: unknown, base: DesignSystemSettings): D
     schemaVersion: SETTINGS_SCHEMA_VERSION,
     colors: {
       brand: normalizeHex(colors.brand) ?? base.colors.brand,
+      // null means "no secondary color". A missing value keeps whatever was there before.
+      secondary: colors.secondary === null ? null : (normalizeHex(colors.secondary) ?? base.colors.secondary),
       neutralTone: oneOf(colors.neutralTone, ["cool", "warm", "pure", "brand"] as const, base.colors.neutralTone),
       roles,
     },

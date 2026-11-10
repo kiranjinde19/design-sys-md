@@ -101,6 +101,26 @@ export function generateNeutralScale(tone: NeutralTone, brandHex: string): Color
   return scale;
 }
 
+export interface SecondarySuggestion {
+  label: string;
+  hex: string;
+}
+
+/**
+ * Three starting points for an optional secondary color, all derived from the brand
+ * color by turning its hue. The user can pick one or type their own.
+ */
+export function suggestSecondaryColors(brandHex: string): SecondarySuggestion[] {
+  const { l, c, h } = hexToOklch(normalizeHex(brandHex) ?? FALLBACK_BRAND);
+  const make = (turn: number) =>
+    oklchToHex({ l: clamp(l, 0.55, 0.7), c: Math.max(c * 0.9, 0.12), h: (h + turn) % 360 });
+  return [
+    { label: "Analogous", hex: make(30) },
+    { label: "Split complement", hex: make(150) },
+    { label: "Complement", hex: make(180) },
+  ];
+}
+
 export function generateSemanticScales(): Record<SemanticName, ColorScale> {
   return {
     success: generateScale(SEMANTIC_ANCHORS.success),
@@ -131,7 +151,9 @@ export function generateColors(settings: ColorSettings): ColorTokens {
   const resolve = (ref: ColorRef) => resolveColorRef(ref, scales);
 
   const primary = resolve(settings.roles.primary);
-  const roles = {
+  const secondary = settings.secondary ? generateScale(settings.secondary) : null;
+
+  const roles: ColorTokens["roles"] = {
     primary,
     primaryForeground: pickReadableText(primary, WHITE, neutral[900]),
     background: resolve(settings.roles.background),
@@ -141,6 +163,11 @@ export function generateColors(settings: ColorSettings): ColorTokens {
     text: resolve(settings.roles.text),
     textMuted: resolve(settings.roles.textMuted),
   };
+
+  if (secondary) {
+    roles.secondary = secondary[BRAND_STEP];
+    roles.secondaryForeground = pickReadableText(roles.secondary, WHITE, neutral[900]);
+  }
 
   const pair = (id: string, label: string, foreground: string, background: string): ContrastPair => ({
     id,
@@ -159,5 +186,11 @@ export function generateColors(settings: ColorSettings): ColorTokens {
     pair("primary-on-background", "Primary as link text on background", roles.primary, roles.background),
   ];
 
-  return { brand, neutral, semantic, roles, contrastPairs };
+  if (roles.secondary && roles.secondaryForeground) {
+    contrastPairs.push(
+      pair("on-secondary", "Text on secondary button", roles.secondaryForeground, roles.secondary),
+    );
+  }
+
+  return { brand, secondary, neutral, semantic, roles, contrastPairs };
 }
