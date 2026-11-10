@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   catalogFont,
+  defaultTracking,
   effectiveFont,
   recommendBodyFonts,
   useDesignSystem,
@@ -22,6 +23,7 @@ export function TypographyEditor() {
   const warning = tokens.colors.semantic.warning;
 
   const headingName = effectiveFont(typography.headingFont).name;
+  const fontDefaultTracking = defaultTracking(typography.headingFont);
   const recommendations = headingPicked ? recommendBodyFonts(headingName) : [];
 
   return (
@@ -44,14 +46,26 @@ export function TypographyEditor() {
             initialCategory="all"
             weight={typography.headingWeight}
             onChange={(headingFont) => {
-              update({ typography: { headingFont } });
+              // Each font has its own default tracking. The slider below can still override it.
+              update({ typography: { headingFont, headingTracking: defaultTracking(headingFont) } });
               setHeadingPicked(true);
             }}
             onWeightChange={(headingWeight) => update({ typography: { headingWeight } })}
           >
             <div className="space-y-1.5">
-              <div className="text-xs font-medium text-muted-foreground">
-                Heading tracking: {typography.headingTracking}em
+              <div className="flex items-center justify-between gap-2 text-xs font-medium text-muted-foreground">
+                <span>Heading tracking: {typography.headingTracking}em</span>
+                {typography.headingTracking !== fontDefaultTracking ? (
+                  <button
+                    type="button"
+                    className="underline underline-offset-2 hover:text-foreground"
+                    onClick={() => update({ typography: { headingTracking: fontDefaultTracking } })}
+                  >
+                    Reset to {fontDefaultTracking}em
+                  </button>
+                ) : (
+                  <span className="font-normal">default for {headingName}</span>
+                )}
               </div>
               <input
                 type="range"
@@ -70,6 +84,7 @@ export function TypographyEditor() {
             title="Body font"
             choice={typography.bodyFont}
             initialCategory="all"
+            markDisplay
             weight={typography.bodyWeight}
             onChange={(bodyFont) => update({ typography: { bodyFont } })}
             onWeightChange={(bodyWeight) => update({ typography: { bodyWeight } })}

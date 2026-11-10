@@ -16,6 +16,8 @@ export interface FontEntry {
   tags: string[];
   /** Weights the font offers, from 100 to 900. */
   weights: FontWeight[];
+  /** Default heading tracking in em, applied when the font or a pairing using it is selected. */
+  tracking: number;
 }
 
 const w = (...weights: FontWeight[]) => weights;
@@ -23,39 +25,39 @@ const ALL = w(100, 200, 300, 400, 500, 600, 700, 800, 900);
 
 export const FONT_CATALOG: FontEntry[] = [
   // Sans
-  { name: "Inter", category: "sans", tags: ["neutral", "workhorse", "interface"], weights: ALL },
-  { name: "Geist", category: "sans", tags: ["neutral", "modern", "technical"], weights: ALL },
-  { name: "DM Sans", category: "sans", tags: ["geometric", "friendly", "workhorse"], weights: ALL },
-  { name: "Plus Jakarta Sans", category: "sans", tags: ["friendly", "geometric", "modern"], weights: w(200, 300, 400, 500, 600, 700, 800) },
-  { name: "Manrope", category: "sans", tags: ["modern", "geometric", "clean"], weights: w(200, 300, 400, 500, 600, 700, 800) },
-  { name: "Outfit", category: "sans", tags: ["geometric", "friendly", "expressive"], weights: ALL },
-  { name: "Figtree", category: "sans", tags: ["friendly", "neutral", "workhorse"], weights: w(300, 400, 500, 600, 700, 800, 900) },
-  { name: "Work Sans", category: "sans", tags: ["neutral", "workhorse", "humanist"], weights: ALL },
-  { name: "IBM Plex Sans", category: "sans", tags: ["technical", "workhorse", "humanist"], weights: w(100, 200, 300, 400, 500, 600, 700) },
-  { name: "Public Sans", category: "sans", tags: ["neutral", "workhorse", "plain"], weights: ALL },
-  { name: "Source Sans 3", category: "sans", tags: ["neutral", "workhorse", "humanist"], weights: w(200, 300, 400, 500, 600, 700, 800, 900) },
-  { name: "Nunito Sans", category: "sans", tags: ["friendly", "humanist", "workhorse"], weights: w(200, 300, 400, 500, 600, 700, 800, 900) },
-  { name: "Space Grotesk", category: "sans", tags: ["technical", "expressive", "quirky"], weights: w(300, 400, 500, 600, 700) },
-  { name: "Sora", category: "sans", tags: ["modern", "geometric", "expressive"], weights: w(100, 200, 300, 400, 500, 600, 700, 800) },
-  { name: "Instrument Sans", category: "sans", tags: ["refined", "modern", "neutral"], weights: w(400, 500, 600, 700) },
-  { name: "Onest", category: "sans", tags: ["modern", "neutral", "workhorse"], weights: ALL },
-  { name: "Bricolage Grotesque", category: "sans", tags: ["expressive", "display", "bold"], weights: w(200, 300, 400, 500, 600, 700, 800) },
+  { name: "Inter", category: "sans", tags: ["neutral", "workhorse", "interface"], weights: ALL, tracking: -0.02 },
+  { name: "Geist", category: "sans", tags: ["neutral", "modern", "technical"], weights: ALL, tracking: -0.02 },
+  { name: "DM Sans", category: "sans", tags: ["geometric", "friendly", "workhorse"], weights: ALL, tracking: -0.02 },
+  { name: "Plus Jakarta Sans", category: "sans", tags: ["friendly", "geometric", "modern"], weights: w(200, 300, 400, 500, 600, 700, 800), tracking: -0.005 },
+  { name: "Manrope", category: "sans", tags: ["modern", "geometric", "clean"], weights: w(200, 300, 400, 500, 600, 700, 800), tracking: -0.015 },
+  { name: "Outfit", category: "sans", tags: ["geometric", "friendly", "expressive"], weights: ALL, tracking: -0.01 },
+  { name: "Figtree", category: "sans", tags: ["friendly", "neutral", "workhorse"], weights: w(300, 400, 500, 600, 700, 800, 900), tracking: -0.015 },
+  { name: "Work Sans", category: "sans", tags: ["neutral", "workhorse", "humanist"], weights: ALL, tracking: -0.01 },
+  { name: "IBM Plex Sans", category: "sans", tags: ["technical", "workhorse", "humanist"], weights: w(100, 200, 300, 400, 500, 600, 700), tracking: -0.01 },
+  { name: "Public Sans", category: "sans", tags: ["neutral", "workhorse", "plain"], weights: ALL, tracking: -0.015 },
+  { name: "Source Sans 3", category: "sans", tags: ["neutral", "workhorse", "humanist"], weights: w(200, 300, 400, 500, 600, 700, 800, 900), tracking: -0.005 },
+  { name: "Nunito Sans", category: "sans", tags: ["friendly", "humanist", "workhorse"], weights: w(200, 300, 400, 500, 600, 700, 800, 900), tracking: -0.01 },
+  { name: "Space Grotesk", category: "sans", tags: ["technical", "expressive", "quirky"], weights: w(300, 400, 500, 600, 700), tracking: -0.01 },
+  { name: "Sora", category: "sans", tags: ["modern", "geometric", "expressive"], weights: w(100, 200, 300, 400, 500, 600, 700, 800), tracking: -0.01 },
+  { name: "Instrument Sans", category: "sans", tags: ["refined", "modern", "neutral"], weights: w(400, 500, 600, 700), tracking: -0.015 },
+  { name: "Onest", category: "sans", tags: ["modern", "neutral", "workhorse"], weights: ALL, tracking: -0.015 },
+  { name: "Bricolage Grotesque", category: "sans", tags: ["expressive", "display", "bold"], weights: w(200, 300, 400, 500, 600, 700, 800), tracking: -0.015 },
   // Serif
-  { name: "Fraunces", category: "serif", tags: ["expressive", "display", "editorial", "soft"], weights: ALL },
-  { name: "Playfair Display", category: "serif", tags: ["display", "editorial", "classic"], weights: w(400, 500, 600, 700, 800, 900) },
-  { name: "Lora", category: "serif", tags: ["classic", "readable", "editorial"], weights: w(400, 500, 600, 700) },
-  { name: "Source Serif 4", category: "serif", tags: ["classic", "readable", "workhorse"], weights: w(200, 300, 400, 500, 600, 700, 800, 900) },
-  { name: "Newsreader", category: "serif", tags: ["editorial", "readable", "refined"], weights: w(200, 300, 400, 500, 600, 700, 800) },
-  { name: "Instrument Serif", category: "serif", tags: ["display", "refined", "editorial"], weights: w(400) },
-  { name: "DM Serif Display", category: "serif", tags: ["display", "classic", "high-contrast"], weights: w(400) },
-  { name: "Merriweather", category: "serif", tags: ["classic", "readable", "sturdy"], weights: w(300, 400, 500, 600, 700, 800, 900) },
+  { name: "Fraunces", category: "serif", tags: ["expressive", "display", "editorial", "soft"], weights: ALL, tracking: -0.01 },
+  { name: "Playfair Display", category: "serif", tags: ["display", "editorial", "classic"], weights: w(400, 500, 600, 700, 800, 900), tracking: -0.005 },
+  { name: "Lora", category: "serif", tags: ["classic", "readable", "editorial"], weights: w(400, 500, 600, 700), tracking: 0 },
+  { name: "Source Serif 4", category: "serif", tags: ["classic", "readable", "workhorse"], weights: w(200, 300, 400, 500, 600, 700, 800, 900), tracking: -0.005 },
+  { name: "Newsreader", category: "serif", tags: ["editorial", "readable", "refined"], weights: w(200, 300, 400, 500, 600, 700, 800), tracking: -0.005 },
+  { name: "Instrument Serif", category: "serif", tags: ["display", "refined", "editorial"], weights: w(400), tracking: 0 },
+  { name: "DM Serif Display", category: "serif", tags: ["display", "classic", "high-contrast"], weights: w(400), tracking: 0 },
+  { name: "Merriweather", category: "serif", tags: ["classic", "readable", "sturdy"], weights: w(300, 400, 500, 600, 700, 800, 900), tracking: 0 },
   // Mono
-  { name: "Geist Mono", category: "mono", tags: ["technical", "neutral", "modern"], weights: ALL },
-  { name: "JetBrains Mono", category: "mono", tags: ["technical", "coding", "readable"], weights: w(100, 200, 300, 400, 500, 600, 700, 800) },
-  { name: "IBM Plex Mono", category: "mono", tags: ["technical", "humanist", "sturdy"], weights: w(100, 200, 300, 400, 500, 600, 700) },
-  { name: "Fira Code", category: "mono", tags: ["technical", "coding", "ligatures"], weights: w(300, 400, 500, 600, 700) },
-  { name: "Space Mono", category: "mono", tags: ["quirky", "expressive", "retro"], weights: w(400, 700) },
-  { name: "DM Mono", category: "mono", tags: ["friendly", "light", "clean"], weights: w(300, 400, 500) },
+  { name: "Geist Mono", category: "mono", tags: ["technical", "neutral", "modern"], weights: ALL, tracking: 0 },
+  { name: "JetBrains Mono", category: "mono", tags: ["technical", "coding", "readable"], weights: w(100, 200, 300, 400, 500, 600, 700, 800), tracking: 0 },
+  { name: "IBM Plex Mono", category: "mono", tags: ["technical", "humanist", "sturdy"], weights: w(100, 200, 300, 400, 500, 600, 700), tracking: 0 },
+  { name: "Fira Code", category: "mono", tags: ["technical", "coding", "ligatures"], weights: w(300, 400, 500, 600, 700), tracking: 0 },
+  { name: "Space Mono", category: "mono", tags: ["quirky", "expressive", "retro"], weights: w(400, 700), tracking: 0 },
+  { name: "DM Mono", category: "mono", tags: ["friendly", "light", "clean"], weights: w(300, 400, 500), tracking: 0 },
 ];
 
 export const FONT_CATEGORY_LABELS: Record<FontCategory, string> = {
@@ -101,6 +103,9 @@ export function effectiveFont(choice: FontChoice): FontEntry {
   const name = choice.kind === "brand" ? choice.fallback : choice.name;
   return getFont(name) ?? getFont(DEFAULT_FONT_NAME)!;
 }
+
+/** The tracking a heading font starts with. A brand font uses its fallback's value. */
+export const defaultTracking = (choice: FontChoice): number => effectiveFont(choice).tracking;
 
 export const offeredWeights = (choice: FontChoice): FontWeight[] => effectiveFont(choice).weights;
 

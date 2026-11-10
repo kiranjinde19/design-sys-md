@@ -136,6 +136,14 @@ const KEEP_CLEAR_DEGREES = 45;
 
 const hueDistance = (a: number, b: number) => Math.abs(((a - b + 540) % 360) - 180);
 
+/** True if a color sits close to the warning or error hue, where it could be mistaken for a status color. */
+export function isNearStatusHue(hex: string): boolean {
+  const { h } = hexToOklch(normalizeHex(hex) ?? FALLBACK_BRAND);
+  return KEEP_CLEAR_OF.some(
+    (name) => hueDistance(h, hexToOklch(SEMANTIC_ANCHORS[name]).h) < KEEP_CLEAR_DEGREES,
+  );
+}
+
 /**
  * Three starting points for an optional secondary color, all derived from the brand
  * color by turning its hue. Turns that would land close to the warning or error

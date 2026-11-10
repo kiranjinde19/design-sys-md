@@ -85,7 +85,7 @@ export function DebugType() {
               fontFamily: typography.heading.previewStack,
               fontWeight: typography.headingWeight,
               fontSize: headingSize.px,
-              lineHeight: headingSize.lineHeight,
+              lineHeight: `${headingSize.lineHeightPx}px`,
               letterSpacing: headingSize.letterSpacing,
               color: colors.roles.foreground,
             }}
@@ -97,7 +97,7 @@ export function DebugType() {
               fontFamily: typography.body.previewStack,
               fontWeight: typography.bodyWeight,
               fontSize: body.px,
-              lineHeight: body.lineHeight,
+              lineHeight: `${body.lineHeightPx}px`,
               color: colors.roles["muted-foreground"],
             }}
           >
@@ -113,17 +113,19 @@ export function DebugType() {
 
       <Section
         title="Type scale"
-        description={`Base ${typography.baseSize}px, ratio ${typography.scaleRatio}, body line height ${typography.bodyLineHeight}. Whole pixel sizes, 12px minimum. Tracking applies to headings only.`}
+        description={`Base ${typography.baseSize}px, ratio ${typography.scaleRatio}, body line height ${typography.bodyLineHeight}. Even pixel sizes (12px minimum), line heights in multiples of 4px. Tracking applies to 2xl and larger and fades out below that.`}
       >
         <div className="divide-y divide-border rounded-xl border border-border">
           {[...typography.sizes].reverse().map((size) => {
             const isHeading = size.step >= 2;
             return (
-              <div key={size.name} className="grid items-baseline gap-2 p-4 sm:grid-cols-[10rem_1fr]">
+              <div key={size.name} className="grid items-baseline gap-2 p-4 sm:grid-cols-[13rem_1fr]">
                 <div className="font-mono text-xs text-muted-foreground">
                   {size.name} · {size.px}px · {size.rem}rem
                   <br />
-                  lh {size.lineHeight} · ls {size.letterSpacing}
+                  line height {size.lineHeightPx}px ({size.lineHeight})
+                  <br />
+                  tracking {size.letterSpacing}
                 </div>
                 <div
                   className="truncate"
@@ -131,7 +133,7 @@ export function DebugType() {
                     fontFamily: isHeading ? typography.heading.previewStack : typography.body.previewStack,
                     fontWeight: isHeading ? typography.headingWeight : typography.bodyWeight,
                     fontSize: size.px,
-                    lineHeight: size.lineHeight,
+                    lineHeight: `${size.lineHeightPx}px`,
                     letterSpacing: size.letterSpacing,
                     color: colors.roles.foreground,
                   }}

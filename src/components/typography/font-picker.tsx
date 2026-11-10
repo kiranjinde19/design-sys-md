@@ -8,6 +8,7 @@ import {
   WEIGHT_LABELS,
   catalogFont,
   effectiveFont,
+  isDisplayFont,
   offeredWeights,
   sanitizeFontName,
   type FontCategory,
@@ -31,6 +32,8 @@ interface FontPickerProps {
   /** Heading and body pick a weight. Mono does not. */
   weight?: number;
   onWeightChange?: (weight: FontWeight) => void;
+  /** For a body font picker: label headline-only (display) fonts in the list, so the risk is visible before picking. */
+  markDisplay?: boolean;
   /** Extra controls shown at the bottom, such as the tracking slider. */
   children?: ReactNode;
 }
@@ -104,6 +107,7 @@ export function FontPicker({
   initialCategory,
   weight,
   onWeightChange,
+  markDisplay,
   children,
 }: FontPickerProps) {
   useFontNames();
@@ -157,15 +161,17 @@ export function FontPicker({
                       aria-selected={selected}
                       onClick={() => onChange(catalogFont(font.name))}
                       className={cn(
-                        "flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-muted",
+                        "flex w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 px-3 py-2 text-left hover:bg-muted",
                         selected && "bg-muted",
                       )}
                     >
-                      <span className="truncate text-lg" style={{ fontFamily: nameFamily(font.name) }}>
+                      {/* The name comes first and is never cut off. If there is no room, the tag wraps below it. */}
+                      <span className="break-words text-lg" style={{ fontFamily: nameFamily(font.name) }}>
                         {font.name}
                       </span>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {FONT_CATEGORY_LABELS[font.category]} · {font.tags[0]}
+                      <span className="text-xs text-muted-foreground">
+                        {FONT_CATEGORY_LABELS[font.category]} ·{" "}
+                        {markDisplay && isDisplayFont(font) ? "headline style, not for body text" : font.tags[0]}
                       </span>
                     </button>
                   </li>

@@ -4,6 +4,7 @@
  * useSyncExternalStore (see provider.tsx), which avoids a flash of wrong content.
  */
 
+import { dropLegacyAutoSecondary } from "./migrations";
 import { applyPatch, normalizeSettings, type SettingsPatch } from "./normalize";
 import { DEFAULT_PRESET_ID, PRESETS, isPresetId, type PresetId } from "./presets";
 import { SETTINGS_SCHEMA_VERSION, type DesignSystemSettings } from "./types";
@@ -33,7 +34,7 @@ function readFromStorage(): StoredState {
     const presetId = isPresetId(record.presetId) ? record.presetId : DEFAULT_PRESET_ID;
     return {
       presetId,
-      settings: normalizeSettings(record.settings, PRESETS[presetId].settings),
+      settings: dropLegacyAutoSecondary(normalizeSettings(record.settings, PRESETS[presetId].settings)),
     };
   } catch {
     // Storage blocked or the saved data is broken: start fresh instead of crashing.

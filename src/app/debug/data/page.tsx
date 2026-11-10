@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { generateTokens } from "@/lib/design-system/generate";
 import { PRESETS } from "@/lib/design-system/presets";
 import { radiusLabel } from "@/lib/design-system/radius";
-import { FONT_CATALOG, WEIGHT_LABELS } from "@/lib/design-system/fonts";
+import { FONT_CATALOG, WEIGHT_LABELS, getFont } from "@/lib/design-system/fonts";
 import { FONT_PAIRINGS, PAIRING_SAMPLE_LINE, pairingGalleryUrl, recommendBodyFonts } from "@/lib/design-system/font-pairings";
 import { fontNamesUrl, selectedFontsUrl } from "@/lib/design-system/font-loading";
 import { SIGNATURE_CATALOG } from "@/lib/design-system/signature";
@@ -134,26 +134,29 @@ const sections: { title: string; body: string }[] = [
   {
     title: "Type scale",
     body: [
-      `Base ${tokens.typography.baseSize}px, ratio ${tokens.typography.scaleRatio}, body line height ${tokens.typography.bodyLineHeight}. Whole pixels, 12px minimum.`,
+      `Base ${tokens.typography.baseSize}px, ratio ${tokens.typography.scaleRatio}, body line height ${tokens.typography.bodyLineHeight}.`,
+      "Sizes are even whole pixels (12px minimum), and from 20px up they sit on the 4px grid.",
+      "Line heights are multiples of 4px. Headings stay tighter than body text. Both px and ratio are stored.",
+      "Tracking applies to 2xl and larger and fades to 0 below that (xl half, lg a quarter, base and smaller none).",
       "",
-      `${pad("name", 6)}${pad("px", 9)}${pad("rem", 10)}${pad("line height", 13)}letter spacing`,
+      `${pad("name", 6)}${pad("px", 6)}${pad("rem", 8)}${pad("line height px", 16)}${pad("line height ratio", 19)}tracking`,
       ...tokens.typography.sizes.map(
         (size) =>
-          `${pad(size.name, 6)}${pad(size.px, 9)}${pad(size.rem, 10)}${pad(size.lineHeight, 13)}${size.letterSpacing}`,
+          `${pad(size.name, 6)}${pad(size.px, 6)}${pad(size.rem, 8)}${pad(`${size.lineHeightPx}px`, 16)}${pad(size.lineHeight, 19)}${size.letterSpacing}`,
       ),
     ].join("\n"),
   },
   {
-    title: `Curated font list (${FONT_CATALOG.length} Google fonts, with the weights each really offers)`,
+    title: `Curated font list (${FONT_CATALOG.length} Google fonts: category, weights each really offers, default heading tracking, tags)`,
     body: FONT_CATALOG.map(
-      (font) => `${pad(font.name, 22)}${pad(font.category, 7)}${pad(font.weights.join(" "), 38)}${font.tags.join(", ")}`,
+      (font) => `${pad(font.name, 22)}${pad(font.category, 7)}${pad(font.weights.join(" "), 38)}${pad(`${font.tracking}em`, 10)}${font.tags.join(", ")}`,
     ).join("\n"),
   },
   {
     title: "Font pairings",
     body: FONT_PAIRINGS.map(
       (p) =>
-        `${p.name}  (${p.mood})${p.id === "modern-saas" ? "  [default]" : ""}\n  ${p.heading} ${p.headingWeight} + ${p.body} ${p.bodyWeight}${p.mono ? ` + ${p.mono} mono accent` : ""}, tracking ${p.tracking}em\n  ${p.reason}`,
+        `${p.name}  (${p.mood})${p.id === "modern-saas" ? "  [default]" : ""}\n  ${p.heading} ${p.headingWeight} + ${p.body} ${p.bodyWeight}${p.mono ? ` + ${p.mono} mono accent` : ""}, tracking ${getFont(p.heading)?.tracking}em (the heading font\u2019s default)\n  ${p.reason}`,
     )
       .concat([`Sample line on every card: "${PAIRING_SAMPLE_LINE}"`])
       .join("\n\n"),

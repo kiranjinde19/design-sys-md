@@ -5,13 +5,14 @@ export { generateTokens, createDesignSystem } from "./generate";
 export { generateScale, generateBrandScale, generateNeutralScale, generateSemanticScales, generateColors, suggestSecondaryColors, WHITE, BLACK } from "./colors";
 export { checkContrast, contrastRatio, pickReadableText } from "./contrast";
 export { normalizeHex } from "./color-math";
-export { generateTypography, resolveFont, MIN_FONT_SIZE } from "./typography";
+export { generateTypography, resolveFont, snapFontSize, MIN_FONT_SIZE } from "./typography";
 export {
   FONT_CATALOG,
   FONT_CATEGORY_LABELS,
   WEIGHT_LABELS,
   SYSTEM_STACKS,
   catalogFont,
+  defaultTracking,
   effectiveFont,
   getFont,
   isDisplayFont,

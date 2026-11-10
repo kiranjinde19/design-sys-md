@@ -67,24 +67,51 @@ const SIZE_LADDER: { name: TypeSizeName; step: number }[] = [
   { name: "5xl", step: 6 },
 ];
 
-/** Small text keeps the body line height. Bigger text gets tighter, down to a floor of 1.1. */
-function lineHeightFor(step: number, bodyLineHeight: number): number {
-  if (step <= 0) return round(bodyLineHeight, 2);
-  return round(Math.max(1.1, bodyLineHeight - 0.08 * step), 2);
+/** No size on the ladder goes below this, so small print stays readable. */
+export const MIN_FONT_SIZE = 12;
+
+/**
+ * Sizes are whole, even pixels. From 20px up they also sit on the 4px grid, which keeps
+ * big headings in step with the 4px line heights. At the default ratio of 1.2 this gives
+ * 12, 14, 16, 20, 24, 28, 32, 40, 48.
+ */
+export function snapFontSize(px: number): number {
+  const even = Math.round(px / 2) * 2;
+  const snapped = even >= 20 ? Math.round(px / 4) * 4 : even;
+  return Math.max(MIN_FONT_SIZE, snapped);
+}
+
+/** Nearest multiple of 4. A tie goes down, which keeps text a little tighter. */
+const snapToFour = (px: number) => Math.ceil(px / 4 - 0.5) * 4;
+
+/** The line height wanted for a size, before snapping: body text keeps the body ratio, bigger text gets tighter, down to 1.1. */
+function wantedLineHeight(step: number, bodyLineHeight: number): number {
+  if (step <= 0) return bodyLineHeight;
+  return Math.max(1.1, bodyLineHeight - 0.08 * step);
 }
 
 /**
- * Body text is never tracked. Headings use the chosen tracking at full strength from
- * 3xl up, and a smaller share on the way down, since small headings need less tightening.
+ * Line heights snap to multiples of 4px. Headings stay tighter than body text, and no
+ * line height is ever smaller than its font size.
  */
-function letterSpacingFor(step: number, tracking: number): string {
-  const share = step >= 4 ? 1 : step === 3 ? 0.5 : step === 2 ? 0.25 : 0;
-  const value = round(tracking * share, 3);
-  return `${value === 0 ? 0 : value}em`;
+function lineHeightPxFor(sizePx: number, step: number, bodyLineHeight: number): number {
+  const floor = Math.ceil(sizePx / 4) * 4;
+  let px = Math.max(floor, snapToFour(sizePx * wantedLineHeight(step, bodyLineHeight)));
+  if (step > 0) {
+    while (px / sizePx > bodyLineHeight && px - 4 >= floor) px -= 4;
+  }
+  return px;
 }
 
-/** No size on the ladder goes below this, so small print stays readable. */
-export const MIN_FONT_SIZE = 12;
+/**
+ * Body text is never tracked. Headings use the chosen tracking at full strength from 2xl
+ * up, then fade out below that: half at xl, a quarter at lg, none at base and smaller.
+ */
+function letterSpacingFor(step: number, tracking: number): string {
+  const share = step >= 3 ? 1 : step === 2 ? 0.5 : step === 1 ? 0.25 : 0;
+  const value = round(tracking * share, 4);
+  return `${value === 0 ? 0 : value}em`;
+}
 
 export function generateTypography(settings: TypographySettings): TypographyTokens {
   const heading = resolveFont(settings.headingFont, "heading");
@@ -92,14 +119,16 @@ export function generateTypography(settings: TypographySettings): TypographyToke
   const mono = settings.monoFont ? resolveFont(settings.monoFont, "mono") : null;
 
   const sizes: TypeSizeToken[] = SIZE_LADDER.map(({ name, step }) => {
-    // Whole pixels only. rem is worked out from the rounded px so the two always agree.
-    const pxValue = Math.max(MIN_FONT_SIZE, Math.round(settings.baseSize * settings.scaleRatio ** step));
+    // Even whole pixels. rem is worked out from the rounded px so the two always agree.
+    const pxValue = snapFontSize(settings.baseSize * settings.scaleRatio ** step);
+    const lineHeightPx = lineHeightPxFor(pxValue, step, settings.lineHeight);
     return {
       name,
       step,
       px: pxValue,
       rem: round(pxValue / 16, 4),
-      lineHeight: lineHeightFor(step, settings.lineHeight),
+      lineHeight: round(lineHeightPx / pxValue, 3),
+      lineHeightPx,
       letterSpacing: letterSpacingFor(step, settings.headingTracking),
     };
   });

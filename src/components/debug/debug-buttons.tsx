@@ -9,6 +9,7 @@ import {
   type SelectionControl,
   type SelectionState,
 } from "@/lib/design-system";
+import { Button } from "@/components/ui/button";
 import { PassBadge, Section } from "./section";
 import { asStyle, usePreviewStage } from "./preview-stage";
 
@@ -120,7 +121,9 @@ function Labelled({ children, label, muted }: { children: ReactNode; label: stri
 }
 
 export function DebugButtons() {
+  const { settings, update } = useDesignSystem();
   const { tokens, stage, body, small } = usePreviewStage();
+  const secondaryColor = settings.colors.secondary;
   const { controls, colors, spacing } = tokens;
   const { spinner } = controls.buttons;
   const muted = colors.roles["muted-foreground"];
@@ -133,6 +136,27 @@ export function DebugButtons() {
         description={`Secondary is ${controls.secondaryStyle}. Focus shows the signature focus ring. Loading keeps the full color and adds a spinner. Only disabled is faded.`}
       >
         <style>{spinner.stylesheet}</style>
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border p-3 text-sm">
+          <span
+            className="size-5 shrink-0 rounded-full border border-border"
+            style={{ background: secondaryColor ?? colors.neutral[100] }}
+            aria-hidden
+          />
+          {secondaryColor ? (
+            <>
+              <span className="min-w-0 flex-1">
+                Secondary buttons are drawn from your <strong>secondary color</strong> ({secondaryColor}), steps 100, 200 and 300 for the fill and 900 for text.
+              </span>
+              <Button size="sm" variant="outline" onClick={() => update({ colors: { secondary: null } })}>
+                Remove secondary color
+              </Button>
+            </>
+          ) : (
+            <span className="min-w-0 flex-1">
+              Secondary buttons are drawn from the <strong>neutral scale</strong>: 100 default, 200 hover, 300 pressed, 900 text. No secondary color has been added.
+            </span>
+          )}
+        </div>
         <div className="overflow-x-auto" style={stage}>
           <div className="grid min-w-[46rem] gap-3" style={{ gridTemplateColumns: "6rem repeat(6, 1fr)" }}>
             <div />

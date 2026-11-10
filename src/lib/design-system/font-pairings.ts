@@ -1,7 +1,7 @@
 /** Ready-made font pairings, body font recommendations, and font warnings. */
 
 import { galleryFontsUrl, type FontRequest } from "./font-loading";
-import { FONT_CATALOG, catalogFont, effectiveFont, getFont, isDisplayFont, type FontEntry } from "./fonts";
+import { FONT_CATALOG, catalogFont, defaultTracking, effectiveFont, getFont, isDisplayFont, type FontEntry } from "./fonts";
 import type { FontChoice, FontWeight, TypographySettings } from "./types";
 
 /** The line shown in every pairing card. */
@@ -22,7 +22,6 @@ export interface FontPairing {
   mono: string | null;
   headingWeight: FontWeight;
   bodyWeight: FontWeight;
-  tracking: number;
 }
 
 export const FONT_PAIRINGS: FontPairing[] = [
@@ -36,7 +35,6 @@ export const FONT_PAIRINGS: FontPairing[] = [
     mono: null,
     headingWeight: 600,
     bodyWeight: 400,
-    tracking: -0.02,
   },
   {
     id: "friendly-product",
@@ -48,7 +46,6 @@ export const FONT_PAIRINGS: FontPairing[] = [
     mono: null,
     headingWeight: 700,
     bodyWeight: 400,
-    tracking: -0.02,
   },
   {
     id: "developer-tools",
@@ -60,7 +57,6 @@ export const FONT_PAIRINGS: FontPairing[] = [
     mono: "Geist Mono",
     headingWeight: 600,
     bodyWeight: 400,
-    tracking: -0.02,
   },
   {
     id: "editorial",
@@ -72,7 +68,6 @@ export const FONT_PAIRINGS: FontPairing[] = [
     mono: null,
     headingWeight: 600,
     bodyWeight: 400,
-    tracking: -0.01,
   },
   {
     id: "sharp-technical",
@@ -84,7 +79,6 @@ export const FONT_PAIRINGS: FontPairing[] = [
     mono: null,
     headingWeight: 600,
     bodyWeight: 400,
-    tracking: -0.02,
   },
   {
     id: "bold-startup",
@@ -96,7 +90,6 @@ export const FONT_PAIRINGS: FontPairing[] = [
     mono: null,
     headingWeight: 700,
     bodyWeight: 400,
-    tracking: -0.03,
   },
   {
     id: "classic-trust",
@@ -108,7 +101,6 @@ export const FONT_PAIRINGS: FontPairing[] = [
     mono: null,
     headingWeight: 600,
     bodyWeight: 400,
-    tracking: -0.01,
   },
   {
     id: "refined",
@@ -120,11 +112,10 @@ export const FONT_PAIRINGS: FontPairing[] = [
     mono: null,
     headingWeight: 400,
     bodyWeight: 400,
-    tracking: -0.01,
   },
 ];
 
-/** The settings a pairing changes. */
+/** The settings a pairing changes. Tracking is the heading font's own default. */
 export function pairingSettings(pairing: FontPairing): Pick<
   TypographySettings,
   "headingFont" | "bodyFont" | "monoFont" | "headingWeight" | "bodyWeight" | "headingTracking"
@@ -135,14 +126,14 @@ export function pairingSettings(pairing: FontPairing): Pick<
     monoFont: pairing.mono ? catalogFont(pairing.mono) : null,
     headingWeight: pairing.headingWeight,
     bodyWeight: pairing.bodyWeight,
-    headingTracking: pairing.tracking,
+    headingTracking: defaultTracking(catalogFont(pairing.heading)),
   };
 }
 
 const sameFont = (choice: FontChoice | null, name: string | null) =>
   choice === null ? name === null : choice.kind === "catalog" && choice.name === name;
 
-/** Which pairing, if any, the current settings match exactly. */
+/** Which pairing, if any, the current fonts and weights match. Tracking is left out, so nudging the slider keeps it. */
 export function matchingPairingId(t: TypographySettings): string | null {
   const match = FONT_PAIRINGS.find(
     (p) =>
@@ -150,8 +141,7 @@ export function matchingPairingId(t: TypographySettings): string | null {
       sameFont(t.bodyFont, p.body) &&
       sameFont(t.monoFont, p.mono) &&
       t.headingWeight === p.headingWeight &&
-      t.bodyWeight === p.bodyWeight &&
-      t.headingTracking === p.tracking,
+      t.bodyWeight === p.bodyWeight,
   );
   return match?.id ?? null;
 }

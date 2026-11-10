@@ -305,7 +305,10 @@ export interface TypeSizeToken {
   step: number;
   px: number;
   rem: number;
+  /** Line height as a ratio of the font size, e.g. 1.5. Always px divided by size, so the two agree. */
   lineHeight: number;
+  /** Line height in px, always a multiple of 4. */
+  lineHeightPx: number;
   letterSpacing: string;
 }
 

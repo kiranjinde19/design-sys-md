@@ -2,6 +2,7 @@
 
 import {
   FONT_PAIRINGS,
+  getFont,
   PAIRING_MONO_SAMPLE,
   PAIRING_SAMPLE_LINE,
   matchingPairingId,
@@ -17,7 +18,8 @@ export function PairingGallery({ onApply }: { onApply: () => void }) {
   const { settings, tokens, update } = useDesignSystem();
   const activeId = matchingPairingId(settings.typography);
   const sizes = tokens.typography.sizes;
-  const headingSize = sizes.find((size) => size.name === "xl")!;
+  // 2xl is the smallest size where heading tracking applies in full.
+  const headingSize = sizes.find((size) => size.name === "2xl")!;
   const bodySize = sizes.find((size) => size.name === "sm")!;
   const monoSize = sizes.find((size) => size.name === "xs")!;
 
@@ -45,7 +47,7 @@ export function PairingGallery({ onApply }: { onApply: () => void }) {
               fontWeight: pairing.headingWeight,
               fontSize: headingSize.px,
               lineHeight: headingSize.lineHeight,
-              letterSpacing: `${pairing.tracking}em`,
+              letterSpacing: `${getFont(pairing.heading)?.tracking ?? 0}em`,
             }}
           >
             {PAIRING_SAMPLE_LINE}
