@@ -1,7 +1,7 @@
 /** WCAG 2.x contrast checking. */
 
 import { hexToRgb, toLinear } from "./color-math";
-import type { ContrastResult, WcagLevel } from "./types";
+import type { ContrastLevels, ContrastResult, WcagLevel } from "./types";
 
 export const WCAG_AAA = 7;
 export const WCAG_AA = 4.5;
@@ -35,6 +35,22 @@ export function checkContrast(foreground: string, background: string): ContrastR
     passesAAA: exact >= WCAG_AAA,
     passesAALarge: exact >= WCAG_AA_LARGE,
     label: `${level} ${ratio.toFixed(2)}:1`,
+  };
+}
+
+/**
+ * All three WCAG thresholds for one color pair.
+ *  - normal: 4.5:1, body text (AA)
+ *  - large:  3:1, large text and UI parts such as borders, icons and focus rings
+ *  - aaa:    7:1, enhanced contrast (AAA)
+ */
+export function contrastLevels(foreground: string, background: string): ContrastLevels {
+  const exact = contrastRatio(foreground, background);
+  return {
+    ratio: Math.floor(exact * 100) / 100,
+    normal: exact >= WCAG_AA,
+    large: exact >= WCAG_AA_LARGE,
+    aaa: exact >= WCAG_AAA,
   };
 }
 

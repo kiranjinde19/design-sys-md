@@ -164,6 +164,36 @@ export interface ContrastResult {
 
 export type ColorRoleTokenName = ColorRoleName | "primaryForeground";
 
+/** Pass or fail at each of the three WCAG levels. */
+export interface ContrastLevels {
+  /** Contrast ratio, rounded down to 2 decimals. */
+  ratio: number;
+  /** 4.5:1, normal text (AA). */
+  normal: boolean;
+  /** 3:1, large text and UI parts like borders, icons and focus rings. */
+  large: boolean;
+  /** 7:1, enhanced contrast (AAA). */
+  aaa: boolean;
+}
+
+export interface StepContrast {
+  onWhite: ContrastLevels;
+  onBlack: ContrastLevels;
+}
+
+/** Which steps of a scale are safe to use as a filled background. */
+export interface ScaleGuidance {
+  /** Lightest step that takes white text at 4.5:1. That step and every darker one are safe. */
+  whiteTextFrom: ScaleStep | null;
+  /** Darkest step that takes dark text (the neutral 900 ink) at 4.5:1. That step and every lighter one are safe. */
+  darkTextUpTo: ScaleStep | null;
+}
+
+export interface ScaleReport {
+  contrast: Record<ScaleStep, StepContrast>;
+  guidance: ScaleGuidance;
+}
+
 export interface ContrastPair {
   id: string;
   label: string;
@@ -180,6 +210,13 @@ export interface ColorTokens {
   semantic: Record<SemanticName, ColorScale>;
   /** secondary and secondaryForeground only exist when a secondary color is chosen. */
   roles: Record<ColorRoleTokenName, string> & { secondary?: string; secondaryForeground?: string };
+  /** Contrast at three levels for every step, plus safe-fill guidance, for every scale. */
+  reports: {
+    brand: ScaleReport;
+    secondary: ScaleReport | null;
+    neutral: ScaleReport;
+    semantic: Record<SemanticName, ScaleReport>;
+  };
   contrastPairs: ContrastPair[];
 }
 
@@ -227,8 +264,10 @@ export interface RadiusTokens {
 export type SpacingRole =
   | "inlineGap"
   | "stackGap"
-  | "controlPaddingX"
-  | "controlPaddingY"
+  | "buttonPaddingX"
+  | "buttonPaddingY"
+  | "inputPaddingX"
+  | "inputPaddingY"
   | "cardPadding"
   | "sectionGap";
 
@@ -312,6 +351,7 @@ export interface ControlTokens {
   buttons: {
     height: Record<ButtonSize, number>;
     paddingX: Record<ButtonSize, number>;
+    paddingY: number;
     radius: number;
     fontWeight: number;
     borderWidth: number;
@@ -320,6 +360,7 @@ export interface ControlTokens {
   inputs: {
     height: number;
     paddingX: number;
+    paddingY: number;
     radius: number;
     borderWidth: number;
     placeholderColor: string;
@@ -346,9 +387,14 @@ export interface SignatureTokens {
   hover: SignatureRecipe<HoverEffect>;
   primaryCta: SignatureRecipe<PrimaryCta> & {
     animated: boolean;
-    /** @keyframes block for animated CTAs, otherwise null. */
-    keyframes: string | null;
-    /** What to show when the user prefers reduced motion. */
+    /** Class name the stylesheet targets, or null when the CTA is not animated. */
+    className: string | null;
+    /**
+     * Complete CSS for animated CTAs: the glow, the @keyframes, and the
+     * prefers-reduced-motion fallback. Null when the CTA is not animated.
+     */
+    stylesheet: string | null;
+    /** What the button shows when the user prefers reduced motion: no animation, a steady glow. */
     reducedMotionCss: CssRecipe;
   };
   iconContainer: SignatureRecipe<IconContainer>;

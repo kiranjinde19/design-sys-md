@@ -133,10 +133,7 @@ export function DebugComponents({ part }: { part: "buttons" | "signature" }) {
         </>
       ) : (
       <Section title="Signature details" description="The seven chosen moves, shown on small samples.">
-        <style>{`
-          ${cta.keyframes ?? ""}
-          @media (prefers-reduced-motion: reduce) { .ds-cta { animation: none !important; } }
-        `}</style>
+        {cta.stylesheet ? <style>{cta.stylesheet}</style> : null}
         <div className="grid gap-4 md:grid-cols-2" style={stage}>
           <Sample label={`Featured highlight: ${signature.featuredHighlight.label}`}>
             <div className="p-4" style={{ borderRadius: radius.lg, ...asStyle(signature.cardStyle.css), ...asStyle(signature.featuredHighlight.css) }}>
@@ -157,7 +154,7 @@ export function DebugComponents({ part }: { part: "buttons" | "signature" }) {
             <button
               type="button"
               tabIndex={-1}
-              className="ds-cta"
+              className={cta.className ?? undefined}
               style={{
                 height: controls.buttons.height.md,
                 paddingInline: controls.buttons.paddingX.lg,
@@ -212,6 +209,18 @@ export function DebugComponents({ part }: { part: "buttons" | "signature" }) {
             </div>
           </Sample>
         </div>
+        {cta.stylesheet ? (
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Primary CTA CSS (with reduced-motion fallback)</h3>
+            <pre className="overflow-x-auto rounded-lg border border-border p-4 font-mono text-xs leading-relaxed">
+              {cta.stylesheet}
+            </pre>
+            <p className="text-xs text-muted-foreground">
+              To test: turn on &quot;Reduce motion&quot; in your computer&apos;s accessibility settings and reload. The glow stops
+              pulsing and stays on as a steady border.
+            </p>
+          </div>
+        ) : null}
         <p className="text-sm text-muted-foreground">
           Options per category:{" "}
           {Object.values(SIGNATURE_CATALOG)

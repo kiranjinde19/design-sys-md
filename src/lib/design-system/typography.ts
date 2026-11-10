@@ -73,13 +73,17 @@ function letterSpacingFor(step: number): string {
   return "0em";
 }
 
+/** No size on the ladder goes below this, so small print stays readable. */
+export const MIN_FONT_SIZE = 12;
+
 export function generateTypography(settings: TypographySettings): TypographyTokens {
   const sizes: TypeSizeToken[] = SIZE_LADDER.map(({ name, step }) => {
-    const pxValue = settings.baseSize * settings.scaleRatio ** step;
+    // Whole pixels only. rem is worked out from the rounded px so the two always agree.
+    const pxValue = Math.max(MIN_FONT_SIZE, Math.round(settings.baseSize * settings.scaleRatio ** step));
     return {
       name,
       step,
-      px: round(pxValue, 2),
+      px: pxValue,
       rem: round(pxValue / 16, 4),
       lineHeight: lineHeightFor(step, settings.lineHeight),
       letterSpacing: letterSpacingFor(step),

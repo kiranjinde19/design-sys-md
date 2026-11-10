@@ -119,6 +119,7 @@ export const BLANK_SLATE_SIGNATURE: SignatureSettings = {
 };
 
 const ICON_CONTAINER_SIZE = 40;
+const CTA_GLOW_CLASS = "ds-cta-glow";
 const HOVER_TRANSITION = "transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease";
 
 interface SignatureContext {
@@ -210,6 +211,7 @@ export function generateSignature(
   };
 
   // Primary call to action
+  const glowStatic = `0 0 0 2px ${withAlpha(brand[400], 0.65)}, 0 0 14px ${withAlpha(brand[400], 0.45)}`;
   const glowFrom = `0 0 0 1px ${withAlpha(brand[400], 0.5)}, 0 0 8px ${withAlpha(brand[400], 0.35)}`;
   const glowTo = `0 0 0 2px ${withAlpha(brand[400], 0.8)}, 0 0 20px ${withAlpha(brand[400], 0.55)}`;
   const ctaBase: CssRecipe = {
@@ -218,7 +220,8 @@ export function generateSignature(
   };
   const ctaCss: Record<SignatureSettings["primaryCta"], CssRecipe> = {
     solid: ctaBase,
-    "animated-glow-border": { ...ctaBase, boxShadow: glowFrom, animation: "ds-glow-border 3.6s ease-in-out infinite" },
+    // The glow itself lives in the stylesheet below, so reduced motion can override it.
+    "animated-glow-border": ctaBase,
     "gradient-fill": {
       background: `linear-gradient(135deg, ${brand[500]}, ${brand[700]})`,
       color: colors.roles.primaryForeground,
@@ -294,10 +297,29 @@ export function generateSignature(
           : undefined,
       ),
       animated,
-      keyframes: animated
-        ? `@keyframes ds-glow-border {\n  0%, 100% { box-shadow: ${glowFrom}; }\n  50% { box-shadow: ${glowTo}; }\n}`
+      className: animated ? CTA_GLOW_CLASS : null,
+      stylesheet: animated
+        ? [
+            `.${CTA_GLOW_CLASS} {`,
+            `  box-shadow: ${glowFrom};`,
+            `  animation: ds-glow-border 3.6s ease-in-out infinite;`,
+            `}`,
+            ``,
+            `@keyframes ds-glow-border {`,
+            `  0%, 100% { box-shadow: ${glowFrom}; }`,
+            `  50% { box-shadow: ${glowTo}; }`,
+            `}`,
+            ``,
+            `/* Reduced motion: no animation, a steady glow border instead. */`,
+            `@media (prefers-reduced-motion: reduce) {`,
+            `  .${CTA_GLOW_CLASS} {`,
+            `    animation: none;`,
+            `    box-shadow: ${glowStatic};`,
+            `  }`,
+            `}`,
+          ].join("\n")
         : null,
-      reducedMotionCss: animated ? { animation: "none", boxShadow: glowFrom } : {},
+      reducedMotionCss: animated ? { animation: "none", boxShadow: glowStatic } : {},
     },
     iconContainer: recipe("iconContainer", settings.iconContainer, iconCss[settings.iconContainer]),
     focusRing: recipe("focusRing", settings.focusRing, focusCss[settings.focusRing]),

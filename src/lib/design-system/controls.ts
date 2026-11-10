@@ -121,13 +121,14 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
   };
 
   const height = settings.height;
-  const paddingX = spacing.semantic.controlPaddingX;
+  const buttonPaddingX = spacing.semantic.buttonPaddingX;
 
   return {
     secondaryStyle: settings.secondaryStyle,
     buttons: {
       height: { sm: height - 8, md: height, lg: height + 8 },
-      paddingX: { sm: paddingX - 4, md: paddingX, lg: paddingX + 4 },
+      paddingX: { sm: buttonPaddingX - 4, md: buttonPaddingX, lg: buttonPaddingX + 4 },
+      paddingY: spacing.semantic.buttonPaddingY,
       radius: radius.md,
       fontWeight: 500,
       borderWidth: borders.width,
@@ -135,7 +136,8 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
     },
     inputs: {
       height,
-      paddingX,
+      paddingX: spacing.semantic.inputPaddingX,
+      paddingY: spacing.semantic.inputPaddingY,
       radius: radius.md,
       borderWidth: borders.width,
       placeholderColor: neutral[500],

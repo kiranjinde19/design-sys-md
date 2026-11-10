@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import { BLACK, WHITE } from "@/lib/design-system/colors";
-import { checkContrast } from "@/lib/design-system/contrast";
 import { generateTokens } from "@/lib/design-system/generate";
 import { PRESETS } from "@/lib/design-system/presets";
 import { SIGNATURE_CATALOG } from "@/lib/design-system/signature";
-import { SCALE_STEPS, type ColorScale, type SignatureSettings } from "@/lib/design-system/types";
+import {
+  SCALE_STEPS,
+  type ColorScale,
+  type ContrastLevels,
+  type ScaleReport,
+  type SignatureSettings,
+} from "@/lib/design-system/types";
 
 export const metadata: Metadata = {
   title: "Token data (temporary)",
@@ -16,39 +20,60 @@ const tokens = generateTokens(preset.settings);
 
 const pad = (value: string | number, width: number) => String(value).padEnd(width);
 
-function contrastCell(foreground: string, background: string) {
-  const result = checkContrast(foreground, background);
-  return `${result.ratio.toFixed(2).padStart(5)}:1 ${result.passesAA ? "AA PASS" : "AA FAIL"}`;
+const pf = (passes: boolean) => (passes ? "pass" : "FAIL");
+
+/** "6.28:1  4.5 pass | 3 pass | 7 FAIL" */
+function contrastCell(levels: ContrastLevels) {
+  return `${levels.ratio.toFixed(2).padStart(5)}:1  4.5 ${pf(levels.normal)} | 3 ${pf(levels.large)} | 7 ${pf(levels.aaa)}`;
 }
 
-function scaleText(scale: ColorScale) {
-  return SCALE_STEPS.map(
-    (step) =>
-      `${pad(step, 5)}${pad(scale[step], 9)}vs white ${contrastCell(scale[step], WHITE)}   vs black ${contrastCell(scale[step], BLACK)}`,
-  ).join("\n");
+function guidanceText(report: ScaleReport) {
+  const { whiteTextFrom, darkTextUpTo } = report.guidance;
+  return [
+    `Filled background with white text: ${whiteTextFrom ? `step ${whiteTextFrom} and darker` : "no step passes"}`,
+    `Filled background with dark text:  ${darkTextUpTo ? `step ${darkTextUpTo} and lighter` : "no step passes"}`,
+  ].join("\n");
 }
 
-function simpleScaleText(scale: ColorScale) {
-  return SCALE_STEPS.map((step) => `${pad(step, 5)}${scale[step]}`).join("\n");
+function scaleText(scale: ColorScale, report: ScaleReport) {
+  return [
+    guidanceText(report),
+    "",
+    `${pad("step", 6)}${pad("hex", 9)}${pad("vs white", 40)}vs black`,
+    ...SCALE_STEPS.map(
+      (step) =>
+        `${pad(step, 6)}${pad(scale[step], 9)}${pad(contrastCell(report.contrast[step].onWhite), 40)}${contrastCell(report.contrast[step].onBlack)}`,
+    ),
+  ].join("\n");
 }
 
 const sections: { title: string; body: string }[] = [
+  {
+    title: "How to read the contrast columns",
+    body: [
+      "4.5  normal text (WCAG AA)",
+      "3    large text and UI parts such as borders, icons and focus rings (WCAG AA large)",
+      "7    enhanced contrast (WCAG AAA)",
+      "Ratios are rounded down, so a near miss never shows as a pass.",
+      "Dark text means the neutral 900 ink used by the system, not pure black.",
+    ].join("\n"),
+  },
   {
     title: "Preset",
     body: `${preset.name}: ${preset.description}`,
   },
   {
     title: "Brand scale (step 600 is the exact brand color)",
-    body: `Brand color ${preset.settings.colors.brand}\n\n${scaleText(tokens.colors.brand)}`,
+    body: `Brand color ${preset.settings.colors.brand}\n\n${scaleText(tokens.colors.brand, tokens.colors.reports.brand)}`,
   },
   {
     title: `Neutral scale (${preset.settings.colors.neutralTone} tone)`,
-    body: scaleText(tokens.colors.neutral),
+    body: scaleText(tokens.colors.neutral, tokens.colors.reports.neutral),
   },
   {
-    title: "Semantic colors (full scales)",
+    title: "Semantic colors (full scales, with contrast)",
     body: (["success", "warning", "error", "info"] as const)
-      .map((name) => `${name}\n${simpleScaleText(tokens.colors.semantic[name])}`)
+      .map((name) => `${name.toUpperCase()}\n${scaleText(tokens.colors.semantic[name], tokens.colors.reports.semantic[name])}`)
       .join("\n\n"),
   },
   {
@@ -96,6 +121,10 @@ const sections: { title: string; body: string }[] = [
         return `${SIGNATURE_CATALOG[key].label}: ${recipe.label}\n${css || "    (no styles)"}`;
       })
       .join("\n\n"),
+  },
+  {
+    title: "Primary CTA stylesheet (glow, keyframes and reduced-motion fallback)",
+    body: tokens.signature.primaryCta.stylesheet ?? "The primary CTA is not animated in this preset.",
   },
 ];
 

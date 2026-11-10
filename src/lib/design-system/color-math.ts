@@ -129,6 +129,21 @@ export function oklchToHex(color: Oklch): string {
   });
 }
 
+/**
+ * Hue as designers see it (the HSL hue, 0 to 360), measured on the final hex color.
+ * Returns null for grays, which have no meaningful hue.
+ */
+export function hslHue(hex: string): number | null {
+  const { r, g, b } = hexToRgb(hex);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  if (max - min < 6) return null;
+  const d = max - min;
+  const raw =
+    max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return (raw * 60 + 360) % 360;
+}
+
 /** Make a color lighter (positive) or darker (negative). Used for hover and pressed states. */
 export function shiftLightness(hex: string, delta: number): string {
   const color = hexToOklch(hex);

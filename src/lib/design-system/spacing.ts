@@ -15,8 +15,10 @@ const LADDER_UNITS = [0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, 16];
 const COMFORTABLE_ANCHORS: Record<SpacingRole, number> = {
   inlineGap: 8,
   stackGap: 16,
-  controlPaddingX: 12,
-  controlPaddingY: 8,
+  buttonPaddingX: 16,
+  buttonPaddingY: 8,
+  inputPaddingX: 12,
+  inputPaddingY: 8,
   cardPadding: 24,
   sectionGap: 48,
 };
