@@ -44,7 +44,7 @@ export function layoutSection(ctx: SkillContext): string[] {
   return lines(
     "## Layout and navigation",
     "",
-    `Shell: sidebar (${layout.sidebar.width}px, ${layout.sidebar.collapsed}px collapsed to icons), a ${layout.headerHeight}px top bar, then centered content at most ${layout.maxContentWidth}px wide. Page padding ${pad.base}px on phones, ${pad.md}px from md, ${pad.lg}px from lg; sections ${spacing.semantic.sectionGap}px apart. Mobile first breakpoints: sm ${bp.sm}px (two columns), md ${bp.md}px (sidebar appears), lg ${bp.lg}px (three or four columns), xl ${bp.xl}px (content reaches its maximum width). Below md the sidebar is a menu opened from an icon button in the top bar.`,
+    `Shell: sidebar (${layout.sidebar.width}px, ${layout.sidebar.collapsed}px collapsed to icons), a ${layout.headerHeight}px top bar, then centered content at most ${layout.maxContentWidth}px wide. Page padding ${pad.base}px on phones, ${pad.md}px from md, ${pad.lg}px from lg; sections ${spacing.semantic.sectionGap}px apart. Mobile first breakpoints: sm ${bp.sm}px (two columns), md ${bp.md}px (sidebar appears), lg ${bp.lg}px (three or four columns), xl ${bp.xl}px (content reaches its maximum width). ${ctx.shadcn ? "" : "Below md the sidebar is a menu opened from an icon button in the top bar."}`,
     "",
     "Sidebar roles: `sidebar` the panel, `sidebar-accent` the hovered or current item, `sidebar-primary` an accent mark (logo, active icon), `sidebar-border` its edge. One current item (`aria-current=\"page\"`), muted `text-xs` group labels, one level only; use tabs inside a page.",
     "",

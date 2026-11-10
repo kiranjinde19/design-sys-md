@@ -120,7 +120,7 @@ function roleVars(ctx: SkillContext, withRadius: boolean, prefix = "--"): string
   const v = controls.buttons.variants;
   const role = (name: string) => `${prefix}${name}: ${colors.roles[name as keyof typeof colors.roles]};`;
   return lines(
-    "  /* Roles (shadcn names) and derived button states. shadcn init writes the standard names: replace its values */",
+    "  /* Roles (shadcn names) and derived button states. Replace the values init wrote */",
     ROLE_GROUPS.map((group) => `  ${group.map(role).join(" ")}`),
     `  ${prefix}placeholder: ${colors.placeholder};${withRadius ? ` --radius: ${radius.md}px;` : ""} ${prefix}primary-hover: ${v.primary.hover.background}; ${prefix}primary-pressed: ${v.primary.pressed.background};`,
     `  ${prefix}destructive-hover: ${v.destructive.hover.background}; ${prefix}destructive-pressed: ${v.destructive.pressed.background};`,
@@ -170,22 +170,31 @@ function tailwindCss(ctx: SkillContext): string[] {
     );
   }
 
+  // shadcn stack. The order of these blocks matters, so it is written into the code itself.
+  const radiusLine = `  --radius-sm: ${radius.sm}px; --radius-md: ${radius.md}px; --radius-lg: ${radius.lg}px; --radius-full: ${radius.full}px;`;
+  const commonNoRadius = common.filter((line) => !line.includes("--radius-sm:"));
   return lines(
     ":root {",
     roleVars(ctx, true),
     "}",
     "",
     "@theme {",
-    "  /* Remove Tailwind's defaults, so only these tokens exist */",
+    "  /* FIRST, above shadcn's own @theme inline block: the reset erases role mappings defined before it",
+    "     (build error: Cannot apply unknown utility class `border-border`) */",
     "  --color-*: initial; --text-*: initial; --shadow-*: initial;",
-    common,
+    commonNoRadius,
     "}",
     "",
+    "/* shadcn's @theme inline block (from init) stays here, untouched */",
+    "",
     "@theme inline {",
-    "  /* shadcn init already maps the standard roles. Add only the custom ones */",
+    "  /* LAST, below shadcn's block, so radius and fonts win over its values. Custom role mappings: */",
     map(CUSTOM_ROLES),
+    radiusLine,
     fontBlock,
     "}",
+    "",
+    "@layer base { h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); } }",
   );
 }
 

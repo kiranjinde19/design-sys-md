@@ -15,6 +15,8 @@ export type PresetId = (typeof PRESET_IDS)[number];
 
 export interface Preset {
   id: PresetId;
+  /** Bump this whenever the preset changes, and add a snapshot in preset-history.ts. */
+  version: number;
   name: string;
   description: string;
   settings: DesignSystemSettings;
@@ -93,12 +95,14 @@ const BLANK_SLATE: DesignSystemSettings = {
 export const PRESETS: Record<PresetId, Preset> = {
   "saas-clean": {
     id: "saas-clean",
+    version: 1,
     name: "SaaS Clean",
     description: "Indigo brand, cool grays, soft shadows and a few signature moves.",
     settings: SAAS_CLEAN,
   },
   "blank-slate": {
     id: "blank-slate",
+    version: 1,
     name: "Blank slate",
     description: "Neutral and quiet. A plain starting point with nothing decided for you.",
     settings: BLANK_SLATE,

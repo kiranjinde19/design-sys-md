@@ -1,7 +1,7 @@
 import { lines, table, type SkillContext } from "./context";
 
 export function accessibilitySection(ctx: SkillContext): string[] {
-  const { colors, signature, controls, typography } = ctx.t;
+  const { colors, signature, controls } = ctx.t;
   const pairs = colors.contrastPairs;
   const worst = (group: typeof pairs) => group.reduce((a, b) => (b.levels.ratio < a.levels.ratio ? b : a));
   const grouped = (test: (role: string) => boolean) => pairs.filter((p) => test(p.foregroundRole));
@@ -28,7 +28,7 @@ export function accessibilitySection(ctx: SkillContext): string[] {
     ...table(["Pair", "Ratio"], rows),
     "",
     `- White text on a filled color works from this step and darker: ${(["brand", "success", "warning", "error", "info"] as const).map((n) => `${n} ${guide(n)}`).join(", ")}.`,
-    `- Every interactive element shows the focus ring (${signature.focusRing.label.toLowerCase()}), never removed. Controls are at least ${controls.buttons.height.sm}px tall with ${ctx.t.spacing.semantic.inlineGap}px between targets. Text is never below ${typography.sizes[0].px}px.`,
+    `- Every interactive element shows the focus ring (${signature.focusRing.label.toLowerCase()}), never removed. Controls are at least ${controls.buttons.height.sm}px tall, ${ctx.t.spacing.semantic.inlineGap}px apart.`,
     "- State is never color alone. Use real elements (`button`, `a`, `label`, `th scope`), a logical heading order, and alt text or a decorative mark on every image.",
     "",
   );

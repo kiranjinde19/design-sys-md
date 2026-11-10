@@ -118,7 +118,7 @@ The generator lives in `src/lib/design-system/skill/`. Every value comes from th
 6. Accessibility: the verified contrast pairs, focus ring, reduced motion.
 7. Do and don't pairs for common mistakes.
 8. A final checklist the AI runs before finishing any screen.
-9. One small fenced JSON data block at the end, holding the starting preset and only the settings that differ from it, so "Import my previous file" can restore everything. Export, import, export again gives byte-identical files.
+9. One small fenced JSON data block at the end, holding the starting preset and only the settings that differ from it, so "Import my previous file" can restore everything. Export, import, export again gives byte-identical files. The block also stores the **preset version**. Old files are rebuilt from a frozen snapshot of that exact version (`src/lib/design-system/preset-history.ts`), so updating SaaS Clean never changes an old file. **When you change a preset (a value, or a new setting added to the schema): bump its `version` in `presets.ts` and add the new version's JSON to `preset-history.ts`, leaving old entries untouched.** A guard fails the build if a preset differs from its snapshot.
 
 The file must go beyond a list of values. It should carry rules for decisions, not only values.
 
@@ -126,7 +126,8 @@ The file must go beyond a list of values. It should carry rules for decisions, n
 
 - **SKILL.md** (Claude Code): YAML frontmatter on the first line with `name` (lowercase letters, numbers and hyphens, at most 64 characters, never `synced` or `anthropic-skills`) and `description`. The description says what the file does and when to use it, with the key use case first, because Claude Code truncates the combined listing text at 1,536 characters. Install at `.claude/skills/<name>/SKILL.md` (project) or `~/.claude/skills/<name>/SKILL.md` (all projects).
 - **AGENTS.md** (Codex): the same content without frontmatter. Plain Markdown at the repository root, or `~/.codex/AGENTS.md` for all projects. Codex stops reading instruction files once they add up to 32 KiB by default (`project_doc_max_bytes`), so the file must stay under 32 KiB. The Export step shows a size meter.
-- **Stacks:** Next.js + Tailwind + shadcn/ui (default), React + Tailwind, plain HTML/CSS. Each gets code that matches it.
+- **Stacks:** Next.js + Tailwind + shadcn/ui (default), React + Tailwind, plain HTML/CSS. Each gets code that matches it. The Next.js and React files were verified by building them in fresh projects outside this repo.
+- **shadcn block order (verified):** shadcn init writes its own `@theme inline` block first. The generated `@theme` block starts with `--color-*: initial`, which erases every role mapping defined before it, so it must come **before** shadcn's block (otherwise the build fails with `Cannot apply unknown utility class border-border`). The generated final `@theme inline` block must come **after** shadcn's, because shadcn's own radius and font values would otherwise win. The order is written into the file's CSS comments, and the file includes a one line base layer rule applying the heading font to h1 to h6. Restoring all shadcn mappings instead would cost about 1.3 KiB.
 - **Review page:** `/debug/skill` prints the full SaaS Clean SKILL.md as plain text, rebuilt on every deploy.
 
 ## Pricing page reference scenario (the success test)
