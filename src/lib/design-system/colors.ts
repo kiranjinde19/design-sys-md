@@ -17,6 +17,7 @@ import {
   type ColorScale,
   type ColorSettings,
   type ColorTokens,
+  type ColorRoleTokenName,
   type ContrastPair,
   type ScaleGuidance,
   type ScaleReport,
@@ -191,49 +192,85 @@ export function generateColors(settings: ColorSettings): ColorTokens {
 
   const resolve = (ref: ColorRef) => resolveColorRef(ref, scales);
 
-  const primary = resolve(settings.roles.primary);
   const secondary = settings.secondary ? generateScale(settings.secondary) : null;
+  const ink = neutral[900];
+  const readable = (bg: string) => pickReadableText(bg, WHITE, ink);
+  const r = settings.roles;
+
+  const background = resolve(r.background);
+  const foreground = resolve(r.foreground);
+  const card = resolve(r.card);
+  const primary = resolve(r.primary);
+  const muted = resolve(r.muted);
+  const destructive = resolve(r.destructive);
+  // With a secondary color, secondary is that color and accent is its tint.
+  // Without one, both are the quiet neutral fill, like a default shadcn project.
+  const secondaryFill = secondary ? secondary[BRAND_STEP] : neutral[100];
+  const accentFill = secondary ? secondary[100] : neutral[100];
 
   const roles: ColorTokens["roles"] = {
+    background,
+    foreground,
+    card,
+    "card-foreground": foreground,
     primary,
-    primaryForeground: pickReadableText(primary, WHITE, neutral[900]),
-    background: resolve(settings.roles.background),
-    surface: resolve(settings.roles.surface),
-    surfaceMuted: resolve(settings.roles.surfaceMuted),
-    border: resolve(settings.roles.border),
-    text: resolve(settings.roles.text),
-    textMuted: resolve(settings.roles.textMuted),
+    "primary-foreground": readable(primary),
+    secondary: secondaryFill,
+    "secondary-foreground": readable(secondaryFill),
+    muted,
+    "muted-foreground": resolve(r["muted-foreground"]),
+    accent: accentFill,
+    "accent-foreground": readable(accentFill),
+    destructive,
+    "destructive-foreground": readable(destructive),
+    border: resolve(r.border),
+    input: resolve(r.input),
+    ring: resolve(r.ring),
   };
 
-  if (secondary) {
-    roles.secondary = secondary[BRAND_STEP];
-    roles.secondaryForeground = pickReadableText(roles.secondary, WHITE, neutral[900]);
-  }
-
-  const pair = (id: string, label: string, foreground: string, background: string): ContrastPair => ({
-    id,
-    label,
-    foreground,
-    background,
-    result: checkContrast(foreground, background),
-  });
+  const pair = (
+    foregroundRole: ColorRoleTokenName,
+    backgroundRole: ColorRoleTokenName,
+    kind: "text" | "ui" = "text",
+    label = `${foregroundRole} on ${backgroundRole}`,
+  ): ContrastPair => {
+    const fg = roles[foregroundRole];
+    const bg = roles[backgroundRole];
+    const levels = contrastLevels(fg, bg);
+    const required = kind === "text" ? 4.5 : 3;
+    return {
+      id: `${foregroundRole}-on-${backgroundRole}`,
+      label,
+      foregroundRole,
+      backgroundRole,
+      foreground: fg,
+      background: bg,
+      kind,
+      required,
+      passes: kind === "text" ? levels.normal : levels.large,
+      levels,
+      result: checkContrast(fg, bg),
+    };
+  };
 
   const contrastPairs: ContrastPair[] = [
-    pair("text-on-background", "Text on background", roles.text, roles.background),
-    pair("text-on-surface", "Text on surface", roles.text, roles.surface),
-    pair("muted-on-background", "Muted text on background", roles.textMuted, roles.background),
-    pair("muted-on-surface", "Muted text on surface", roles.textMuted, roles.surface),
-    pair("on-primary", "Text on primary button", roles.primaryForeground, roles.primary),
-    pair("primary-on-background", "Primary as link text on background", roles.primary, roles.background),
+    // Every shadcn foreground on its own background
+    pair("foreground", "background"),
+    pair("card-foreground", "card"),
+    pair("primary-foreground", "primary"),
+    pair("secondary-foreground", "secondary"),
+    pair("muted-foreground", "muted"),
+    pair("accent-foreground", "accent"),
+    pair("destructive-foreground", "destructive"),
+    // Common real-world combinations
+    pair("muted-foreground", "background"),
+    pair("primary", "background", "text", "primary as link text on background"),
+    // Interface parts the user must be able to see, held to 3:1.
+    // Decorative borders and dividers have no WCAG requirement, so they are not checked.
+    pair("input", "background", "ui", "input outline on background"),
+    pair("ring", "background", "ui", "focus ring on background"),
   ];
 
-  if (roles.secondary && roles.secondaryForeground) {
-    contrastPairs.push(
-      pair("on-secondary", "Text on secondary button", roles.secondaryForeground, roles.secondary),
-    );
-  }
-
-  const ink = neutral[900];
   const reports: ColorTokens["reports"] = {
     brand: generateScaleReport(brand, ink),
     secondary: secondary ? generateScaleReport(secondary, ink) : null,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useDesignSystem } from "@/lib/design-system";
+import { radiusLabel, useDesignSystem } from "@/lib/design-system";
 import { Section } from "./section";
 
 export function DebugRadius() {
@@ -21,7 +21,7 @@ export function DebugRadius() {
               }}
             />
             <div className="text-xs font-medium">{name}</div>
-            <div className="font-mono text-xs text-muted-foreground">{radius[name]}px</div>
+            <div className="font-mono text-xs text-muted-foreground">{radiusLabel(name, radius)}</div>
           </div>
         ))}
       </div>
@@ -91,7 +91,7 @@ export function DebugShadows() {
       title="Shadows"
       description={`${elevation.levels} levels, ${elevation.style} style, intensity ${elevation.intensity}.`}
     >
-      <div className="rounded-xl p-8" style={{ background: colors.roles.surface }}>
+      <div className="rounded-xl p-8" style={{ background: colors.roles.muted }}>
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
           {elevation.shadows.map((shadow) => (
             <div
@@ -101,7 +101,7 @@ export function DebugShadows() {
                 background: colors.roles.background,
                 borderRadius: radius.md,
                 boxShadow: shadow.css,
-                color: colors.roles.text,
+                color: colors.roles.foreground,
               }}
             >
               Level {shadow.level}

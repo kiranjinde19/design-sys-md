@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useDesignSystem } from "@/lib/design-system";
-import type { ContrastResult } from "@/lib/design-system";
 
 export function Section({
   title,
@@ -24,16 +23,16 @@ export function Section({
   );
 }
 
-/** Pass / warn / fail label, colored with the design system's own semantic colors. */
-export function ContrastBadge({ result }: { result: ContrastResult }) {
+/** Pass or fail at the ratio a pair needs, colored with the design system's own semantic colors. */
+export function PassBadge({ passes, required }: { passes: boolean; required: number }) {
   const { tokens } = useDesignSystem();
-  const tone = result.passesAA ? tokens.colors.semantic.success : result.passesAALarge ? tokens.colors.semantic.warning : tokens.colors.semantic.error;
+  const tone = passes ? tokens.colors.semantic.success : tokens.colors.semantic.error;
   return (
     <span
       className="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium"
       style={{ background: tone[100], color: tone[800] }}
     >
-      {result.label}
+      {passes ? "Pass" : "Fail"} {required}:1
     </span>
   );
 }

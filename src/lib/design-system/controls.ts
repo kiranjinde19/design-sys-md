@@ -64,7 +64,8 @@ const style = (
 export function generateControls(settings: ControlSettings, ctx: ControlContext): ControlTokens {
   const { colors, radius, spacing, borders } = ctx;
   const neutral = colors.neutral;
-  const text = colors.roles.text;
+  const text = colors.roles.foreground;
+  const { roles } = colors;
   const readable = (bg: string) => pickReadableText(bg, WHITE, neutral[900]);
 
   /** Solid-filled button (primary, destructive): darker on hover and press. */
@@ -80,44 +81,50 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
     };
   };
 
+  // Secondary follows the "secondary" role: the optional secondary color, or a quiet neutral fill.
+  const secondaryBase = roles.secondary;
+  const secondaryHover = shiftLightness(secondaryBase, HOVER_SHIFT);
+  const secondaryPressed = shiftLightness(secondaryBase, PRESSED_SHIFT);
   const secondary: Record<ButtonState, ControlStateStyle> =
     settings.secondaryStyle === "fill"
       ? {
-          default: style(neutral[100], text, TRANSPARENT),
-          hover: style(neutral[200], text, TRANSPARENT),
-          pressed: style(neutral[300], text, TRANSPARENT),
+          default: style(secondaryBase, roles["secondary-foreground"], TRANSPARENT),
+          hover: style(secondaryHover, readable(secondaryHover), TRANSPARENT),
+          pressed: style(secondaryPressed, readable(secondaryPressed), TRANSPARENT),
           disabled: style(neutral[100], neutral[400], TRANSPARENT),
-          loading: style(neutral[100], text, TRANSPARENT, LOADING_OPACITY),
+          loading: style(secondaryBase, roles["secondary-foreground"], TRANSPARENT, LOADING_OPACITY),
         }
       : {
-          default: style(TRANSPARENT, text, borders.colorStrong),
-          hover: style(neutral[50], text, borders.colorStrong),
-          pressed: style(neutral[100], text, borders.colorStrong),
-          disabled: style(TRANSPARENT, neutral[400], borders.color),
-          loading: style(TRANSPARENT, text, borders.colorStrong, LOADING_OPACITY),
+          default: style(TRANSPARENT, text, roles.input),
+          hover: style(neutral[50], text, roles.input),
+          pressed: style(neutral[100], text, roles.input),
+          disabled: style(TRANSPARENT, neutral[400], roles.border),
+          loading: style(TRANSPARENT, text, roles.input, LOADING_OPACITY),
         };
 
+  // Tertiary (ghost) buttons highlight with the "accent" role, like shadcn.
+  const accentPressed = shiftLightness(roles.accent, HOVER_SHIFT);
   const tertiary: Record<ButtonState, ControlStateStyle> = {
     default: style(TRANSPARENT, text, TRANSPARENT),
-    hover: style(neutral[100], text, TRANSPARENT),
-    pressed: style(neutral[200], text, TRANSPARENT),
+    hover: style(roles.accent, roles["accent-foreground"], TRANSPARENT),
+    pressed: style(accentPressed, readable(accentPressed), TRANSPARENT),
     disabled: style(TRANSPARENT, neutral[400], TRANSPARENT),
     loading: style(TRANSPARENT, text, TRANSPARENT, LOADING_OPACITY),
   };
 
   const variants: Record<ButtonVariant, Record<ButtonState, ControlStateStyle>> = {
-    primary: solid(colors.roles.primary),
+    primary: solid(roles.primary),
     secondary,
     tertiary,
-    destructive: solid(colors.semantic.error[600]),
+    destructive: solid(roles.destructive),
   };
 
   const inputStates: Record<InputState, ControlStateStyle> = {
-    default: style(colors.roles.background, text, borders.colorStrong),
-    hover: style(colors.roles.background, text, neutral[400]),
-    focus: style(colors.roles.background, text, colors.roles.primary),
-    error: style(colors.roles.background, text, colors.semantic.error[600]),
-    disabled: style(colors.roles.surfaceMuted, neutral[500], borders.color),
+    default: style(roles.background, text, roles.input),
+    hover: style(roles.background, text, neutral[400]),
+    focus: style(roles.background, text, roles.ring),
+    error: style(roles.background, text, roles.destructive),
+    disabled: style(roles.muted, neutral[500], roles.border),
   };
 
   const height = settings.height;

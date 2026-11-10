@@ -14,3 +14,8 @@ export function generateRadius({ base }: RadiusSettings): RadiusTokens {
     full: FULL_RADIUS,
   };
 }
+
+/** How a radius value is shown to people. "Full" is a pill shape, not a number. */
+export function radiusLabel(name: keyof RadiusTokens, tokens: RadiusTokens): string {
+  return name === "full" ? "full (pill)" : `${tokens[name]}px`;
+}

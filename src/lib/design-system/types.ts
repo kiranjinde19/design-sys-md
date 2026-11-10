@@ -28,14 +28,48 @@ export type ColorRef =
   | { scale: "white" | "black" }
   | { scale: ScaleName; step: ScaleStep };
 
-export const COLOR_ROLE_NAMES = [
-  "primary",
+/**
+ * Color roles use the exact shadcn/ui names, so each one maps straight onto a
+ * shadcn CSS variable (--background, --card-foreground, --ring...).
+ */
+export const SHADCN_ROLE_NAMES = [
   "background",
-  "surface",
-  "surfaceMuted",
+  "foreground",
+  "card",
+  "card-foreground",
+  "primary",
+  "primary-foreground",
+  "secondary",
+  "secondary-foreground",
+  "muted",
+  "muted-foreground",
+  "accent",
+  "accent-foreground",
+  "destructive",
+  "destructive-foreground",
   "border",
-  "text",
-  "textMuted",
+  "input",
+  "ring",
+] as const;
+export type ColorRoleTokenName = (typeof SHADCN_ROLE_NAMES)[number];
+
+/**
+ * The roles a user can assign to a swatch. The rest are worked out automatically:
+ * the foregrounds that sit on a colored fill are picked for readable contrast,
+ * card-foreground follows foreground, and secondary and accent follow the
+ * optional secondary color (or the neutral grays when there is none).
+ */
+export const COLOR_ROLE_NAMES = [
+  "background",
+  "foreground",
+  "card",
+  "primary",
+  "muted",
+  "muted-foreground",
+  "destructive",
+  "border",
+  "input",
+  "ring",
 ] as const;
 export type ColorRoleName = (typeof COLOR_ROLE_NAMES)[number];
 
@@ -162,7 +196,6 @@ export interface ContrastResult {
   label: string;
 }
 
-export type ColorRoleTokenName = ColorRoleName | "primaryForeground";
 
 /** Pass or fail at each of the three WCAG levels. */
 export interface ContrastLevels {
@@ -197,8 +230,17 @@ export interface ScaleReport {
 export interface ContrastPair {
   id: string;
   label: string;
+  /** Role names, e.g. "primary-foreground" on "primary". */
+  foregroundRole: ColorRoleTokenName;
+  backgroundRole: ColorRoleTokenName;
   foreground: string;
   background: string;
+  /** "text" pairs need 4.5:1. "ui" pairs (borders, input outlines, focus rings) need 3:1. */
+  kind: "text" | "ui";
+  required: 4.5 | 3;
+  /** Whether the pair reaches its required ratio. */
+  passes: boolean;
+  levels: ContrastLevels;
   result: ContrastResult;
 }
 
@@ -208,8 +250,8 @@ export interface ColorTokens {
   secondary: ColorScale | null;
   neutral: ColorScale;
   semantic: Record<SemanticName, ColorScale>;
-  /** secondary and secondaryForeground only exist when a secondary color is chosen. */
-  roles: Record<ColorRoleTokenName, string> & { secondary?: string; secondaryForeground?: string };
+  /** All 17 shadcn roles as hex colors. */
+  roles: Record<ColorRoleTokenName, string>;
   /** Contrast at three levels for every step, plus safe-fill guidance, for every scale. */
   reports: {
     brand: ScaleReport;

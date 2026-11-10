@@ -161,12 +161,12 @@ export function generateSignature(
       boxShadow: `0 0 0 1px ${withAlpha(brand[500], 0.35)}, 0 0 24px ${withAlpha(brand[500], 0.28)}`,
     },
     "offset-shadow": {
-      border: `${border} ${colors.roles.text}`,
+      border: `${border} ${colors.roles.foreground}`,
       boxShadow: `6px 6px 0 0 ${brand[600]}`,
     },
     "solid-accent-fill": {
       background: colors.roles.primary,
-      color: colors.roles.primaryForeground,
+      color: colors.roles["primary-foreground"],
       border: `${border} ${colors.roles.primary}`,
     },
     "corner-ribbon": {
@@ -216,7 +216,7 @@ export function generateSignature(
   const glowTo = `0 0 0 2px ${withAlpha(brand[400], 0.8)}, 0 0 20px ${withAlpha(brand[400], 0.55)}`;
   const ctaBase: CssRecipe = {
     background: colors.roles.primary,
-    color: colors.roles.primaryForeground,
+    color: colors.roles["primary-foreground"],
   };
   const ctaCss: Record<SignatureSettings["primaryCta"], CssRecipe> = {
     solid: ctaBase,
@@ -224,7 +224,7 @@ export function generateSignature(
     "animated-glow-border": ctaBase,
     "gradient-fill": {
       background: `linear-gradient(135deg, ${brand[500]}, ${brand[700]})`,
-      color: colors.roles.primaryForeground,
+      color: colors.roles["primary-foreground"],
     },
     "underline-sweep": { background: "transparent", color: colors.roles.primary },
   };

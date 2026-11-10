@@ -18,19 +18,22 @@ export interface Preset {
   settings: DesignSystemSettings;
 }
 
-const ref = (scale: "brand" | "neutral", step: ScaleStep): ColorRef => ({
+const ref = (scale: "brand" | "neutral" | "error", step: ScaleStep): ColorRef => ({
   scale,
   step,
 });
 
 const DEFAULT_ROLES = {
-  primary: ref("brand", 600),
   background: { scale: "white" } as ColorRef,
-  surface: ref("neutral", 50),
-  surfaceMuted: ref("neutral", 100),
+  foreground: ref("neutral", 900),
+  card: { scale: "white" } as ColorRef,
+  primary: ref("brand", 600),
+  muted: ref("neutral", 100),
+  "muted-foreground": ref("neutral", 600),
+  destructive: ref("error", 600),
   border: ref("neutral", 200),
-  text: ref("neutral", 900),
-  textMuted: ref("neutral", 600),
+  input: ref("neutral", 300),
+  ring: ref("brand", 500),
 };
 
 const SAAS_CLEAN: DesignSystemSettings = {

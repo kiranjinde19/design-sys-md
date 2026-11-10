@@ -24,7 +24,7 @@ export function DebugComponents({ part }: { part: "buttons" | "signature" }) {
   const small = typography.sizes.find((size) => size.name === "sm")!;
   const stage: CSSProperties = {
     background: colors.roles.background,
-    color: colors.roles.text,
+    color: colors.roles.foreground,
     fontFamily: typography.body.previewStack,
     fontSize: body.px,
     border: `${borders.width}px solid ${borders.color}`,
@@ -45,13 +45,13 @@ export function DebugComponents({ part }: { part: "buttons" | "signature" }) {
           <div className="grid min-w-[40rem] gap-3" style={{ gridTemplateColumns: "6rem repeat(5, 1fr)" }}>
             <div />
             {BUTTON_STATES.map((state) => (
-              <div key={state} className="text-xs" style={{ color: colors.roles.textMuted }}>
+              <div key={state} className="text-xs" style={{ color: colors.roles["muted-foreground"] }}>
                 {state}
               </div>
             ))}
             {BUTTON_VARIANTS.map((variant) => (
               <div key={variant} className="contents">
-                <div className="self-center text-xs" style={{ color: colors.roles.textMuted }}>
+                <div className="self-center text-xs" style={{ color: colors.roles["muted-foreground"] }}>
                   {variant}
                 </div>
                 {BUTTON_STATES.map((state) => {
@@ -91,7 +91,7 @@ export function DebugComponents({ part }: { part: "buttons" | "signature" }) {
             const s = controls.inputs.states[state];
             return (
               <div key={state} className="space-y-1.5">
-                <div style={{ fontSize: small.px, color: colors.roles.textMuted }}>{state}</div>
+                <div style={{ fontSize: small.px, color: colors.roles["muted-foreground"] }}>{state}</div>
                 <input
                   readOnly
                   disabled={state === "disabled"}
@@ -202,7 +202,7 @@ export function DebugComponents({ part }: { part: "buttons" | "signature" }) {
             </div>
           </Sample>
           <Sample label={`Divider: ${signature.divider.label}`}>
-            <div style={{ color: colors.roles.textMuted, fontSize: small.px }}>
+            <div style={{ color: colors.roles["muted-foreground"], fontSize: small.px }}>
               Above
               <div style={asStyle(signature.divider.css)} />
               Below
@@ -238,7 +238,7 @@ function Sample({ label, children }: { label: string; children: React.ReactNode 
   const { tokens } = useDesignSystem();
   return (
     <div className="space-y-2">
-      <div className="text-xs" style={{ color: tokens.colors.roles.textMuted }}>
+      <div className="text-xs" style={{ color: tokens.colors.roles["muted-foreground"] }}>
         {label}
       </div>
       {children}

@@ -5,12 +5,13 @@ import {
   pickReadableText,
   useDesignSystem,
   SCALE_STEPS,
+  SHADCN_ROLE_NAMES,
   type ColorScale,
   type ContrastLevels,
   type ScaleGuidance,
   type ScaleReport,
 } from "@/lib/design-system";
-import { ContrastBadge, Section } from "./section";
+import { PassBadge, Section } from "./section";
 
 const mark = (passes: boolean) => (passes ? "✓" : "✕");
 
@@ -81,40 +82,60 @@ export function DebugColors() {
         <ScaleRow key={name} name={name} scale={colors.semantic[name]} report={colors.reports.semantic[name]} />
       ))}
 
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Roles</h3>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-          {(Object.keys(colors.roles) as (keyof typeof colors.roles)[]).map((role) => (
-            <div key={role} className="space-y-1.5">
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-sm font-medium">Roles (shadcn/ui names)</h3>
+          <p className="text-xs text-muted-foreground">
+            Each role maps to the shadcn CSS variable of the same name, for example primary-foreground is --primary-foreground.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {SHADCN_ROLE_NAMES.map((role) => (
+            <div key={role} className="flex items-center gap-3">
               <div
-                className="h-12 rounded-lg border border-border"
+                className="size-10 shrink-0 rounded-lg border border-border"
                 style={{ background: colors.roles[role] }}
               />
-              <div className="text-xs font-medium">{role}</div>
-              <div className="font-mono text-xs text-muted-foreground">{colors.roles[role]}</div>
+              <div className="min-w-0">
+                <div className="truncate text-xs font-medium">{role}</div>
+                <div className="font-mono text-xs text-muted-foreground">{colors.roles[role]}</div>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium">Contrast checks</h3>
-        <div className="grid gap-2 sm:grid-cols-2">
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-sm font-medium">Role contrast checks</h3>
+          <p className="text-xs text-muted-foreground">
+            Text pairs need 4.5:1. Input outlines and focus rings are interface parts and need 3:1. Decorative borders and dividers are not checked. The three marks show 4.5, 3 and 7 (AAA).
+          </p>
+        </div>
+        <div className="grid gap-2 lg:grid-cols-2">
           {colors.contrastPairs.map((pair) => (
             <div
               key={pair.id}
               className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <span
-                  className="flex h-10 w-12 items-center justify-center rounded-md border border-border text-sm font-semibold"
+                  className="flex h-10 w-12 shrink-0 items-center justify-center rounded-md border border-border text-sm font-semibold"
                   style={{ background: pair.background, color: pair.foreground }}
                 >
                   Aa
                 </span>
-                <span className="text-sm">{pair.label}</span>
+                <div className="min-w-0">
+                  <div className="truncate text-sm">{pair.label}</div>
+                  <div className="font-mono text-xs text-muted-foreground">
+                    {pair.foreground} on {pair.background}
+                  </div>
+                  <div className="font-mono text-xs text-muted-foreground">
+                    {pair.levels.ratio.toFixed(2)}:1 · {levelsText(pair.levels)}
+                  </div>
+                </div>
               </div>
-              <ContrastBadge result={pair.result} />
+              <PassBadge passes={pair.passes} required={pair.required} />
             </div>
           ))}
         </div>

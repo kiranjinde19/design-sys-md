@@ -6,7 +6,7 @@ export { generateScale, generateBrandScale, generateNeutralScale, generateSemant
 export { checkContrast, contrastRatio, pickReadableText } from "./contrast";
 export { normalizeHex } from "./color-math";
 export { generateTypography, FONT_CATALOG } from "./typography";
-export { generateRadius } from "./radius";
+export { generateRadius, radiusLabel } from "./radius";
 export { generateSpacing } from "./spacing";
 export { generateBorders } from "./borders";
 export { generateElevation, shadowAt } from "./elevation";

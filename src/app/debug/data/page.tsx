@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { generateTokens } from "@/lib/design-system/generate";
 import { PRESETS } from "@/lib/design-system/presets";
+import { radiusLabel } from "@/lib/design-system/radius";
 import { SIGNATURE_CATALOG } from "@/lib/design-system/signature";
 import {
   SCALE_STEPS,
+  SHADCN_ROLE_NAMES,
   type ColorScale,
   type ContrastLevels,
   type ScaleReport,
@@ -71,6 +73,21 @@ const sections: { title: string; body: string }[] = [
     body: scaleText(tokens.colors.neutral, tokens.colors.reports.neutral),
   },
   {
+    title: "Color roles (shadcn/ui names, each maps to the CSS variable of the same name)",
+    body: SHADCN_ROLE_NAMES.map((role) => `${pad(`--${role}`, 26)}${tokens.colors.roles[role]}`).join("\n"),
+  },
+  {
+    title: "Role contrast checks",
+    body: [
+      "Text pairs need 4.5:1. Input outlines and focus rings are interface parts and need 3:1. Decorative borders and dividers are not checked.",
+      "",
+      ...tokens.colors.contrastPairs.map(
+        (pair) =>
+          `${pad(pair.label, 40)}${pad(`${pair.foreground} on ${pair.background}`, 24)}${contrastCell(pair.levels)}  => ${pair.passes ? "PASS" : "FAIL"} (needs ${pair.required}:1)`,
+      ),
+    ].join("\n"),
+  },
+  {
     title: "Semantic colors (full scales, with contrast)",
     body: (["success", "warning", "error", "info"] as const)
       .map((name) => `${name.toUpperCase()}\n${scaleText(tokens.colors.semantic[name], tokens.colors.reports.semantic[name])}`)
@@ -92,7 +109,7 @@ const sections: { title: string; body: string }[] = [
   {
     title: "Radius ladder",
     body: (Object.keys(tokens.radius) as (keyof typeof tokens.radius)[])
-      .map((name) => `${pad(name, 6)}${tokens.radius[name]}px`)
+      .map((name) => `${pad(name, 6)}${radiusLabel(name, tokens.radius)}`)
       .join("\n"),
   },
   {

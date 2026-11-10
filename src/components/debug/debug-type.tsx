@@ -30,7 +30,7 @@ export function DebugType() {
                   fontSize: size.px,
                   lineHeight: size.lineHeight,
                   letterSpacing: size.letterSpacing,
-                  color: colors.roles.text,
+                  color: colors.roles.foreground,
                 }}
               >
                 Stop shipping random blues
