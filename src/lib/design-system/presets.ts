@@ -1,5 +1,6 @@
 /** The two starting points: "SaaS Clean" and "Blank slate". */
 
+import { catalogFont } from "./fonts";
 import { BLANK_SLATE_SIGNATURE, SAAS_CLEAN_SIGNATURE } from "./signature";
 import {
   SETTINGS_SCHEMA_VERSION,
@@ -39,8 +40,10 @@ const SAAS_CLEAN: DesignSystemSettings = {
   schemaVersion: SETTINGS_SCHEMA_VERSION,
   colors: { brand: "#4F46E5", secondary: null, neutralTone: "cool", roles: DEFAULT_ROLES },
   typography: {
-    headingFont: "Inter",
-    bodyFont: "Inter",
+    headingFont: catalogFont("Inter"),
+    bodyFont: catalogFont("Inter"),
+    monoFont: null,
+    headingTracking: -0.02,
     baseSize: 16,
     scaleRatio: 1.2,
     lineHeight: 1.5,
@@ -60,8 +63,10 @@ const BLANK_SLATE: DesignSystemSettings = {
   schemaVersion: SETTINGS_SCHEMA_VERSION,
   colors: { brand: "#404040", secondary: null, neutralTone: "pure", roles: DEFAULT_ROLES },
   typography: {
-    headingFont: "Inter",
-    bodyFont: "Inter",
+    headingFont: catalogFont("Inter"),
+    bodyFont: catalogFont("Inter"),
+    monoFont: null,
+    headingTracking: -0.02,
     baseSize: 16,
     scaleRatio: 1.25,
     lineHeight: 1.5,

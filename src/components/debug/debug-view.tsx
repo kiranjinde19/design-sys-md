@@ -10,6 +10,8 @@ import { DebugSignature } from "./debug-components";
 import { DebugControls } from "./debug-controls";
 import { DebugBorders, DebugRadius, DebugShadows, DebugSpacing } from "./debug-shape";
 import { DebugType } from "./debug-type";
+import { TypographyEditor } from "@/components/typography/typography-editor";
+import { useSelectedFonts } from "@/components/typography/google-fonts";
 
 /** Each tab has its own link, e.g. /debug#buttons, so a section can be bookmarked or shared. */
 const TAB_IDS = ["colors", "typography", "radius", "spacing", "borders", "shadows", "buttons", "signature", "raw"];
@@ -22,6 +24,8 @@ function tabFromHash(): number {
 
 export function DebugView() {
   const { ready, tokens } = useDesignSystem();
+  // Load only the fonts currently selected, so every tab previews with the real fonts.
+  useSelectedFonts();
   const [active, setActiveState] = useState(tabFromHash);
   const setActive = (index: number) => {
     setActiveState(index);
@@ -30,7 +34,15 @@ export function DebugView() {
 
   const tabs: { label: string; content: ReactNode }[] = [
     { label: "Colors", content: <DebugColors /> },
-    { label: "Typography", content: <DebugType /> },
+    {
+      label: "Typography",
+      content: (
+        <div className="space-y-12">
+          <TypographyEditor />
+          <DebugType />
+        </div>
+      ),
+    },
     { label: "Radius", content: <DebugRadius /> },
     { label: "Spacing", content: <DebugSpacing /> },
     { label: "Borders", content: <DebugBorders /> },

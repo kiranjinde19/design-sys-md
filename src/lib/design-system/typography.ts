@@ -1,49 +1,56 @@
-/** Typography generator: base size + ratio in, a full type ladder out. */
+/**
+ * Typography generator: fonts, weights, tracking, base size and ratio in; a full type
+ * ladder and complete CSS font stacks out.
+ */
 
+import { FONT_CATALOG, SYSTEM_STACKS, effectiveFont, getFont, isDisplayFont, nearestWeight } from "./fonts";
+import { bodyFontWarnings } from "./font-pairings";
 import type {
+  FontChoice,
+  FontRole,
+  FontToken,
   TypeSizeName,
   TypeSizeToken,
   TypographySettings,
   TypographyTokens,
-  FontToken,
 } from "./types";
 import { round } from "./units";
 
-interface FontEntry {
-  name: string;
-  category: "sans" | "serif" | "mono";
-  fallback: string;
-  /** CSS variable holding the font if this app has loaded it with next/font. */
-  appVariable?: string;
-}
+// Kept for older imports. The list now lives in fonts.ts.
+export { FONT_CATALOG };
 
-const SANS_FALLBACK = "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif";
-const SERIF_FALLBACK = "ui-serif, Georgia, 'Times New Roman', serif";
+/** Turns one font choice into a font token with its full CSS stacks. */
+export function resolveFont(choice: FontChoice, role: FontRole): FontToken {
+  const font = effectiveFont(choice);
+  const system = SYSTEM_STACKS[font.category];
 
-/**
- * The curated font list. Only Inter is loaded in this app today, so only
- * Inter will render truthfully in the preview. Loading the rest comes with
- * the font picker.
- */
-export const FONT_CATALOG: FontEntry[] = [
-  { name: "Inter", category: "sans", fallback: SANS_FALLBACK, appVariable: "--font-inter" },
-  { name: "DM Sans", category: "sans", fallback: SANS_FALLBACK },
-  { name: "Manrope", category: "sans", fallback: SANS_FALLBACK },
-  { name: "Plus Jakarta Sans", category: "sans", fallback: SANS_FALLBACK },
-  { name: "Space Grotesk", category: "sans", fallback: SANS_FALLBACK },
-  { name: "IBM Plex Sans", category: "sans", fallback: SANS_FALLBACK },
-  { name: "Source Serif 4", category: "serif", fallback: SERIF_FALLBACK },
-  { name: "Playfair Display", category: "serif", fallback: SERIF_FALLBACK },
-];
+  if (choice.kind === "brand") {
+    return {
+      role,
+      name: choice.name,
+      source: "brand",
+      licensed: true,
+      category: font.category,
+      // The brand font comes first. The fallback follows, so text still looks right if the brand font is missing.
+      stack: `"${choice.name}", "${font.name}", ${system}`,
+      // This tool cannot ship a licensed font, so previews use the fallback.
+      previewStack: `"${font.name}", ${system}`,
+      fallbackName: font.name,
+      offeredWeights: font.weights,
+    };
+  }
 
-export function resolveFont(name: string): FontToken {
-  const entry = FONT_CATALOG.find((font) => font.name === name);
-  const fallback = entry?.fallback ?? SANS_FALLBACK;
-  const stack = `"${name}", ${fallback}`;
+  const stack = `"${font.name}", ${system}`;
   return {
-    name,
+    role,
+    name: font.name,
+    source: "catalog",
+    licensed: false,
+    category: font.category,
     stack,
-    previewStack: entry?.appVariable ? `var(${entry.appVariable}), ${fallback}` : stack,
+    previewStack: stack,
+    fallbackName: null,
+    offeredWeights: font.weights,
   };
 }
 
@@ -66,17 +73,24 @@ function lineHeightFor(step: number, bodyLineHeight: number): number {
   return round(Math.max(1.1, bodyLineHeight - 0.08 * step), 2);
 }
 
-/** Big headings look loose at default spacing, so they are pulled in slightly. */
-function letterSpacingFor(step: number): string {
-  if (step >= 4) return "-0.02em";
-  if (step === 3) return "-0.01em";
-  return "0em";
+/**
+ * Body text is never tracked. Headings use the chosen tracking at full strength from
+ * 3xl up, and a smaller share on the way down, since small headings need less tightening.
+ */
+function letterSpacingFor(step: number, tracking: number): string {
+  const share = step >= 4 ? 1 : step === 3 ? 0.5 : step === 2 ? 0.25 : 0;
+  const value = round(tracking * share, 3);
+  return `${value === 0 ? 0 : value}em`;
 }
 
 /** No size on the ladder goes below this, so small print stays readable. */
 export const MIN_FONT_SIZE = 12;
 
 export function generateTypography(settings: TypographySettings): TypographyTokens {
+  const heading = resolveFont(settings.headingFont, "heading");
+  const body = resolveFont(settings.bodyFont, "body");
+  const mono = settings.monoFont ? resolveFont(settings.monoFont, "mono") : null;
+
   const sizes: TypeSizeToken[] = SIZE_LADDER.map(({ name, step }) => {
     // Whole pixels only. rem is worked out from the rounded px so the two always agree.
     const pxValue = Math.max(MIN_FONT_SIZE, Math.round(settings.baseSize * settings.scaleRatio ** step));
@@ -86,19 +100,44 @@ export function generateTypography(settings: TypographySettings): TypographyToke
       px: pxValue,
       rem: round(pxValue / 16, 4),
       lineHeight: lineHeightFor(step, settings.lineHeight),
-      letterSpacing: letterSpacingFor(step),
+      letterSpacing: letterSpacingFor(step, settings.headingTracking),
     };
   });
 
+  // Component recipes use regular, medium, semibold and bold. Each maps to the nearest
+  // weight the body font really offers, so a recipe never asks for a missing weight.
+  const offered = body.offeredWeights;
+  const weights = {
+    regular: nearestWeight(400, offered),
+    medium: nearestWeight(500, offered),
+    semibold: nearestWeight(600, offered),
+    bold: nearestWeight(700, offered),
+  };
+
   return {
-    heading: resolveFont(settings.headingFont),
-    body: resolveFont(settings.bodyFont),
+    heading,
+    body,
+    mono,
+    stacks: {
+      heading: heading.stack,
+      body: body.stack,
+      mono: mono ? mono.stack : SYSTEM_STACKS.mono,
+    },
+    headingTracking: settings.headingTracking,
+    tabularNumbers: {
+      css: { fontVariantNumeric: "tabular-nums" },
+      className: "tabular-nums",
+      usage: "Use for tables, dashboards, prices and any column of numbers, so digits line up and values do not jitter when they change.",
+    },
+    warnings: bodyFontWarnings(settings.bodyFont),
     baseSize: settings.baseSize,
     scaleRatio: settings.scaleRatio,
     bodyLineHeight: settings.lineHeight,
-    weights: { regular: 400, medium: 500, semibold: 600, bold: 700 },
-    headingWeight: settings.headingWeight,
-    bodyWeight: settings.bodyWeight,
+    weights,
+    headingWeight: nearestWeight(settings.headingWeight, heading.offeredWeights),
+    bodyWeight: nearestWeight(settings.bodyWeight, body.offeredWeights),
     sizes,
   };
 }
+
+export { getFont, isDisplayFont };

@@ -52,7 +52,7 @@ A solo founder building a SaaS with Claude Code. They care about functionality, 
 | System | Control |
 |---|---|
 | Colors | Brand color picker, auto 10 step scale, drag swatches onto roles (Primary, Surface, Background), live contrast badge |
-| Typography | Heading and body font pickers (curated list), type scale slider (1.125 to 1.5), base size stepper, line height slider |
+| Typography | A pairing gallery of 8 one-click pairings, plus a customize panel with independent heading, body and optional mono pickers (curated Google Fonts list, search, category chips, weights limited to what each font offers), a heading tracking slider (-0.04em to 0.02em), "Use my own font" (a licensed brand font plus a fallback), type scale slider (1.125 to 1.5), base size stepper, line height slider. Whole pixel sizes, 12px minimum. A tabular-numbers token is included. See "Typography selection" below |
 | Icons | Style (outline, solid, duotone), stroke width slider, round or sharp ends |
 | Radius | One slider (0 to 24px) generating small, medium, large, full |
 | Spacing | 4px or 8px base toggle, density slider (compact to spacious) |
@@ -60,6 +60,15 @@ A solo founder building a SaaS with Claude Code. They care about functionality, 
 | Elevation and shadows | Levels slider, intensity slider, soft, hard or brand tinted style |
 | Buttons and inputs | Secondary as fill or outline, height, focus ring style. States (hover, pressed, disabled, loading) auto derived. Radio vs checkbox vs switch usage rules generated |
 | Signature details | Pick one per category (below) |
+
+### Typography selection
+
+- **Curated list (31 Google Fonts):** Inter, Geist, DM Sans, Plus Jakarta Sans, Manrope, Outfit, Figtree, Work Sans, IBM Plex Sans, Public Sans, Source Sans 3, Nunito Sans, Space Grotesk, Sora, Instrument Sans, Onest, Bricolage Grotesque (sans); Fraunces, Playfair Display, Lora, Source Serif 4, Newsreader, Instrument Serif, DM Serif Display, Merriweather (serif); Geist Mono, JetBrains Mono, IBM Plex Mono, Fira Code, Space Mono, DM Mono (mono). Each has a category, tags and the weights it really offers. The list lives in `src/lib/design-system/fonts.ts`, the only place font names are written besides the presets and pairings.
+- **Pairings (heading + body):** Modern SaaS (Inter + Inter, default), Friendly product (Plus Jakarta Sans + Inter), Developer tools (Geist + Geist, with Geist Mono accent), Editorial (Fraunces + Inter), Sharp and technical (Space Grotesk + IBM Plex Sans), Bold startup (Bricolage Grotesque + DM Sans), Classic trust (Source Serif 4 + Source Sans 3), Refined (Instrument Serif + Instrument Sans). Each card shows the sample line "Stop shipping random blues and mismatched buttons.", a mood tag and a one-line reason.
+- **Manual picks:** after a manual heading pick, suggest 3 body fonts by simple rules (serif heading gets a neutral sans, expressive sans heading gets a workhorse sans, same family as the safe option). Warn if the body font is a display style or lacks regular (400) or semibold (600).
+- **Own font:** the user enters a font name and picks a fallback from the list. It is marked as a licensed brand font. Previews use the fallback. The skill file records the brand font plus the fallback.
+- **Loading rules:** load only the fonts currently selected, in the weights they offer. The picker loads one tiny request with only the letters needed to spell the font names. The pairing cards load only the letters of the sample line. Never load the full list. Always `display=swap`. Only request weights a font offers, because Google rejects the whole request otherwise. Preview-only subsets are renamed so they never clash with a real font of the same name.
+- **Tokens:** heading font, body font, optional mono font, weights, heading tracking, full CSS stacks with system fallbacks, and a tabular-numbers token (`font-variant-numeric: tabular-nums`) for tables and dashboards.
 
 ### Signature details options (SaaS Clean defaults in bold)
 

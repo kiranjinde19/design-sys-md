@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { generateTokens } from "@/lib/design-system/generate";
 import { PRESETS } from "@/lib/design-system/presets";
 import { radiusLabel } from "@/lib/design-system/radius";
+import { FONT_CATALOG, WEIGHT_LABELS } from "@/lib/design-system/fonts";
+import { FONT_PAIRINGS, PAIRING_SAMPLE_LINE, pairingGalleryUrl, recommendBodyFonts } from "@/lib/design-system/font-pairings";
+import { fontNamesUrl, selectedFontsUrl } from "@/lib/design-system/font-loading";
 import { SIGNATURE_CATALOG } from "@/lib/design-system/signature";
 import {
   SCALE_STEPS,
@@ -100,16 +103,83 @@ const sections: { title: string; body: string }[] = [
       .join("\n\n"),
   },
   {
+    title: "Fonts in use (complete CSS stacks, with system fallbacks)",
+    body: [tokens.typography.heading, tokens.typography.body, ...(tokens.typography.mono ? [tokens.typography.mono] : [])]
+      .map((font) =>
+        [
+          `${font.role.toUpperCase()}  ${font.name}  [${font.source === "brand" ? "licensed brand font" : "Google font"}, ${font.category}]`,
+          font.fallbackName ? `  fallback and preview font: ${font.fallbackName}` : null,
+          `  stack: ${font.stack}`,
+          `  offers: ${font.offeredWeights.join(", ")}`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      )
+      .concat(tokens.typography.mono ? [] : [`MONO  none chosen\n  stack: ${tokens.typography.stacks.mono}`])
+      .join("\n\n"),
+  },
+  {
+    title: "Weights, tracking and tabular numbers",
+    body: [
+      `Heading weight ${tokens.typography.headingWeight} (${WEIGHT_LABELS[tokens.typography.headingWeight]}), body weight ${tokens.typography.bodyWeight} (${WEIGHT_LABELS[tokens.typography.bodyWeight]})`,
+      `Component weights: regular ${tokens.typography.weights.regular}, medium ${tokens.typography.weights.medium}, semibold ${tokens.typography.weights.semibold}, bold ${tokens.typography.weights.bold}`,
+      `Heading tracking: ${tokens.typography.headingTracking}em (smaller headings get a proportional share, body text none)`,
+      "",
+      `Tabular numbers: ${Object.entries(tokens.typography.tabularNumbers.css).map(([k, v]) => `${k}: ${v}`).join("; ")}  (Tailwind class: ${tokens.typography.tabularNumbers.className})`,
+      tokens.typography.tabularNumbers.usage,
+      "",
+      tokens.typography.warnings.length ? `Warnings:\n${tokens.typography.warnings.map((w) => `  - ${w}`).join("\n")}` : "Warnings: none",
+    ].join("\n"),
+  },
+  {
     title: "Type scale",
     body: [
-      `Heading: ${tokens.typography.heading.name} ${tokens.typography.headingWeight}, body: ${tokens.typography.body.name} ${tokens.typography.bodyWeight}`,
-      `Base ${tokens.typography.baseSize}px, ratio ${tokens.typography.scaleRatio}, body line height ${tokens.typography.bodyLineHeight}`,
+      `Base ${tokens.typography.baseSize}px, ratio ${tokens.typography.scaleRatio}, body line height ${tokens.typography.bodyLineHeight}. Whole pixels, 12px minimum.`,
       "",
       `${pad("name", 6)}${pad("px", 9)}${pad("rem", 10)}${pad("line height", 13)}letter spacing`,
       ...tokens.typography.sizes.map(
         (size) =>
           `${pad(size.name, 6)}${pad(size.px, 9)}${pad(size.rem, 10)}${pad(size.lineHeight, 13)}${size.letterSpacing}`,
       ),
+    ].join("\n"),
+  },
+  {
+    title: `Curated font list (${FONT_CATALOG.length} Google fonts, with the weights each really offers)`,
+    body: FONT_CATALOG.map(
+      (font) => `${pad(font.name, 22)}${pad(font.category, 7)}${pad(font.weights.join(" "), 38)}${font.tags.join(", ")}`,
+    ).join("\n"),
+  },
+  {
+    title: "Font pairings",
+    body: FONT_PAIRINGS.map(
+      (p) =>
+        `${p.name}  (${p.mood})${p.id === "modern-saas" ? "  [default]" : ""}\n  ${p.heading} ${p.headingWeight} + ${p.body} ${p.bodyWeight}${p.mono ? ` + ${p.mono} mono accent` : ""}, tracking ${p.tracking}em\n  ${p.reason}`,
+    )
+      .concat([`Sample line on every card: "${PAIRING_SAMPLE_LINE}"`])
+      .join("\n\n"),
+  },
+  {
+    title: "Body font recommendations (shown after a manual heading pick)",
+    body: ["Fraunces", "Space Grotesk", "Inter", "Source Serif 4"]
+      .map(
+        (h) =>
+          `${h} -> ${recommendBodyFonts(h)
+            .map((r) => r.font.name)
+            .join(", ")}`,
+      )
+      .join("\n"),
+  },
+  {
+    title: "Font loading (all use display=swap, none loads the full list)",
+    body: [
+      "Selected fonts, in the weights they offer:",
+      `  ${selectedFontsUrl(tokens.typography) ?? "(none)"}`,
+      "",
+      "Picker names: one request for the whole list, carrying only the letters the names need:",
+      `  ${fontNamesUrl()}`,
+      "",
+      "Pairing cards: only the fonts the cards use, carrying only the sample text letters:",
+      `  ${pairingGalleryUrl()}`,
     ].join("\n"),
   },
   {

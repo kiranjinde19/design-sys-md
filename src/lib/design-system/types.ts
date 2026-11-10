@@ -75,7 +75,17 @@ export type ColorRoleName = (typeof COLOR_ROLE_NAMES)[number];
 
 export type Density = "compact" | "comfortable" | "spacious";
 export type ElevationStyle = "soft" | "hard" | "brand-tinted";
-export type FontWeight = 400 | 500 | 600 | 700;
+export type FontWeight = 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
+export type FontCategory = "sans" | "serif" | "mono";
+export type FontRole = "heading" | "body" | "mono";
+
+/**
+ * One font choice for one role. Either a font from the curated Google Fonts list, or the
+ * user's own licensed brand font with a fallback from that list (used for previews).
+ */
+export type FontChoice =
+  | { kind: "catalog"; name: string }
+  | { kind: "brand"; name: string; fallback: string };
 export type IconStyle = "outline" | "solid" | "duotone";
 export type IconEnds = "round" | "sharp";
 export type SecondaryButtonStyle = "fill" | "outline";
@@ -104,8 +114,12 @@ export interface ColorSettings {
 }
 
 export interface TypographySettings {
-  headingFont: string;
-  bodyFont: string;
+  headingFont: FontChoice;
+  bodyFont: FontChoice;
+  /** Optional third font for code, IDs and numbers. null means no mono accent. */
+  monoFont: FontChoice | null;
+  /** Letter spacing for headings in em, -0.04 to 0.02. Smaller headings get a proportional share. */
+  headingTracking: number;
   /** Base size in px. */
   baseSize: number;
   /** Type scale ratio, 1.125 to 1.5. */
@@ -268,11 +282,21 @@ export interface ColorTokens {
 export type TypeSizeName = "xs" | "sm" | "base" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl";
 
 export interface FontToken {
+  role: FontRole;
   name: string;
-  /** Full CSS font-family stack for the generated file. */
+  /** "brand" means the user's own licensed font. */
+  source: "catalog" | "brand";
+  /** True for a licensed brand font: the user must hold the license and host the files. */
+  licensed: boolean;
+  category: FontCategory;
+  /** Full CSS font-family stack, with system fallbacks, for the generated file. */
   stack: string;
-  /** Stack that works inside this app's own preview (uses the loaded font). */
+  /** Stack used by this tool's own preview. For a brand font this uses the fallback. */
   previewStack: string;
+  /** For a brand font: the Google font used as its fallback and in previews. Otherwise null. */
+  fallbackName: string | null;
+  /** The weights the font (or its fallback) actually offers. */
+  offeredWeights: number[];
 }
 
 export interface TypeSizeToken {
@@ -288,6 +312,16 @@ export interface TypeSizeToken {
 export interface TypographyTokens {
   heading: FontToken;
   body: FontToken;
+  /** null when no mono font was chosen. */
+  mono: FontToken | null;
+  /** Complete CSS font stacks. Without a mono font, mono is a system monospace stack. */
+  stacks: { heading: string; body: string; mono: string };
+  /** Letter spacing for headings, in em. */
+  headingTracking: number;
+  /** Turn on for tables, dashboards, prices and any column of numbers. */
+  tabularNumbers: { css: CssRecipe; className: string; usage: string };
+  /** Plain-language cautions about the font choices. Empty when everything is fine. */
+  warnings: string[];
   baseSize: number;
   scaleRatio: number;
   bodyLineHeight: number;

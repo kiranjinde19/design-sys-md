@@ -7,6 +7,7 @@
  */
 
 import { normalizeHex } from "./color-math";
+import { getFont, nearestWeight, offeredWeights, sanitizeFontName } from "./fonts";
 import { SIGNATURE_CATALOG } from "./signature";
 import {
   COLOR_ROLE_NAMES,
@@ -18,6 +19,8 @@ import {
   type ColorSettings,
   type ControlSettings,
   type DesignSystemSettings,
+  type FontChoice,
+  type FontWeight,
   type ElevationSettings,
   type IconSettings,
   type RadiusSettings,
@@ -45,8 +48,33 @@ function num(value: unknown, min: number, max: number, fallback: number, step?: 
   return round(clamp(stepped, min, max), 4);
 }
 
-function text(value: unknown, fallback: string): string {
-  return typeof value === "string" && value.trim() !== "" && value.length <= 60 ? value.trim() : fallback;
+/**
+ * Accepts the current shape ({ kind, name }) and the old one (a plain font name string),
+ * so work saved before fonts became objects still loads.
+ */
+function parseFontChoice(value: unknown): FontChoice | null {
+  if (typeof value === "string") {
+    return getFont(value) ? { kind: "catalog", name: value } : null;
+  }
+  const v = asRecord(value);
+  if (v.kind === "catalog" && typeof v.name === "string" && getFont(v.name)) {
+    return { kind: "catalog", name: v.name };
+  }
+  if (v.kind === "brand") {
+    const name = sanitizeFontName(v.name);
+    const fallbackName = typeof v.fallback === "string" && getFont(v.fallback) ? v.fallback : "Inter";
+    if (name) return { kind: "brand", name, fallback: fallbackName };
+  }
+  return null;
+}
+
+const normalizeFontChoice = (value: unknown, fallback: FontChoice): FontChoice =>
+  parseFontChoice(value) ?? fallback;
+
+/** A weight the font really offers: the wanted one if it exists, else the nearest. */
+function weightFor(value: unknown, choice: FontChoice, fallback: FontWeight): FontWeight {
+  const wanted = oneOf(value, [100, 200, 300, 400, 500, 600, 700, 800, 900] as const, fallback);
+  return nearestWeight(wanted, offeredWeights(choice));
 }
 
 const SCALE_NAMES: readonly ScaleName[] = ["brand", "neutral", "success", "warning", "error", "info"];
@@ -94,15 +122,22 @@ export function normalizeSettings(input: unknown, base: DesignSystemSettings): D
       neutralTone: oneOf(colors.neutralTone, ["cool", "warm", "pure", "brand"] as const, base.colors.neutralTone),
       roles,
     },
-    typography: {
-      headingFont: text(typography.headingFont, base.typography.headingFont),
-      bodyFont: text(typography.bodyFont, base.typography.bodyFont),
-      baseSize: num(typography.baseSize, 12, 24, base.typography.baseSize, 1),
-      scaleRatio: num(typography.scaleRatio, 1.125, 1.5, base.typography.scaleRatio, 0.005),
-      lineHeight: num(typography.lineHeight, 1.2, 2, base.typography.lineHeight, 0.05),
-      headingWeight: oneOf(typography.headingWeight, [400, 500, 600, 700] as const, base.typography.headingWeight),
-      bodyWeight: oneOf(typography.bodyWeight, [400, 500, 600, 700] as const, base.typography.bodyWeight),
-    },
+    typography: (() => {
+      const headingFont = normalizeFontChoice(typography.headingFont, base.typography.headingFont);
+      const bodyFont = normalizeFontChoice(typography.bodyFont, base.typography.bodyFont);
+      return {
+        headingFont,
+        bodyFont,
+        // null is a real answer (no mono font). Only a missing value keeps the previous one.
+        monoFont: typography.monoFont === null ? null : (parseFontChoice(typography.monoFont) ?? base.typography.monoFont),
+        headingTracking: num(typography.headingTracking, -0.04, 0.02, base.typography.headingTracking, 0.005),
+        baseSize: num(typography.baseSize, 12, 24, base.typography.baseSize, 1),
+        scaleRatio: num(typography.scaleRatio, 1.125, 1.5, base.typography.scaleRatio, 0.005),
+        lineHeight: num(typography.lineHeight, 1.2, 2, base.typography.lineHeight, 0.05),
+        headingWeight: weightFor(typography.headingWeight, headingFont, base.typography.headingWeight),
+        bodyWeight: weightFor(typography.bodyWeight, bodyFont, base.typography.bodyWeight),
+      };
+    })(),
     icons: {
       style: oneOf(icons.style, ["outline", "solid", "duotone"] as const, base.icons.style),
       strokeWidth: num(icons.strokeWidth, 1, 3, base.icons.strokeWidth, 0.25),

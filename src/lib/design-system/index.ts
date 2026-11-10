@@ -5,7 +5,34 @@ export { generateTokens, createDesignSystem } from "./generate";
 export { generateScale, generateBrandScale, generateNeutralScale, generateSemanticScales, generateColors, suggestSecondaryColors, WHITE, BLACK } from "./colors";
 export { checkContrast, contrastRatio, pickReadableText } from "./contrast";
 export { normalizeHex } from "./color-math";
-export { generateTypography, FONT_CATALOG } from "./typography";
+export { generateTypography, resolveFont, MIN_FONT_SIZE } from "./typography";
+export {
+  FONT_CATALOG,
+  FONT_CATEGORY_LABELS,
+  WEIGHT_LABELS,
+  SYSTEM_STACKS,
+  catalogFont,
+  effectiveFont,
+  getFont,
+  isDisplayFont,
+  nearestWeight,
+  offeredWeights,
+  sanitizeFontName,
+  type FontEntry,
+} from "./fonts";
+export {
+  FONT_PAIRINGS,
+  PAIRING_SAMPLE_LINE,
+  PAIRING_MONO_SAMPLE,
+  pairingSettings,
+  matchingPairingId,
+  recommendBodyFonts,
+  bodyFontWarnings,
+  pairingGalleryUrl,
+  type FontPairing,
+  type BodyRecommendation,
+} from "./font-pairings";
+export { buildFontsUrl, selectedFontsUrl, fontNamesUrl, galleryFontsUrl, type FontRequest } from "./font-loading";
 export { generateRadius, radiusLabel } from "./radius";
 export { generateSpacing } from "./spacing";
 export { generateBorders } from "./borders";
