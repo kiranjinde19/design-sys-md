@@ -307,6 +307,11 @@ export default function DebugDataPage() {
       <p className="rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
         This page is temporary. It prints the SaaS Clean preset as plain text for checking and will be removed before launch.
       </p>
+      <p className="rounded-lg border border-border px-3 py-2 font-mono text-xs text-muted-foreground">
+        Built from commit {process.env.NEXT_PUBLIC_BUILD_COMMIT} at {process.env.NEXT_PUBLIC_BUILD_TIME}. Every deploy rebuilds
+        this page. It runs the same generateTokens() as /debug, on the SaaS Clean defaults. /debug shows your own autosaved edits, so the two can
+        differ if you changed a slider.
+      </p>
       <h1 className="text-2xl font-semibold tracking-tight">SaaS Clean: generated values</h1>
       {sections.map((section) => (
         <section key={section.title} className="space-y-2">

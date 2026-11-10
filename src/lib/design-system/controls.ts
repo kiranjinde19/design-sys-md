@@ -115,12 +115,15 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
   const quietBorder = colors.secondary
     ? lightestShadeReaching(colors.secondary, roles.background, 3)
     : roles.input;
+  // Without a secondary color the fill is neutral 200, 300 (hover) and 400 (pressed).
+  // With one, it is that color's 100, 200 and 300.
+  const [fillDefault, fillHover, fillPressed] = colors.secondary ? ([100, 200, 300] as const) : ([200, 300, 400] as const);
   const secondary =
     settings.secondaryStyle === "fill"
       ? withStates(
-          style(quiet[100], quiet[900], TRANSPARENT),
-          style(quiet[200], quiet[900], TRANSPARENT),
-          style(quiet[300], quiet[900], TRANSPARENT),
+          style(quiet[fillDefault], quiet[900], TRANSPARENT),
+          style(quiet[fillHover], quiet[900], TRANSPARENT),
+          style(quiet[fillPressed], quiet[900], TRANSPARENT),
           style(neutral[100], neutral[400], TRANSPARENT),
         )
       : withStates(

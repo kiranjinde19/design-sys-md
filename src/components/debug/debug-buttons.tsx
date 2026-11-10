@@ -153,7 +153,7 @@ export function DebugButtons() {
             </>
           ) : (
             <span className="min-w-0 flex-1">
-              Secondary buttons are drawn from the <strong>neutral scale</strong>: 100 default, 200 hover, 300 pressed, 900 text. No secondary color has been added.
+              Secondary buttons are drawn from the <strong>neutral scale</strong>: 200 default, 300 hover, 400 pressed, 900 text. No secondary color has been added.
             </span>
           )}
         </div>

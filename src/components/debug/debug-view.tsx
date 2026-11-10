@@ -67,6 +67,9 @@ export function DebugView() {
           This page is temporary. It exists only to test the token engine and will be removed before launch.
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">Token engine debug</h1>
+        <p className="font-mono text-xs text-muted-foreground">
+          Built from commit {process.env.NEXT_PUBLIC_BUILD_COMMIT} at {process.env.NEXT_PUBLIC_BUILD_TIME}
+        </p>
       </header>
 
       {ready ? (

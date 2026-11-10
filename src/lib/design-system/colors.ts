@@ -275,7 +275,7 @@ export function generateColors(settings: ColorSettings): ColorTokens {
   // Secondary and accent use the secondary color's scale when one was added, and the neutral
   // scale when not. Never anything else, so they can not drift toward a status color.
   const quiet = secondary ?? neutral;
-  const secondaryFill = quiet[100];
+  const secondaryFill = secondary ? secondary[100] : neutral[200];
   const accentFill = quiet[100];
   const onQuiet = (bg: string) => (contrastLevels(quiet[900], bg).normal ? quiet[900] : readable(bg));
 

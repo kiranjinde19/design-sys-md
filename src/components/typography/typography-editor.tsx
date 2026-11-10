@@ -6,6 +6,8 @@ import {
   catalogFont,
   defaultTracking,
   effectiveFont,
+  nearestWeight,
+  offeredWeights,
   recommendBodyFonts,
   useDesignSystem,
 } from "@/lib/design-system";
@@ -46,8 +48,15 @@ export function TypographyEditor() {
             initialCategory="all"
             weight={typography.headingWeight}
             onChange={(headingFont) => {
-              // Each font has its own default tracking. The slider below can still override it.
-              update({ typography: { headingFont, headingTracking: defaultTracking(headingFont) } });
+              // A chosen font starts at weight 600, or the closest weight it offers, and with its own
+              // default tracking. The weight buttons and the slider can still override both.
+              update({
+                typography: {
+                  headingFont,
+                  headingWeight: nearestWeight(600, offeredWeights(headingFont)),
+                  headingTracking: defaultTracking(headingFont),
+                },
+              });
               setHeadingPicked(true);
             }}
             onWeightChange={(headingWeight) => update({ typography: { headingWeight } })}
