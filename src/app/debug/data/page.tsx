@@ -1,0 +1,119 @@
+import type { Metadata } from "next";
+import { BLACK, WHITE } from "@/lib/design-system/colors";
+import { checkContrast } from "@/lib/design-system/contrast";
+import { generateTokens } from "@/lib/design-system/generate";
+import { PRESETS } from "@/lib/design-system/presets";
+import { SIGNATURE_CATALOG } from "@/lib/design-system/signature";
+import { SCALE_STEPS, type ColorScale, type SignatureSettings } from "@/lib/design-system/types";
+
+export const metadata: Metadata = {
+  title: "Token data (temporary)",
+  robots: { index: false },
+};
+
+const preset = PRESETS["saas-clean"];
+const tokens = generateTokens(preset.settings);
+
+const pad = (value: string | number, width: number) => String(value).padEnd(width);
+
+function contrastCell(foreground: string, background: string) {
+  const result = checkContrast(foreground, background);
+  return `${result.ratio.toFixed(2).padStart(5)}:1 ${result.passesAA ? "AA PASS" : "AA FAIL"}`;
+}
+
+function scaleText(scale: ColorScale) {
+  return SCALE_STEPS.map(
+    (step) =>
+      `${pad(step, 5)}${pad(scale[step], 9)}vs white ${contrastCell(scale[step], WHITE)}   vs black ${contrastCell(scale[step], BLACK)}`,
+  ).join("\n");
+}
+
+function simpleScaleText(scale: ColorScale) {
+  return SCALE_STEPS.map((step) => `${pad(step, 5)}${scale[step]}`).join("\n");
+}
+
+const sections: { title: string; body: string }[] = [
+  {
+    title: "Preset",
+    body: `${preset.name}: ${preset.description}`,
+  },
+  {
+    title: "Brand scale (step 600 is the exact brand color)",
+    body: `Brand color ${preset.settings.colors.brand}\n\n${scaleText(tokens.colors.brand)}`,
+  },
+  {
+    title: `Neutral scale (${preset.settings.colors.neutralTone} tone)`,
+    body: scaleText(tokens.colors.neutral),
+  },
+  {
+    title: "Semantic colors (full scales)",
+    body: (["success", "warning", "error", "info"] as const)
+      .map((name) => `${name}\n${simpleScaleText(tokens.colors.semantic[name])}`)
+      .join("\n\n"),
+  },
+  {
+    title: "Type scale",
+    body: [
+      `Heading: ${tokens.typography.heading.name} ${tokens.typography.headingWeight}, body: ${tokens.typography.body.name} ${tokens.typography.bodyWeight}`,
+      `Base ${tokens.typography.baseSize}px, ratio ${tokens.typography.scaleRatio}, body line height ${tokens.typography.bodyLineHeight}`,
+      "",
+      `${pad("name", 6)}${pad("px", 9)}${pad("rem", 10)}${pad("line height", 13)}letter spacing`,
+      ...tokens.typography.sizes.map(
+        (size) =>
+          `${pad(size.name, 6)}${pad(size.px, 9)}${pad(size.rem, 10)}${pad(size.lineHeight, 13)}${size.letterSpacing}`,
+      ),
+    ].join("\n"),
+  },
+  {
+    title: "Radius ladder",
+    body: (Object.keys(tokens.radius) as (keyof typeof tokens.radius)[])
+      .map((name) => `${pad(name, 6)}${tokens.radius[name]}px`)
+      .join("\n"),
+  },
+  {
+    title: `Spacing ladder (${tokens.spacing.base}px base, ${tokens.spacing.density} density)`,
+    body: [
+      ...tokens.spacing.scale.map((step) => `${pad(step.key, 6)}${step.px}px`),
+      "",
+      "Semantic values at this density:",
+      ...(Object.keys(tokens.spacing.semantic) as (keyof typeof tokens.spacing.semantic)[]).map(
+        (role) => `${pad(role, 18)}${tokens.spacing.semantic[role]}px`,
+      ),
+    ].join("\n"),
+  },
+  {
+    title: `Shadow levels (${tokens.elevation.style}, intensity ${tokens.elevation.intensity})`,
+    body: tokens.elevation.shadows.map((shadow) => `Level ${shadow.level}: ${shadow.css}`).join("\n"),
+  },
+  {
+    title: "Signature detail defaults",
+    body: (Object.keys(SIGNATURE_CATALOG) as (keyof SignatureSettings)[])
+      .map((key) => {
+        const recipe = tokens.signature[key];
+        const css = Object.entries(recipe.css)
+          .map(([property, value]) => `    ${property}: ${value}`)
+          .join("\n");
+        return `${SIGNATURE_CATALOG[key].label}: ${recipe.label}\n${css || "    (no styles)"}`;
+      })
+      .join("\n\n"),
+  },
+];
+
+export default function DebugDataPage() {
+  return (
+    <main className="mx-auto w-full max-w-4xl space-y-8 px-6 py-10">
+      <p className="rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+        This page is temporary. It prints the SaaS Clean preset as plain text for checking and will be removed before launch.
+      </p>
+      <h1 className="text-2xl font-semibold tracking-tight">SaaS Clean: generated values</h1>
+      {sections.map((section) => (
+        <section key={section.title} className="space-y-2">
+          <h2 className="text-base font-semibold">{section.title}</h2>
+          <pre className="overflow-x-auto rounded-lg border border-border p-4 font-mono text-xs leading-relaxed">
+            {section.body}
+          </pre>
+        </section>
+      ))}
+    </main>
+  );
+}
