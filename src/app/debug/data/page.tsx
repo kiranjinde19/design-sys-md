@@ -105,6 +105,25 @@ const sections: { title: string; body: string }[] = [
     ].join("\n"),
   },
   {
+    title: "Chart colors and the color blindness check",
+    body: [
+      `chart-1 to chart-5: ${[1, 2, 3, 4, 5].map((n) => tokens.colors.roles[`chart-${n}` as "chart-1"]).join("  ")}`,
+      `Hues (degrees, chart 1 is the brand hue): ${tokens.colors.chartCheck.hues.join("  ")}`,
+      `Lowest contrast on the background: ${tokens.colors.chartCheck.minContrast}:1 (needs 3:1)`,
+      `Smallest difference between any two colors, by vision type (OKLab distance): normal ${tokens.colors.chartCheck.perVision.normal}, deuteranopia ${tokens.colors.chartCheck.perVision.deuteranopia}, protanopia ${tokens.colors.chartCheck.perVision.protanopia}, tritanopia ${tokens.colors.chartCheck.perVision.tritanopia}`,
+      `Closest pair: charts ${tokens.colors.chartCheck.worstPair.join(" and ")} under ${tokens.colors.chartCheck.worstVision}, ${tokens.colors.chartCheck.minDistance}. Bar: ${tokens.colors.chartCheck.threshold}. ${tokens.colors.chartCheck.passes ? "PASSES" : "DOES NOT PASS"}`,
+    ].join("\n"),
+  },
+  {
+    title: "Layout tokens",
+    body: [
+      `Max content width ${tokens.layout.maxContentWidth}px, top bar ${tokens.layout.headerHeight}px, dialog ${tokens.layout.dialogWidth}px, overlay ${tokens.layout.overlayOpacity * 100}%`,
+      `Sidebar ${tokens.layout.sidebar.width}px, collapsed ${tokens.layout.sidebar.collapsed}px`,
+      `Page padding: ${tokens.layout.pagePadding.base}px base, ${tokens.layout.pagePadding.md}px from md, ${tokens.layout.pagePadding.lg}px from lg`,
+      `Breakpoints: ${Object.entries(tokens.layout.breakpoints).map(([k, v]) => `${k} ${v}px`).join(", ")}`,
+    ].join("\n"),
+  },
+  {
     title: "Semantic colors (full scales, with contrast)",
     body: (["success", "warning", "error", "info"] as const)
       .map((name) => `${name.toUpperCase()}\n${scaleText(tokens.colors.semantic[name], tokens.colors.reports.semantic[name])}`)

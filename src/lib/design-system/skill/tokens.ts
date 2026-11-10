@@ -1,11 +1,12 @@
-import { nearestWeight } from "../fonts";
+import { SYSTEM_STACKS, nearestWeight } from "../fonts";
 import { selectedFontsUrl } from "../font-loading";
 import { SCALE_STEPS, type ColorScale, type FontToken, type SemanticName } from "../types";
-import { SYSTEM_STACKS } from "../fonts";
-import { fence, lines, remOf, shadowClass, table, unit, type SkillContext } from "./context";
+import { fence, lines, remOf, shadowClass, unit, type SkillContext } from "./context";
 
-/** Semantic scale steps written out. Enough for alerts, badges and status text. */
+/** Semantic scale steps written out. Enough for status text, badges and alerts. */
 const SEMANTIC_STEPS = [50, 600, 700, 800] as const;
+/** Steps of the optional secondary scale: fills 100 to 300, text 900, tints 50. */
+const SECONDARY_STEPS = [50, 100, 200, 300, 900] as const;
 
 /** Declarations packed several to a line, to keep long token lists short. */
 const pack = (items: string[], perLine: number): string[] => {
@@ -35,19 +36,18 @@ function fontSlots(ctx: SkillContext): FontSlot[] {
     { role: "body", token: ty.body, weights: bodyWeights },
   ];
   if (ty.mono) slots.push({ role: "mono", token: ty.mono, weights: [nearestWeight(400, ty.mono.offeredWeights), nearestWeight(700, ty.mono.offeredWeights)] });
-  return [...slots];
+  return slots;
 }
 
 const nextFontName = (name: string) => name.replace(/ /g, "_");
-const quoteList = (items: (string | number)[]) => `[${items.map((i) => `"${i}"`).join(", ")}]`;
+const faceVar = (family: string) => `--font-${family.toLowerCase().replace(/ /g, "-")}-face`;
 
-/** Font loading for the chosen stack. Only the selected fonts, only the weights used, always display swap. */
-export function fontLoading(ctx: SkillContext): string[] {
+/** Font loading for the chosen stack: only the selected fonts, only the weights used, always display swap. */
+function fontLoading(ctx: SkillContext): string[] {
   const slots = fontSlots(ctx);
   const brand = slots.filter((slot) => slot.token.source === "brand");
 
   if (ctx.stack === "next-tailwind-shadcn") {
-    // One next/font instance per distinct Google font, with the weights every role needs.
     const families = new Map<string, Set<number>>();
     for (const slot of slots) {
       const family = slot.token.fallbackName ?? slot.token.name;
@@ -55,51 +55,44 @@ export function fontLoading(ctx: SkillContext): string[] {
       slot.weights.forEach((w) => set.add(w));
       families.set(family, set);
     }
-    const varOf = new Map<string, string>();
-    const code: string[] = [];
-    const imports = [...families.keys()].map(nextFontName).join(", ");
-    code.push(`import { ${imports} } from "next/font/google";`);
+    const code = [`import { ${[...families.keys()].map(nextFontName).join(", ")} } from "next/font/google";`];
     if (brand.length) code.push('import localFont from "next/font/local";');
-    code.push("");
+    const names: string[] = [];
     for (const [family, weights] of families) {
       const id = `face${nextFontName(family)}`;
-      varOf.set(family, id);
-      code.push(`const ${id} = ${nextFontName(family)}({`, '  subsets: ["latin"],', `  weight: ${quoteList([...weights].sort((a, b) => a - b))},`, `  variable: "--font-${family.toLowerCase().replace(/ /g, "-")}-face",`, '  display: "swap",', "});");
+      names.push(id);
+      code.push(`const ${id} = ${nextFontName(family)}({ subsets: ["latin"], weight: [${[...weights].sort((a, b) => a - b).map((w) => `"${w}"`).join(", ")}], variable: "${faceVar(family)}", display: "swap" });`);
     }
     for (const slot of brand) {
-      code.push(`// Licensed brand font: you must hold the license and add the files yourself.`, `const brand${slot.role[0].toUpperCase()}${slot.role.slice(1)} = localFont({`, `  src: "./fonts/${slot.token.name.replace(/ /g, "")}.woff2", // path to your licensed file`, `  variable: "--font-${slot.role}-brand-face",`, '  display: "swap",', "});");
+      const id = `brand${slot.role[0].toUpperCase()}${slot.role.slice(1)}`;
+      names.push(id);
+      code.push(`const ${id} = localFont({ src: "./fonts/${slot.token.name.replace(/ /g, "")}.woff2", variable: "--font-${slot.role}-brand-face", display: "swap" }); // licensed: add your own files`);
     }
-    const classNames = [...varOf.values()].map((id) => `\${${id}.variable}`).concat(brand.map((slot) => `\${brand${slot.role[0].toUpperCase()}${slot.role.slice(1)}.variable}`));
-    code.push("", "// app/layout.tsx: put the variables on <html>", `<html lang="en" className={\`${classNames.join(" ")}\`}>`);
-    return lines("### Font loading (app/layout.tsx)", "", fence("tsx", code), "");
+    code.push(`// app/layout.tsx: <html className={\`${names.map((n) => `\${${n}.variable}`).join(" ")}\`}>`);
+    return lines("**Fonts** (`app/layout.tsx`):", "", fence("tsx", code), "");
   }
 
   const url = selectedFontsUrl(ctx.t.typography);
-  const link = url ? [`<link rel="preconnect" href="https://fonts.googleapis.com">`, `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`, `<link rel="stylesheet" href="${url}">`] : [];
   return lines(
-    "### Font loading (index.html, inside head)",
+    "**Fonts** (`index.html`, in `head`):",
     "",
-    fence("html", link),
+    fence("html", url ? [`<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`, `<link rel="stylesheet" href="${url}">`] : []),
     brand.length ? `Licensed brand font: host the files yourself with \`@font-face\` and \`font-display: swap\`. The stack falls back to ${brand.map((b) => b.token.fallbackName).join(", ")}.` : null,
-    "Load only these fonts and these weights. Do not add more.",
     "",
   );
 }
 
-/** The CSS stack for a role, as used in the theme. */
 function stackFor(ctx: SkillContext, role: "heading" | "body" | "mono"): string {
   const { typography: ty } = ctx.t;
-  if (ctx.stack !== "next-tailwind-shadcn") return role === "heading" ? ty.stacks.heading : role === "body" ? ty.stacks.body : ty.stacks.mono;
-  const token = role === "heading" ? ty.heading : role === "body" ? ty.body : ty.mono;
+  if (ctx.stack !== "next-tailwind-shadcn") return ty.stacks[role];
+  const token = ty[role];
   if (!token) return ty.stacks.mono;
-  const family = (token.fallbackName ?? token.name).toLowerCase().replace(/ /g, "-");
-  const system = SYSTEM_STACKS[token.category];
   const brandPart = token.source === "brand" ? `var(--font-${role}-brand-face), ` : "";
-  return `${brandPart}var(--font-${family}-face), ${system}`;
+  return `${brandPart}var(${faceVar(token.fallbackName ?? token.name)}), ${SYSTEM_STACKS[token.category]}`;
 }
 
 // ─────────────────────────────────────────────────────────────
-// CSS variables and Tailwind theme
+// CSS
 // ─────────────────────────────────────────────────────────────
 
 /** Roles grouped the way they are used: a surface and its text on one line. */
@@ -114,191 +107,143 @@ const ROLE_GROUPS: (readonly string[])[] = [
   ["destructive", "destructive-foreground"],
   ["border", "input", "ring"],
   ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"],
+  ["sidebar", "sidebar-foreground"],
+  ["sidebar-primary", "sidebar-primary-foreground"],
+  ["sidebar-accent", "sidebar-accent-foreground"],
+  ["sidebar-border", "sidebar-ring"],
 ];
-const ROLE_ORDER = ROLE_GROUPS.flat();
+/** Roles shadcn does not define. Everything else is mapped to a Tailwind color by `shadcn init`. */
+const CUSTOM_ROLES = ["card-border", "placeholder", "primary-hover", "primary-pressed", "destructive-hover", "destructive-pressed"];
 
-function roleVars(ctx: SkillContext): string[] {
+function roleVars(ctx: SkillContext, withRadius: boolean, prefix = "--"): string[] {
   const { colors, controls, radius } = ctx.t;
   const v = controls.buttons.variants;
-  const role = (name: string) => `--${name}: ${colors.roles[name as keyof typeof colors.roles]};`;
+  const role = (name: string) => `${prefix}${name}: ${colors.roles[name as keyof typeof colors.roles]};`;
   return lines(
-    "  /* Roles (shadcn names), then derived states */",
+    "  /* Roles (shadcn names) and derived button states. shadcn init writes the standard names: replace its values */",
     ROLE_GROUPS.map((group) => `  ${group.map(role).join(" ")}`),
-    `  --placeholder: ${colors.placeholder}; --radius: ${radius.md}px;`,
-    `  --primary-hover: ${v.primary.hover.background}; --primary-pressed: ${v.primary.pressed.background};`,
-    `  --destructive-hover: ${v.destructive.hover.background}; --destructive-pressed: ${v.destructive.pressed.background};`,
+    `  ${prefix}placeholder: ${colors.placeholder};${withRadius ? ` --radius: ${radius.md}px;` : ""} ${prefix}primary-hover: ${v.primary.hover.background}; ${prefix}primary-pressed: ${v.primary.pressed.background};`,
+    `  ${prefix}destructive-hover: ${v.destructive.hover.background}; ${prefix}destructive-pressed: ${v.destructive.pressed.background};`,
   );
 }
 
-function themeBlock(ctx: SkillContext): string[] {
+function tailwindCss(ctx: SkillContext): string[] {
   const { colors, typography: ty, radius, elevation } = ctx.t;
-  const sizeLines = ty.sizes.map((size) => `  --text-${size.name}: ${remOf(size.px)}; --text-${size.name}--line-height: ${remOf(size.lineHeightPx)};`);
   const tracking = (step: number) => ty.sizes.find((s) => s.step === step)!.letterSpacing;
-  const shadowLines = elevation.shadows.filter((s) => s.level > 0).map((s) => `  --shadow-${["xs", "sm", "md", "lg", "xl"][s.level - 1]}: ${s.css};`);
-  const inlineFonts = ctx.stack === "next-tailwind-shadcn";
-
-  const roleMap = pack([...ROLE_ORDER, "placeholder", "primary-hover", "primary-pressed", "destructive-hover", "destructive-pressed"].map((r) => `--color-${r}: var(--${r});`), 3);
-  const headingStack = stackFor(ctx, "heading");
+  const shadcn = ctx.shadcn;
+  const map = (names: string[]) => pack(names.map((r) => `--color-${r}: var(--${r});`), 3);
   const bodyStack = stackFor(ctx, "body");
+  const headingStack = stackFor(ctx, "heading");
   const fontBlock = [
     `  --font-sans: ${bodyStack};`,
     `  --font-heading: ${headingStack === bodyStack ? "var(--font-sans)" : headingStack};`,
     `  --font-mono: ${stackFor(ctx, "mono")};`,
   ];
+  const common = lines(
+    scaleLines("--color-", colors.brand, "brand"),
+    scaleLines("--color-", colors.neutral, "neutral"),
+    colors.secondary ? scaleLines("--color-", colors.secondary, "secondary", SECONDARY_STEPS) : null,
+    (Object.keys(colors.semantic) as SemanticName[]).flatMap((name) => scaleLines("--color-", colors.semantic[name], name, SEMANTIC_STEPS)),
+    `  --radius-sm: ${radius.sm}px; --radius-md: ${radius.md}px; --radius-lg: ${radius.lg}px; --radius-full: ${radius.full}px;`,
+    pack(ty.sizes.map((size) => `--text-${size.name}: ${remOf(size.px)}; --text-${size.name}--line-height: ${remOf(size.lineHeightPx)};`), 2),
+    `  --tracking-heading: ${tracking(3)}; --tracking-heading-sm: ${tracking(2)}; --tracking-heading-xs: ${tracking(1)};`,
+    elevation.shadows.filter((s) => s.level > 0).map((s) => `  --shadow-${["xs", "sm", "md", "lg", "xl"][s.level - 1]}: ${s.css};`),
+  );
+
+  if (!shadcn) {
+    // Plain React + Tailwind: no shadcn to write mappings, so every color is a theme variable.
+    return lines(
+      '@import "tailwindcss";',
+      "",
+      "@theme {",
+      "  /* Remove Tailwind's defaults, so only these tokens exist */",
+      "  --color-*: initial; --text-*: initial; --shadow-*: initial;",
+      roleVars(ctx, false, "--color-"),
+      common,
+      fontBlock,
+      "}",
+      "",
+      "@layer base {",
+      "  body { background: var(--color-background); color: var(--color-foreground); font-family: var(--font-sans); }",
+      "  h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",
+      "}",
+    );
+  }
 
   return lines(
-    '@import "tailwindcss";',
-    "",
     ":root {",
-    roleVars(ctx),
+    roleVars(ctx, true),
     "}",
     "",
     "@theme {",
     "  /* Remove Tailwind's defaults, so only these tokens exist */",
     "  --color-*: initial; --text-*: initial; --shadow-*: initial;",
-    "  /* Scales */",
-    scaleLines("--color-", colors.brand, "brand"),
-    scaleLines("--color-", colors.neutral, "neutral"),
-    colors.secondary ? scaleLines("--color-", colors.secondary, "secondary") : null,
-    (Object.keys(colors.semantic) as SemanticName[]).flatMap((name) => scaleLines("--color-", colors.semantic[name], name, SEMANTIC_STEPS)),
-    "  /* Radius */",
-    `  --radius-sm: ${radius.sm}px; --radius-md: ${radius.md}px; --radius-lg: ${radius.lg}px; --radius-full: ${radius.full}px;`,
-    "  /* Type scale: size and line height. Use text-xs to text-5xl */",
-    sizeLines,
-    "  /* Heading tracking: full from 2xl up, half at xl, a quarter at lg */",
-    `  --tracking-heading: ${tracking(3)}; --tracking-heading-sm: ${tracking(2)}; --tracking-heading-xs: ${tracking(1)};`,
-    "  /* Shadows: xs is level 1, xl is level 5 */",
-    shadowLines,
-    inlineFonts ? null : "  /* Fonts */",
-    inlineFonts ? null : fontBlock,
+    common,
     "}",
     "",
     "@theme inline {",
-    "  /* Roles as Tailwind colors: bg-primary, text-foreground, border-input... */",
-    roleMap,
-    inlineFonts ? "  /* Fonts (the variables come from next/font) */" : null,
-    inlineFonts ? fontBlock : null,
-    "}",
-    "",
-    "@layer base {",
-    "  body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); }",
-    "  h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",
+    "  /* shadcn init already maps the standard roles. Add only the custom ones */",
+    map(CUSTOM_ROLES),
+    fontBlock,
     "}",
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Plain CSS tokens
-// ─────────────────────────────────────────────────────────────
-
 function plainCss(ctx: SkillContext): string[] {
   const { colors, typography: ty, radius, elevation, spacing, controls } = ctx.t;
-  const semantic = (Object.keys(colors.semantic) as SemanticName[]).flatMap((name) => scaleLines("--", colors.semantic[name], name, SEMANTIC_STEPS));
   return lines(
     ":root {",
-    roleVars(ctx).filter((line) => !line.includes("--radius:")).concat(`  --placeholder: ${colors.placeholder};`).filter((line, i, all) => all.indexOf(line) === i).map((line) => line.replace(/ --radius: [^;]+;/, "")),
-    "  /* Scales */",
+    roleVars(ctx, false),
     scaleLines("--", colors.brand, "brand"),
     scaleLines("--", colors.neutral, "neutral"),
-    colors.secondary ? scaleLines("--", colors.secondary, "secondary") : null,
-    semantic,
-    "  /* Fonts */",
+    colors.secondary ? scaleLines("--", colors.secondary, "secondary", SECONDARY_STEPS) : null,
+    (Object.keys(colors.semantic) as SemanticName[]).flatMap((name) => scaleLines("--", colors.semantic[name], name, SEMANTIC_STEPS)),
     `  --font-heading: ${ty.stacks.heading};`,
     `  --font-body: ${ty.stacks.body};`,
     `  --font-mono: ${ty.stacks.mono};`,
-    "  /* Type scale: size and line height */",
-    ty.sizes.map((size) => `  --text-${size.name}: ${remOf(size.px)}; --leading-${size.name}: ${remOf(size.lineHeightPx)};`),
+    pack(ty.sizes.map((size) => `--text-${size.name}: ${remOf(size.px)}; --leading-${size.name}: ${remOf(size.lineHeightPx)};`), 2),
     `  --tracking-heading: ${ty.sizes.find((s) => s.step === 3)!.letterSpacing}; --tracking-heading-sm: ${ty.sizes.find((s) => s.step === 2)!.letterSpacing}; --tracking-heading-xs: ${ty.sizes.find((s) => s.step === 1)!.letterSpacing};`,
-    "  /* Radius, shadows, spacing ladder, control sizes */",
     `  --radius-sm: ${radius.sm}px; --radius-md: ${radius.md}px; --radius-lg: ${radius.lg}px; --radius-full: ${radius.full}px;`,
     elevation.shadows.filter((s) => s.level > 0).map((s) => `  --shadow-${s.level}: ${s.css};`),
     pack(spacing.scale.map((step) => `--space-${step.key.replace(".", "_")}: ${step.px}px;`), 6),
-    `  --control-h-sm: ${controls.buttons.height.sm}px; --control-h: ${controls.buttons.height.md}px; --control-h-lg: ${controls.buttons.height.lg}px;`,
-    `  --button-px: ${spacing.semantic.buttonPaddingX}px; --button-py: ${spacing.semantic.buttonPaddingY}px; --input-px: ${spacing.semantic.inputPaddingX}px; --input-py: ${spacing.semantic.inputPaddingY}px;`,
+    `  --control-h-sm: ${controls.buttons.height.sm}px; --control-h: ${controls.buttons.height.md}px; --control-h-lg: ${controls.buttons.height.lg}px; --button-px: ${spacing.semantic.buttonPaddingX}px; --button-py: ${spacing.semantic.buttonPaddingY}px; --input-px: ${spacing.semantic.inputPaddingX}px; --input-py: ${spacing.semantic.inputPaddingY}px;`,
     "}",
-    "",
     "body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: var(--text-base); line-height: var(--leading-base); }",
     "h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// Public: the whole Tokens section
+// The whole Tokens section
 // ─────────────────────────────────────────────────────────────
 
 export function tokensSection(ctx: SkillContext): string[] {
   const { typography: ty, radius, spacing, borders, elevation } = ctx.t;
+  const tw = ctx.tailwind;
+  const sp = (px: number) => (tw ? `\`${unit(px)}\`` : `${px}px`);
+  const sizeLine = ty.sizes.map((s) => `${s.name} ${s.px}/${s.lineHeightPx}`).join(", ");
+  const shadows = elevation.shadows
+    .filter((s) => s.level > 0)
+    .map((s) => `${tw ? `\`${shadowClass(s.level)}\`` : `\`--shadow-${s.level}\``} ${["resting cards", "raised cards, hover", "dropdowns, popovers", "dialogs", "toasts, drag and drop"][s.level - 1] ?? ""}`)
+    .join("; ");
 
   return lines(
-    "## 1. Tokens",
+    "## Tokens",
     "",
-    ctx.tailwind ? "### globals.css (Tailwind 4: all tokens live in CSS, there is no tailwind.config file)" : "### styles.css (all tokens)",
+    tw ? `### ${ctx.shadcn ? "globals.css" : "src/index.css"} (Tailwind 4: tokens live in CSS, no tailwind.config)` : "### styles.css",
     "",
-    ctx.shadcn ? "shadcn's `init` writes the same role names. Replace its values with these and keep the names." : null,
-    ctx.shadcn ? "" : null,
-    fence("css", ctx.tailwind ? themeBlock(ctx) : plainCss(ctx)),
+    fence("css", tw ? tailwindCss(ctx) : plainCss(ctx)),
     "",
     fontLoading(ctx),
-    "### Type scale",
+    "### Type, radius, spacing, borders, shadows",
     "",
-    `Heading font: ${ty.heading.name} ${ty.headingWeight}. Body font: ${ty.body.name} ${ty.bodyWeight}.${ty.mono ? ` Mono font: ${ty.mono.name}.` : " No mono font: code uses the system monospace stack."} Sizes are whole, even pixels. Line heights are multiples of 4px, tighter for headings.`,
-    "",
-    table(
-      ["Size", "px", "rem", "Line height", "Heading tracking", "Use for"],
-      ty.sizes.map((size) => [
-        ctx.tailwind ? `\`text-${size.name}\`` : `\`--text-${size.name}\``,
-        String(size.px),
-        String(size.rem),
-        `${size.lineHeightPx}px (${size.lineHeight})`,
-        size.letterSpacing,
-        { xs: "Captions, table meta", sm: "Helper text, labels", base: "Body, inputs, buttons", lg: "Card titles, lead text", xl: "Section titles", "2xl": "Page sections", "3xl": "Page titles", "4xl": "Hero headings", "5xl": "Marketing display" }[size.name] ?? "",
-      ]),
-    ),
-    "",
-    ctx.tailwind
-      ? `Headings: \`font-heading font-semibold\` with tracking \`tracking-heading\` from 2xl up, \`tracking-heading-sm\` at xl, \`tracking-heading-xs\` at lg. Body text has no tracking. Heading weight is ${ty.headingWeight}, body is ${ty.bodyWeight}, labels and buttons are ${ty.weights.medium}.`
-      : `Headings: \`font-family: var(--font-heading)\`, weight ${ty.headingWeight}, tracking \`var(--tracking-heading)\` from 2xl up, \`--tracking-heading-sm\` at xl, \`--tracking-heading-xs\` at lg. Body text has no tracking. Labels and buttons are weight ${ty.weights.medium}.`,
-    "",
-    "**Tabular numbers.** Any column of numbers, price or metric uses tabular figures so digits line up.",
-    "",
-    fence(ctx.tailwind ? "html" : "css", ctx.tailwind ? `<td class="text-right ${ty.tabularNumbers.className}">11,111.00</td>` : `.tabular { ${Object.values(ty.tabularNumbers.css).map((v) => `font-variant-numeric: ${v}`).join("; ")}; }`),
-    "",
-    "### Radius",
-    "",
-    table(["Token", "Value", ctx.tailwind ? "Class" : "Variable", "Use for"], [
-      ["sm", `${radius.sm}px`, ctx.tailwind ? "`rounded-sm`" : "`--radius-sm`", "Checkboxes, small tags"],
-      ["md", `${radius.md}px`, ctx.tailwind ? "`rounded-md`" : "`--radius-md`", "Buttons, inputs, selects, icon tiles"],
-      ["lg", `${radius.lg}px`, ctx.tailwind ? "`rounded-lg`" : "`--radius-lg`", "Cards, dialogs, popovers"],
-      ["full", "pill", ctx.tailwind ? "`rounded-full`" : "`--radius-full`", "Radios, switches, avatars, badges"],
-    ]),
-    "",
-    "### Spacing",
-    "",
-    `Base grid ${spacing.base}px, ${spacing.density} density. The ladder, in px: ${spacing.scale.map((step) => step.px).join(", ")}. ${ctx.tailwind ? "In Tailwind the class number is px divided by 4: 16px is `p-4`, 6px is `p-1.5`." : "Variables are `--space-N`, where N is the px divided by the base."} Use only these.`,
-    "",
-    ...table(["Role", "px", ctx.tailwind ? "Class" : "Variable"], [
-      ["Gap between inline items", String(spacing.semantic.inlineGap), ctx.tailwind ? `\`gap-${unit(spacing.semantic.inlineGap)}\`` : `\`--space-${String(spacing.semantic.inlineGap / spacing.base).replace(".", "_")}\``],
-      ["Gap between stacked blocks", String(spacing.semantic.stackGap), ctx.tailwind ? `\`gap-${unit(spacing.semantic.stackGap)}\`` : `\`--space-${String(spacing.semantic.stackGap / spacing.base).replace(".", "_")}\``],
-      ["Button padding (x, y)", `${spacing.semantic.buttonPaddingX}, ${spacing.semantic.buttonPaddingY}`, ctx.tailwind ? `\`px-${unit(spacing.semantic.buttonPaddingX)} py-${unit(spacing.semantic.buttonPaddingY)}\`` : "`--button-px`, `--button-py`"],
-      ["Input padding (x, y)", `${spacing.semantic.inputPaddingX}, ${spacing.semantic.inputPaddingY}`, ctx.tailwind ? `\`px-${unit(spacing.semantic.inputPaddingX)} py-${unit(spacing.semantic.inputPaddingY)}\`` : "`--input-px`, `--input-py`"],
-      ["Card padding", String(spacing.semantic.cardPadding), ctx.tailwind ? `\`p-${unit(spacing.semantic.cardPadding)}\`` : `\`--space-${String(spacing.semantic.cardPadding / spacing.base).replace(".", "_")}\``],
-      ["Gap between page sections", String(spacing.semantic.sectionGap), ctx.tailwind ? `\`gap-${unit(spacing.semantic.sectionGap)}\`` : `\`--space-${String(spacing.semantic.sectionGap / spacing.base).replace(".", "_")}\``],
-    ]),
-    "",
-    "### Borders and shadows",
-    "",
-    `Borders are ${borders.width}px. Decorative dividers and card edges use \`${ctx.tailwind ? "border-border" : "var(--border)"}\`. Form controls use \`${ctx.tailwind ? "border-input" : "var(--input)"}\` (the lightest neutral that reaches 3:1 on every surface). Never use \`border\` for a form control outline.`,
-    "",
-    elevation.levels === 0
-      ? "Shadows are off. This is a flat design: separate surfaces with borders and tints."
-      : [
-          `${elevation.levels} shadow levels, ${elevation.style} style. Level 1 is the smallest. Use higher levels only for floating layers.`,
-          "",
-          elevation.shadows
-            .filter((s) => s.level > 0)
-            .map((s) => `${ctx.tailwind ? `\`${shadowClass(s.level)}\`` : `\`--shadow-${s.level}\``} ${["resting cards", "raised cards and hover", "dropdowns and popovers", "dialogs", "drag and drop, toasts"][s.level - 1] ?? ""}`)
-            .join("; ") + ".",
-        ],
+    `- **Type** (px size/line height, all whole even sizes, line heights multiples of 4): ${sizeLine}. Use xs for captions, sm for labels and helper text, base for body, inputs and buttons, lg for card titles, xl for section titles, 2xl to 3xl for page titles, 4xl to 5xl for marketing only.`,
+    `- **Fonts:** headings ${ty.heading.name} ${ty.headingWeight}${tw ? " (`font-heading`)" : ""}, body ${ty.body.name} ${ty.bodyWeight}, labels and buttons ${ty.weights.medium}${ty.mono ? `, mono ${ty.mono.name}` : ", code in the system monospace stack"}. Heading tracking: ${tw ? "`tracking-heading` from 2xl up, `-sm` at xl, `-xs` at lg" : "`--tracking-heading` from 2xl up, `-sm` at xl, `-xs` at lg"}. Body text has no tracking.`,
+    `- **Tabular numbers:** ${tw ? `\`${ty.tabularNumbers.className}\`` : "`font-variant-numeric: tabular-nums`"} on any column of numbers, price or metric. Right align numbers.`,
+    `- **Radius:** sm ${radius.sm}px ${tw ? "`rounded-sm`" : ""} checkboxes; md ${radius.md}px ${tw ? "`rounded-md`" : ""} buttons, inputs, selects, icon tiles; lg ${radius.lg}px ${tw ? "`rounded-lg`" : ""} cards, dialogs, popovers; full ${tw ? "`rounded-full`" : ""} radios, switches, avatars, badges.${tw ? "" : " Variables: `--radius-sm` to `--radius-full`."}`,
+    `- **Spacing** (${spacing.base}px grid, ${spacing.density}): ladder ${spacing.scale.map((s) => s.px).join(", ")}px${tw ? "; the class number is px divided by 4 (16px is `p-4`)" : " as `--space-N`"}. Inline gap ${sp(spacing.semantic.inlineGap)}, stack gap ${sp(spacing.semantic.stackGap)}, button padding ${sp(spacing.semantic.buttonPaddingX)} by ${sp(spacing.semantic.buttonPaddingY)}, input padding ${sp(spacing.semantic.inputPaddingX)} by ${sp(spacing.semantic.inputPaddingY)}, card padding ${sp(spacing.semantic.cardPadding)}, section gap ${sp(spacing.semantic.sectionGap)}.`,
+    `- **Borders** ${borders.width}px. Dividers and card edges use ${tw ? "`border-border`" : "`var(--border)`"}. Form controls use ${tw ? "`border-input`" : "`var(--input)`"}, the lightest neutral that reaches 3:1 on every surface. Never \`border\` on a form control.`,
+    `- **Shadows:** ${elevation.levels === 0 ? "off. Separate surfaces with borders and tints." : `${elevation.levels} levels, ${elevation.style}. ${shadows}.`}`,
     "",
   );
 }

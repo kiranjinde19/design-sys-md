@@ -98,8 +98,7 @@ export function resetToPreset() {
   commit({ presetId, settings: { ...PRESETS[presetId].settings, project: settings.project } });
 }
 
-/** Replaces everything, for importing a previously exported file. The settings are validated first. */
-export function importSettings(raw: unknown) {
-  const { presetId } = getSnapshot();
-  commit({ presetId, settings: normalizeSettings(raw, PRESETS[presetId].settings) });
+/** Replaces everything with a parsed export file: its starting preset and its validated settings. */
+export function importSettings(result: { presetId: PresetId; settings: DesignSystemSettings }) {
+  commit({ presetId: result.presetId, settings: result.settings });
 }

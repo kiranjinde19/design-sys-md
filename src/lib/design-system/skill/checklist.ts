@@ -1,31 +1,22 @@
 import { lines, type SkillContext } from "./context";
 
 export function checklistSection(ctx: SkillContext): string[] {
-  const { typography } = ctx.t;
   const tw = ctx.tailwind;
   return lines(
-    "## 7. Final checklist",
+    "## Final checklist",
     "",
-    "Run this before you call a screen finished. Fix every miss, or say which item failed and why.",
+    "Run this before calling a screen done. Fix every miss, or say which item failed and why.",
     "",
-    tw
-      ? "- [ ] No hex, rgb(), `[...]` arbitrary values, or default Tailwind palette colors (`blue-500`) anywhere in the changed files."
-      : "- [ ] No hex, rgb() or raw pixel value in any component. Only `var(--token)`.",
-    "- [ ] Every color is a role (`background`, `primary`, `muted`...) or a scale step (`brand-600`, `neutral-200`).",
-    `- [ ] Exactly one primary button in the view. Destructive actions are confirmed.`,
-    "- [ ] One accent color on the screen. Status colors only for status.",
-    `- [ ] Text sizes come from the type scale and none is below ${typography.sizes[0].px}px. Headings use the heading font and its tracking.`,
-    "- [ ] Spacing, radius and shadow values come from their scales. One radius per component family.",
-    "- [ ] Form controls use the `input` border. Cards, dividers and tables use the `border` token.",
-    "- [ ] Every interactive element has hover, active, focus (with the ring), disabled and, if it can wait, loading states.",
-    "- [ ] Selection controls are right: radio for one of few, checkbox for submit, switch for instant settings.",
-    "- [ ] Numbers in tables, dashboards and prices use tabular figures and are right aligned.",
-    "- [ ] Signature details are applied: card style, hover, featured item, icon tiles, divider, and `cta` on one primary action at most.",
-    "- [ ] Animations have a `prefers-reduced-motion` fallback.",
-    "- [ ] Text and background pairs are from the verified list. Errors and status are not color alone.",
-    "- [ ] Every input has a visible label. Icon-only buttons have names. Images have alt text.",
-    "- [ ] All copy follows the Tone of voice: button labels name the action, errors say what to do, empty states say what belongs here.",
-    "- [ ] Nothing is invented. Anything not covered here was derived from the tokens or asked about.",
+    tw ? "- [ ] No hex, rgb(), `[...]` arbitrary values, default palette colors, or `dark:` classes in the changed files." : "- [ ] No hex, rgb(), raw pixel values or dark-mode styles. Only `var(--token)`.",
+    "- [ ] Colors are roles or scale steps. One accent color. Status colors only for status.",
+    "- [ ] One primary button. Destructive actions are confirmed.",
+    "- [ ] Type, spacing, radius and shadows come from their scales, with one radius per family. Nothing under 12px.",
+    "- [ ] Form controls use the `input` border; cards, dividers and tables use `border`. Numbers use tabular figures, right aligned.",
+    "- [ ] Interactive elements have hover, active, focus (with the ring) and disabled states, plus loading if they can wait. Selection controls fit their job.",
+    "- [ ] Signature details applied: `card`, `card-hover` on clickable and pricing cards, `card-featured` on the one recommended item, `icon-tile`, `divider`, `cta` on at most one action.",
+    "- [ ] Layout uses the shell, content width and page padding. Icons are lucide at the listed sizes, icon-only buttons have an `aria-label`.",
+    "- [ ] Motion has a reduced-motion fallback. Text pairs are verified. State is never color alone. Every input has a visible label.",
+    "- [ ] Copy follows Tone of voice, and nothing is invented.",
     "",
   );
 }

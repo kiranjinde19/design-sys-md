@@ -44,18 +44,19 @@ function Segmented<T extends string>({ label, value, options, onChange }: { labe
 }
 
 export function ExportPanel() {
-  const { settings, tokens, update, importSettings } = useDesignSystem();
+  const { settings, tokens, presetId, update, importSettings } = useDesignSystem();
   const { project } = settings;
   const [file, setFile] = useState<"skill" | "agents">("skill");
   const [view, setView] = useState<"rendered" | "raw">("rendered");
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
 
-  const generated = useMemo(() => generateSkillFile({ settings, tokens }), [settings, tokens]);
+  const generated = useMemo(() => generateSkillFile({ settings, tokens }, { presetId }), [settings, tokens, presetId]);
   const text = file === "skill" ? generated.skill : generated.agents;
   const kib = generated.agentsBytes / 1024;
   const overLimit = generated.agentsBytes > CODEX_LIMIT_BYTES;
-  const slug = generated.skill.match(/^name: (.+)$/m)?.[1] ?? "design-system";
+  // One generated name feeds the frontmatter, the folder and the slash command, so they can never disagree.
+  const slug = generated.slug;
 
   const copy = async () => {
     try {
@@ -70,7 +71,7 @@ export function ExportPanel() {
     if (!selected) return;
     const result = parseSkillFile(await selected.text());
     if (result.ok) {
-      importSettings(result.settings);
+      importSettings({ presetId: result.presetId, settings: result.settings });
       setMessage({ ok: true, text: `Restored the design system from ${selected.name}.` });
     } else {
       setMessage({ ok: false, text: result.error });
@@ -197,6 +198,33 @@ export function ExportPanel() {
               </li>
             </ol>
           </div>
+        </div>
+      </Section>
+
+      <Section
+        title="Using this with ChatGPT"
+        description="ChatGPT does not read SKILL.md or AGENTS.md on its own, so you give it the file."
+      >
+        <div className="space-y-2 rounded-xl border border-border p-4 text-sm">
+          <ol className="list-decimal space-y-1 pl-5">
+            <li>
+              <span className="font-medium">Best:</span> create a ChatGPT Project and upload <code className="rounded bg-muted px-1 font-mono text-xs">AGENTS.md</code> to its files
+              (or paste it into the Project instructions). Every chat in that Project can then use it. Start the first message with: &quot;Follow the design
+              system file in this Project for all UI work, and run its Final checklist before you answer.&quot;
+            </li>
+            <li>
+              <span className="font-medium">Quick:</span> paste the whole file at the start of a single chat, followed by your request.
+            </li>
+          </ol>
+          <p>
+            <span className="font-medium">If it is too long:</span> upload it as a file instead of pasting it. If that still fails, split it in two
+            at a section heading: keep Hard rules, Tokens and the Final checklist together, and send the component sections you need for the task.
+            Keep the data block at the end only in the copy you keep for yourself.
+          </p>
+          <p className="text-muted-foreground">
+            What ChatGPT accepts depends on your plan and changes over time. I could not verify the current limits, so no numbers are given here. Check
+            OpenAI&apos;s help page &quot;Using Projects in ChatGPT&quot; before relying on a size.
+          </p>
         </div>
       </Section>
 

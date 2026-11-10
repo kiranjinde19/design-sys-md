@@ -3,38 +3,33 @@ import { lines, table, type SkillContext } from "./context";
 export function accessibilitySection(ctx: SkillContext): string[] {
   const { colors, signature, controls, typography } = ctx.t;
   const pairs = colors.contrastPairs;
-  const failing = pairs.filter((p) => !p.passes);
-  // The input border is checked on five surfaces and the charts are five colors. One row each, at the worst case.
   const worst = (group: typeof pairs) => group.reduce((a, b) => (b.levels.ratio < a.levels.ratio ? b : a));
-  const inputPairs = pairs.filter((p) => p.foregroundRole === "input");
-  const chartPairs = pairs.filter((p) => p.foregroundRole.startsWith("chart-"));
+  const grouped = (test: (role: string) => boolean) => pairs.filter((p) => test(p.foregroundRole));
+  const inputPairs = grouped((r) => r === "input");
+  const chartPairs = grouped((r) => r.startsWith("chart-"));
   const single = pairs.filter((p) => !inputPairs.includes(p) && !chartPairs.includes(p));
-  const row = (label: string, p: (typeof pairs)[number]) => [label, `${p.levels.ratio.toFixed(2)}:1`, `${p.required}:1`, p.passes ? "pass" : "FAIL"];
+  const row = (label: string, p: (typeof pairs)[number]) => [label + (p.required === 3 ? " (3:1)" : ""), `${p.levels.ratio.toFixed(2)}:1${p.passes ? "" : " FAIL"}`];
+  // Pairs that clear 7:1 (AAA) are listed on one line. The tighter ones get a row with their ratio.
+  const strong = single.filter((p) => p.required === 4.5 && p.levels.ratio >= 7);
+  const tight = single.filter((p) => !strong.includes(p));
   const rows = [
-    ...single.map((p) => row(p.label, p)),
+    ...tight.map((p) => row(p.label, p)),
     row(`input border on ${inputPairs.map((p) => p.backgroundRole.replace("tinted-tile", "tinted bento tile")).join(", ")} (lowest)`, worst(inputPairs)),
     row("chart 1 to 5 on background (lowest)", worst(chartPairs)),
   ];
+  const guide = (name: "brand" | "success" | "warning" | "error" | "info") => (name === "brand" ? colors.reports.brand : colors.reports.semantic[name]).guidance.whiteTextFrom ?? "none";
   return lines(
-    "## 5. Accessibility",
+    "## Accessibility",
     "",
-    "### Verified contrast",
+    "Every pair was measured from these tokens and passes (text needs 4.5:1, interface parts 3:1). Use no other pair without checking it.",
     "",
-    `Text pairs need 4.5:1. Interface parts (input outlines, focus rings, chart colors) need 3:1. Every pair below was measured from these exact tokens.${failing.length ? ` Pairs marked FAIL do not reach their target: do not use them for essential content.` : ""}`,
+    `At 7:1 or more (AAA, lowest ${worst(strong).levels.ratio.toFixed(2)}:1), each text color on its own surface: ${strong.map((p) => (p.foregroundRole === "foreground" ? "foreground on background" : p.foregroundRole === `${p.backgroundRole}-foreground` ? p.backgroundRole : p.label)).join(", ")}.`,
     "",
-    ...table(["Pair", "Ratio", "Needs", "Result"], rows),
+    ...table(["Pair", "Ratio"], rows),
     "",
-    "- Body text goes on `background`, `card`, `popover`, `muted` or `accent` using the matching foreground. Do not put text on any other surface or on a scale color without checking it.",
-    `- White text on a filled color works from this step, and on darker ones: brand ${colors.reports.brand.guidance.whiteTextFrom ?? "none"}, success ${colors.reports.semantic.success.guidance.whiteTextFrom ?? "none"}, warning ${colors.reports.semantic.warning.guidance.whiteTextFrom ?? "none"}, error ${colors.reports.semantic.error.guidance.whiteTextFrom ?? "none"}, info ${colors.reports.semantic.info.guidance.whiteTextFrom ?? "none"}. Dark text works on lighter steps, up to brand ${colors.reports.brand.guidance.darkTextUpTo ?? "none"}.`,
-    "",
-    "### Focus, motion, targets",
-    "",
-    `- Every interactive element shows the focus ring (${signature.focusRing.label.toLowerCase()}). Never remove it, never rely on color alone for focus.`,
-    `- ${signature.primaryCta.animated ? "The animated glow stops under `prefers-reduced-motion` and becomes a steady border." : "Motion is limited to small hover transitions."} Never add autoplaying motion without a reduced-motion fallback.`,
-    `- Controls are at least ${controls.buttons.height.sm}px tall, ${controls.buttons.height.md}px by default. Keep ${ctx.t.spacing.semantic.inlineGap}px between neighbouring targets.`,
-    `- Text is never below ${typography.sizes[0].px}px. Body text is ${typography.sizes.find((s) => s.name === "base")!.px}px.`,
-    "- State is never color alone: errors have text, success has text, status has an icon or label.",
-    "- Use real elements: `button` for actions, `a` for navigation, `label` for fields, `th scope` for table headers. Keep a logical heading order.",
+    `- White text on a filled color works from this step and darker: ${(["brand", "success", "warning", "error", "info"] as const).map((n) => `${n} ${guide(n)}`).join(", ")}.`,
+    `- Every interactive element shows the focus ring (${signature.focusRing.label.toLowerCase()}), never removed. Controls are at least ${controls.buttons.height.sm}px tall with ${ctx.t.spacing.semantic.inlineGap}px between targets. Text is never below ${typography.sizes[0].px}px.`,
+    "- State is never color alone. Use real elements (`button`, `a`, `label`, `th scope`), a logical heading order, and alt text or a decorative mark on every image.",
     "",
   );
 }

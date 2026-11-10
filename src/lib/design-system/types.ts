@@ -57,6 +57,14 @@ export const SHADCN_ROLE_NAMES = [
   "chart-3",
   "chart-4",
   "chart-5",
+  "sidebar",
+  "sidebar-foreground",
+  "sidebar-primary",
+  "sidebar-primary-foreground",
+  "sidebar-accent",
+  "sidebar-accent-foreground",
+  "sidebar-border",
+  "sidebar-ring",
 ] as const;
 
 /** Roles shadcn does not define but this system needs. */
@@ -296,6 +304,26 @@ export interface ContrastPair {
   result: ContrastResult;
 }
 
+export type VisionKindName = "normal" | "deuteranopia" | "protanopia" | "tritanopia";
+
+export interface ChartCheck {
+  /** Hue of each chart color in degrees, from the OKLCH wheel. Chart 1 is the brand hue. */
+  hues: number[];
+  /** Smallest difference between any two chart colors under any vision type (OKLab distance). */
+  minDistance: number;
+  /** The pair and vision type where that smallest difference occurs. */
+  worstPair: [number, number];
+  worstVision: VisionKindName;
+  /** The difference this system treats as "clearly distinguishable". */
+  threshold: number;
+  /** True when every pair reaches the threshold under every vision type. */
+  passes: boolean;
+  /** Lowest contrast of any chart color on the background. */
+  minContrast: number;
+  /** The smallest difference per vision type. */
+  perVision: Record<VisionKindName, number>;
+}
+
 export interface ColorTokens {
   brand: ColorScale;
   /** Only present when the user chose a secondary color. */
@@ -306,6 +334,8 @@ export interface ColorTokens {
   roles: Record<ColorRoleTokenName, string>;
   /** Placeholder text color: the lightest neutral shade that reaches 4.5:1 on the background. */
   placeholder: string;
+  /** What the chart color check measured. The skill file only claims what this supports. */
+  chartCheck: ChartCheck;
   /** Contrast at three levels for every step, plus safe-fill guidance, for every scale. */
   reports: {
     brand: ScaleReport;
@@ -550,7 +580,24 @@ export interface SignatureTokens {
   divider: SignatureRecipe<DividerStyle>;
 }
 
+export interface LayoutTokens {
+  /** Maximum width of page content, in px. */
+  maxContentWidth: number;
+  /** Height of the top bar, in px. */
+  headerHeight: number;
+  sidebar: { width: number; collapsed: number };
+  /** Horizontal page padding at each breakpoint, in px. */
+  pagePadding: { base: number; md: number; lg: number };
+  /** Width of a dialog, in px. */
+  dialogWidth: number;
+  /** Opacity of the dark layer behind a dialog, from 0 to 1. */
+  overlayOpacity: number;
+  /** Mobile first breakpoints, in px. */
+  breakpoints: { sm: number; md: number; lg: number; xl: number; "2xl": number };
+}
+
 export interface DesignSystemTokens {
+  layout: LayoutTokens;
   colors: ColorTokens;
   typography: TypographyTokens;
   icons: IconTokens;

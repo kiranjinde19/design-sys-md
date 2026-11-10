@@ -12,9 +12,8 @@
  *  - Form control outlines use the "input" border: the lightest neutral that reaches 3:1.
  */
 
-import { shiftLightness } from "./color-math";
 import { pickReadableText } from "./contrast";
-import { WHITE, lightestShadeReaching } from "./colors";
+import { WHITE, lightestShadeReaching, shiftKeepingHue } from "./colors";
 import type {
   BorderTokens,
   ButtonState,
@@ -42,18 +41,18 @@ const PRESSED_SHIFT = -0.12;
 export const SELECTION_RULES: SelectionRule[] = [
   {
     control: "radio",
-    useWhen: "The user must pick exactly one option from a short list (2 to 5) and should see every option at once.",
-    avoidWhen: "The list is long (use a select), or the choice takes effect immediately (use a switch).",
+    useWhen: "Exactly one choice from 2 to 5 options, all visible at once.",
+    avoidWhen: "Long lists (use a select) or settings that apply instantly (use a switch).",
   },
   {
     control: "checkbox",
-    useWhen: "The user can pick zero, one or several options, or must confirm something (terms, consent) before submitting.",
-    avoidWhen: "The setting applies instantly with no submit (use a switch), or only one option may be chosen (use radio).",
+    useWhen: "Zero, one or several options, or consent, submitted with a form.",
+    avoidWhen: "Settings that apply instantly (use a switch) or a single choice (use radio).",
   },
   {
     control: "switch",
-    useWhen: "A setting turns on or off and the change applies immediately, with no save button.",
-    avoidWhen: "The choice is part of a form that gets submitted (use a checkbox), or there are more than two states (use radio).",
+    useWhen: "An on or off setting that applies immediately, with no save button.",
+    avoidWhen: "Anything submitted with a form (use a checkbox), or three or more states (use radio).",
   },
 ];
 
@@ -100,8 +99,8 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
 
   /** Solid-filled button (primary, destructive): darker on hover and press. */
   const solid = (base: string): Record<ButtonState, ControlStateStyle> => {
-    const hover = shiftLightness(base, HOVER_SHIFT);
-    const pressed = shiftLightness(base, PRESSED_SHIFT);
+    const hover = shiftKeepingHue(base, HOVER_SHIFT, 0.97);
+    const pressed = shiftKeepingHue(base, PRESSED_SHIFT, 0.92);
     return withStates(
       style(base, readable(base), TRANSPARENT),
       style(hover, readable(hover), TRANSPARENT),

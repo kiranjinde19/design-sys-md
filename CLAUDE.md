@@ -64,11 +64,12 @@ A solo founder building a SaaS with Claude Code. They care about functionality, 
 
 ### Color roles
 
-Roles use the exact shadcn/ui names: background, foreground, card, card-foreground, popover, popover-foreground, primary, primary-foreground, secondary, secondary-foreground, muted, muted-foreground, accent, accent-foreground, destructive, destructive-foreground, border, input, ring, chart-1 to chart-5, plus one extra, card-border.
+Roles use the exact shadcn/ui names: background, foreground, card, card-foreground, popover, popover-foreground, primary, primary-foreground, secondary, secondary-foreground, muted, muted-foreground, accent, accent-foreground, destructive, destructive-foreground, border, input, ring, chart-1 to chart-5, and the eight shadcn sidebar roles (sidebar, sidebar-foreground, sidebar-primary, sidebar-primary-foreground, sidebar-accent, sidebar-accent-foreground, sidebar-border, sidebar-ring), plus one extra, card-border.
 
 - **card follows the card style.** For "tinted bento tile" it is the brand 50 tint with a brand 100 border (card-border), so bg-card gives the same result as the signature card. Popover keeps the plain card color.
 - **input** is the lightest neutral that reaches 3:1 on every surface it can sit on (background, card, muted, accent, tinted tile). Placeholder text reaches 4.5:1. Decorative borders (border, card-border) have no contrast requirement.
-- **chart-1 to chart-5** use distinct hues from the brand and status colors. Lightness is searched so the five stay apart under normal vision, deuteranopia, protanopia and tritanopia, and each reaches 3:1 on the background.
+- **chart-1 to chart-5:** chart-1 is the brand color. The others are spaced around the hue wheel from the brand hue (72 degrees apart, nudged a few degrees at most) and their lightness is searched. Every pair is measured under normal vision, deuteranopia, protanopia and tritanopia simulation (OKLab distance, bar 0.08), and each color reaches 3:1 on the background. The skill file only claims color blind separation when this check passes, and quotes the measured number.
+- **Button states** (hover, pressed) keep the hue of their base color, so an indigo primary stays indigo and does not drift toward violet.
 - **secondary and accent** come from the neutral scale unless a secondary color is added. Suggestions never land near the warning or error hues.
 
 ### Typography selection
@@ -106,17 +107,18 @@ Dashboard, Tables, Forms, Charts and graphs, Pricing, Buttons and States. Every 
 
 ## What the generated skill file must contain
 
-The generator lives in `src/lib/design-system/skill/`. Every value comes from the design system object, and nothing is hardcoded in the templates. Colors are written by token name (bg-primary, var(--ring)), never as hex outside the token definitions. The file is tight, with no filler, about 400 to 600 lines. Sections, in this order:
+The generator lives in `src/lib/design-system/skill/`. Every value comes from the design system object, and nothing is hardcoded in the templates. Colors are written by token name (bg-primary, var(--ring)), never as hex outside the token definitions and the deliberate "Don't" examples. The file is tight, with no filler. **Size target: AGENTS.md under 28 KiB with a product name, a description and a secondary color filled in** (Codex reads at most 32 KiB). With shadcn the standard role mappings are skipped, because `shadcn init` writes them. Sections, in this order:
 
-1. Frontmatter (`name`, `description`), then "Hard rules": use only these tokens, never hardcode hex colors or arbitrary pixel values, never invent colors, sizes or fonts, one primary button per view, one accent color per screen, minimum text size 12px, and if something is not covered, derive it from the tokens or ask.
+1. Frontmatter (`name`, `description`), then "Hard rules": use only these tokens, never hardcode hex colors or arbitrary pixel values, never invent colors, sizes or fonts, one primary button per view, one accent color per screen (the brand color; the only other colors are status colors for status and chart series inside charts), minimum text size 12px, light mode only (no `dark:` classes unless the file defines a dark theme), and if something is not covered, derive it from the tokens or ask. The product description is left out of the frontmatter when empty. One generated name is used for the frontmatter, the folder and the slash command.
 2. Tokens as real code for the chosen stack: CSS variables with shadcn names, the Tailwind mapping (this project uses Tailwind 4, so CSS-first `@theme`, no tailwind.config), font loading, type scale with line heights, radius, spacing, borders, shadows, the tabular-nums rule.
 3. Component recipes with real class examples and a states table: buttons (4 variants, 6 states), inputs, radio vs checkbox vs switch with use when and avoid when, selects, tables (type hierarchy, right aligned tabular numbers, row height by density), cards, forms, dashboards, charts, pricing cards.
-4. Signature details as exact code, including the reduced motion fallback.
-5. Tone of voice: principles, word choices, do and don't microcopy for buttons, errors, empty states and confirmations.
+4. Layout and navigation (shell, content width, page padding, breakpoints, sidebar recipe), Overlays and feedback (dialog, toast, tabs, badge, avatar, skeleton), and Icons (lucide-react, strokeWidth 1.5, sizes 16, 20, 24, aria-label on icon-only buttons).
+4b. Signature details as exact code, including the reduced motion fallback. Hover effects never replace the featured highlight: properties both set apply on hover only to cards that are not featured, so a hovered featured card lifts and keeps its glow. Every pricing card uses the hover lift.
+5. Tone of voice, described in words and never in numbers (a number such as "formality 4/5" reads the wrong way round): principles, word choices, do and don't microcopy for buttons, errors, empty states and confirmations. Sample lines show tone, not facts, and the pricing sample is a tone example only.
 6. Accessibility: the verified contrast pairs, focus ring, reduced motion.
 7. Do and don't pairs for common mistakes.
 8. A final checklist the AI runs before finishing any screen.
-9. One small fenced JSON data block at the end, so "Import my previous file" can restore everything.
+9. One small fenced JSON data block at the end, holding the starting preset and only the settings that differ from it, so "Import my previous file" can restore everything. Export, import, export again gives byte-identical files.
 
 The file must go beyond a list of values. It should carry rules for decisions, not only values.
 

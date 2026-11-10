@@ -9,7 +9,7 @@
  */
 
 import { hexToOklch, hslHue, normalizeHex, oklchToHex } from "./color-math";
-import { appearanceOf, worstCaseDistance } from "./color-vision";
+import { VISION_KINDS, appearanceOf, seenAs, worstCaseDistance } from "./color-vision";
 import { checkContrast, contrastLevels, contrastRatio, pickReadableText, relativeLuminance } from "./contrast";
 import {
   BRAND_STEP,
@@ -19,6 +19,8 @@ import {
   type ColorSettings,
   type ColorTokens,
   type CardStyle,
+  type ChartCheck,
+  type VisionKindName,
   type ColorRoleTokenName,
   type ContrastPair,
   type ScaleGuidance,
@@ -265,66 +267,112 @@ export function lightestShadeReachingAll(scale: ColorScale, surfaces: string[], 
   return darkest;
 }
 
-/** Where each chart color gets its hue. Lightness is searched for, see generateChartColors. */
-const CHART_HUES: ("brand" | SemanticName | "brand+60")[] = ["brand", "warning", "success", "error", "brand+60"];
+/** The lightness values tried for each chart color. Nothing darker than 0.44, so no chart color reads as near-black; nothing lighter than 0.67, which fails 3:1 on white. */
+const CHART_LIGHTNESS = [0.44, 0.48, 0.52, 0.56, 0.6, 0.64, 0.67];
 
-/** The lightness values tried for each chart color. Colors lighter than this fail 3:1 on white. */
-const CHART_LIGHTNESS = [0.36, 0.4, 0.44, 0.48, 0.52, 0.56, 0.6, 0.64, 0.67];
+/** Small turns of the whole wheel that are tried, so the best-separated version can be picked. */
+const CHART_HUE_NUDGES = [-12, -6, 0, 6, 12];
+
+/** Two chart colors count as clearly different under every vision type at or above this OKLab distance. */
+export const CHART_MIN_DISTANCE = 0.08;
+
+const chartCache = new Map<string, { colors: string[]; check: ChartCheck }>();
 
 /**
- * Five chart colors with distinct hues taken from the brand and status colors. Chart 1 is the
- * brand color. For the rest, the hue is fixed and lightness is searched: of all the combinations
- * that reach 3:1 on the background, the one whose closest pair stays furthest apart under normal
- * vision, deuteranopia, protanopia and tritanopia wins. So the colors differ in lightness as well
- * as hue, and stay readable for color blind users.
+ * Five chart colors. Chart 1 is the brand color. The other four sit around the hue wheel at even
+ * steps from the brand hue (72 degrees apart, nudged a few degrees at most), and their lightness
+ * is searched: of every combination that reaches 3:1 on the background, the one whose closest
+ * pair stays furthest apart wins. "Apart" is measured under normal vision, deuteranopia,
+ * protanopia and tritanopia, and the result is reported in the returned check.
  */
-export function generateChartColors(brand: ColorScale, semantic: Record<SemanticName, ColorScale>, background: string): string[] {
+export function generateChartColors(brand: ColorScale, background: string): { colors: string[]; check: ChartCheck } {
+  const key = `${brand[BRAND_STEP]}|${background}`;
+  const cached = chartCache.get(key);
+  if (cached) return cached;
+
   const brandOklch = hexToOklch(brand[BRAND_STEP]);
   const reaches = (hex: string) => contrastRatio(hex, background) >= 3;
-
   const steps: ScaleStep[] = [600, 700, 800, 900];
   const first = brand[steps.find((step) => reaches(brand[step])) ?? 900];
-
-  // For each free slot, every lightness that reaches 3:1.
-  const options = CHART_HUES.slice(1).map((hue) => {
-    const source = hue === "brand+60" ? brandOklch : hexToOklch(semantic[hue as SemanticName][BRAND_STEP]);
-    const h = hue === "brand+60" ? (brandOklch.h + 60) % 360 : source.h;
-    const c = Math.max(source.c, 0.12);
-    return CHART_LIGHTNESS.map((l) => oklchToHex({ l, c, h }))
-      .filter(reaches)
-      .map((hex) => ({ hex, look: appearanceOf(hex) }));
-  });
-  if (options.some((list) => list.length === 0)) {
-    // A very dark background could rule everything out. Fall back to the plain scale steps.
-    return [first, semantic.warning[700], semantic.success[700], semantic.error[700], semantic.info[700]];
-  }
-
   const firstLook = appearanceOf(first);
-  let best: { score: number; picks: string[] } = { score: -1, picks: [] };
-  const [o1, o2, o3, o4] = options;
-  for (const a of o1) {
-    const dA = worstCaseDistance(firstLook, a.look);
-    if (dA <= best.score) continue;
-    for (const b of o2) {
-      const dB = Math.min(dA, worstCaseDistance(firstLook, b.look), worstCaseDistance(a.look, b.look));
-      if (dB <= best.score) continue;
-      for (const c of o3) {
-        const dC = Math.min(dB, worstCaseDistance(firstLook, c.look), worstCaseDistance(a.look, c.look), worstCaseDistance(b.look, c.look));
-        if (dC <= best.score) continue;
-        for (const d of o4) {
-          const score = Math.min(
-            dC,
-            worstCaseDistance(firstLook, d.look),
-            worstCaseDistance(a.look, d.look),
-            worstCaseDistance(b.look, d.look),
-            worstCaseDistance(c.look, d.look),
-          );
-          if (score > best.score) best = { score, picks: [a.hex, b.hex, c.hex, d.hex] };
+  const chroma = Math.min(0.2, Math.max(brandOklch.c, 0.13));
+
+  let best: { score: number; colors: string[]; hues: number[] } = { score: -1, colors: [first], hues: [brandOklch.h] };
+  for (const nudge of CHART_HUE_NUDGES) {
+    const hues = [1, 2, 3, 4].map((k) => (brandOklch.h + k * 72 + nudge + 360) % 360);
+    const options = hues.map((h) =>
+      CHART_LIGHTNESS.map((l) => oklchToHex({ l, c: chroma, h }))
+        .filter(reaches)
+        .map((hex) => ({ hex, look: appearanceOf(hex) })),
+    );
+    if (options.some((list) => list.length === 0)) continue;
+    const [o1, o2, o3, o4] = options;
+    for (const a of o1) {
+      const dA = worstCaseDistance(firstLook, a.look);
+      if (dA <= best.score) continue;
+      for (const b of o2) {
+        const dB = Math.min(dA, worstCaseDistance(firstLook, b.look), worstCaseDistance(a.look, b.look));
+        if (dB <= best.score) continue;
+        for (const c of o3) {
+          const dC = Math.min(dB, worstCaseDistance(firstLook, c.look), worstCaseDistance(a.look, c.look), worstCaseDistance(b.look, c.look));
+          if (dC <= best.score) continue;
+          for (const d of o4) {
+            const score = Math.min(dC, worstCaseDistance(firstLook, d.look), worstCaseDistance(a.look, d.look), worstCaseDistance(b.look, d.look), worstCaseDistance(c.look, d.look));
+            if (score > best.score) best = { score, colors: [first, a.hex, b.hex, c.hex, d.hex], hues: [brandOklch.h, ...hues] };
+          }
         }
       }
     }
   }
-  return [first, ...best.picks];
+
+  const colors = best.colors.length === 5 ? best.colors : [first, ...[1, 2, 3, 4].map((k) => oklchToHex({ l: 0.45, c: chroma, h: (brandOklch.h + k * 72) % 360 }))];
+  const check = measureChart(colors, background, best.hues.length === 5 ? best.hues : colors.map((c) => hexToOklch(c).h));
+  const result = { colors, check };
+  if (chartCache.size > 24) chartCache.clear();
+  chartCache.set(key, result);
+  return result;
+}
+
+/** Measures a chart palette: every pair under every vision type, and contrast on the background. */
+function measureChart(colors: string[], background: string, hues: number[]): ChartCheck {
+  const perVision = { normal: Infinity, deuteranopia: Infinity, protanopia: Infinity, tritanopia: Infinity } as ChartCheck["perVision"];
+  let min = Infinity;
+  let worstPair: [number, number] = [1, 2];
+  let worstVision: VisionKindName = "normal";
+  const looks = colors.map((hex) => VISION_KINDS.map((kind) => seenAs(hex, kind)));
+  for (let i = 0; i < colors.length; i++) {
+    for (let j = i + 1; j < colors.length; j++) {
+      VISION_KINDS.forEach((kind, k) => {
+        const d = Math.hypot(looks[i][k][0] - looks[j][k][0], looks[i][k][1] - looks[j][k][1], looks[i][k][2] - looks[j][k][2]);
+        perVision[kind] = Math.min(perVision[kind], d);
+        if (d < min) {
+          min = d;
+          worstPair = [i + 1, j + 1];
+          worstVision = kind;
+        }
+      });
+    }
+  }
+  const round3 = (n: number) => Math.round(n * 1000) / 1000;
+  return {
+    hues: hues.map((h) => Math.round(h)),
+    minDistance: round3(min),
+    worstPair,
+    worstVision,
+    threshold: CHART_MIN_DISTANCE,
+    passes: min >= CHART_MIN_DISTANCE,
+    minContrast: Math.floor(Math.min(...colors.map((hex) => contrastRatio(hex, background))) * 100) / 100,
+    perVision: { normal: round3(perVision.normal), deuteranopia: round3(perVision.deuteranopia), protanopia: round3(perVision.protanopia), tritanopia: round3(perVision.tritanopia) },
+  };
+}
+
+/**
+ * A darker or lighter version of a color that keeps its hue, so a hover state of an indigo
+ * button stays indigo and does not drift toward violet. Chroma is eased down a little.
+ */
+export function shiftKeepingHue(hex: string, delta: number, chromaScale = 1): string {
+  const { l, c, h } = hexToOklch(hex);
+  return darkStep(clamp(l + delta, 0, 1), c * chromaScale, h, hslHue(hex));
 }
 
 export function generateColors(settings: ColorSettings, options: { cardStyle: CardStyle }): ColorTokens {
@@ -363,12 +411,12 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
   // Outlines of form controls must stay visible on every surface they can sit on: the page,
   // a card, a muted area, an accent area and the tinted bento tile.
   const tile = brand[50];
-  const inputSurfaces = [background, card, muted, accentFill, tile];
+  const inputSurfaces = [background, card, muted, accentFill, tile, neutral[50]];
   const input = lightestShadeReachingAll(neutral, inputSurfaces, 3);
   // Placeholder text is text, so it needs 4.5:1.
   const placeholder = lightestShadeReaching(neutral, background, 4.5);
 
-  const charts = generateChartColors(brand, semantic, background);
+  const { colors: charts, check: chartCheck } = generateChartColors(brand, background);
 
   const roles: ColorTokens["roles"] = {
     background,
@@ -397,6 +445,14 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     "chart-4": charts[3],
     "chart-5": charts[4],
     "card-border": cardBorder,
+    sidebar: neutral[50],
+    "sidebar-foreground": foreground,
+    "sidebar-primary": primary,
+    "sidebar-primary-foreground": readable(primary),
+    "sidebar-accent": accentFill,
+    "sidebar-accent-foreground": onQuiet(accentFill),
+    "sidebar-border": resolve(r.border),
+    "sidebar-ring": resolve(r.ring),
   };
 
   type Surface = ColorRoleTokenName | { name: "tinted-tile"; hex: string };
@@ -436,6 +492,9 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     pair("muted-foreground", "muted"),
     pair("accent-foreground", "accent"),
     pair("destructive-foreground", "destructive"),
+    pair("sidebar-foreground", "sidebar"),
+    pair("sidebar-primary-foreground", "sidebar-primary"),
+    pair("sidebar-accent-foreground", "sidebar-accent"),
     // Common real-world combinations
     pair("muted-foreground", "background"),
     pair("primary", "background", "text", "primary as link text on background"),
@@ -468,5 +527,5 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     },
   };
 
-  return { brand, secondary, neutral, semantic, roles, placeholder, contrastPairs, reports };
+  return { brand, secondary, neutral, semantic, roles, placeholder, chartCheck, contrastPairs, reports };
 }

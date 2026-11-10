@@ -111,6 +111,29 @@ export function DebugColors() {
 
       <div className="space-y-3">
         <div>
+          <h3 className="text-sm font-medium">Chart colors and the color blindness check</h3>
+          <p className="text-xs text-muted-foreground">
+            Chart 1 is the brand color. The other four are spaced around the hue wheel (hues {colors.chartCheck.hues.join(", ")} degrees) with varied lightness. Every
+            pair is compared under normal vision, deuteranopia, protanopia and tritanopia simulation (OKLab distance). The closest pair is charts{" "}
+            {colors.chartCheck.worstPair.join(" and ")} under {colors.chartCheck.worstVision}: <span className="font-medium text-foreground">{colors.chartCheck.minDistance}</span>
+            , against a bar of {colors.chartCheck.threshold}. {colors.chartCheck.passes ? "Passes." : "Does not pass."} Lowest contrast on the background: {colors.chartCheck.minContrast}:1 (needs 3:1).
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <div key={n} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs">
+              <span className="size-6 rounded-md" style={{ background: colors.roles[`chart-${n}` as "chart-1"] }} />
+              <span className="font-mono">chart-{n} {colors.roles[`chart-${n}` as "chart-1"]}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Smallest difference per vision type: normal {colors.chartCheck.perVision.normal}, deuteranopia {colors.chartCheck.perVision.deuteranopia}, protanopia {colors.chartCheck.perVision.protanopia}, tritanopia {colors.chartCheck.perVision.tritanopia}.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <div>
           <h3 className="text-sm font-medium">Role contrast checks</h3>
           <p className="text-xs text-muted-foreground">
             Text pairs need 4.5:1. Input outlines and focus rings are interface parts and need 3:1. Decorative borders and dividers are not checked. The three marks show 4.5, 3 and 7 (AAA).

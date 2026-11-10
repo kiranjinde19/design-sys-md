@@ -1,6 +1,6 @@
 import { SIGNATURE_CATALOG } from "../signature";
-import type { SignatureSettings } from "../types";
-import { compactCss, fence, lines, recipeLines, table, unit, type SkillContext } from "./context";
+import type { CssRecipe, SignatureSettings } from "../types";
+import { compactCss, fence, lines, recipeLines, unit, type SkillContext } from "./context";
 
 /**
  * The glow shadows repeat three times in the animation. Each distinct value is written once as a
@@ -14,6 +14,22 @@ function glowVariables(css: string): string {
   return [":root {", ...values.map((v, i) => `  ${names[i]}: ${v};`), "}", out].join("\n");
 }
 
+/** Two CSS properties clash if setting one would replace the other. */
+const canon = (key: string) => (/^border/.test(key) ? "border" : key === "backgroundColor" ? "background" : key);
+
+/**
+ * Hover effects must never replace the featured highlight. Properties the featured style also sets
+ * (its glow, its border) apply on hover only to cards that are not featured. Everything else, such
+ * as the lift, applies to every card. So a hovered featured card lifts and keeps its glow.
+ */
+function splitHover(hover: CssRecipe, featured: CssRecipe): { all: CssRecipe; notFeatured: CssRecipe } {
+  const taken = new Set(Object.keys(featured).map(canon));
+  const all: CssRecipe = {};
+  const notFeatured: CssRecipe = {};
+  for (const [key, value] of Object.entries(hover)) (taken.has(canon(key)) ? notFeatured : all)[key] = value;
+  return { all, notFeatured };
+}
+
 /** CSS for the seven chosen signature details, written exactly as it should be used. */
 export function signatureSection(ctx: SkillContext): string[] {
   const { signature: sig, spacing } = ctx.t;
@@ -21,8 +37,8 @@ export function signatureSection(ctx: SkillContext): string[] {
   const hoverCss = { ...sig.hover.css };
   const transition = hoverCss.transition;
   delete hoverCss.transition;
-
-  const chosen = (Object.keys(SIGNATURE_CATALOG) as (keyof SignatureSettings)[]).map((key) => [SIGNATURE_CATALOG[key].label, sig[key].label]);
+  const { all, notFeatured } = splitHover(hoverCss, sig.featuredHighlight.css);
+  const chosen = (Object.keys(SIGNATURE_CATALOG) as (keyof SignatureSettings)[]).map((key) => `${SIGNATURE_CATALOG[key].label.toLowerCase()} ${sig[key].label.toLowerCase()}`);
 
   const css = lines(
     `/* Card: ${sig.cardStyle.label} */`,
@@ -31,15 +47,14 @@ export function signatureSection(ctx: SkillContext): string[] {
     `  padding: ${ctx.tailwind ? `calc(var(--spacing) * ${unit(spacing.semantic.cardPadding)})` : `var(--space-${String(spacing.semantic.cardPadding / spacing.base).replace(".", "_")})`};`,
     "}",
     "",
-    `/* Hover: ${sig.hover.label}. Add to any card that is clickable */`,
+    `/* Hover: ${sig.hover.label}. Every pricing card and every clickable card. Never replaces the featured highlight */`,
     ".card-hover {",
     transition ? `  transition: ${transition};` : null,
     "}",
-    ".card-hover:hover {",
-    recipeLines(ctx, hoverCss),
-    "}",
+    Object.keys(all).length ? [".card-hover:hover {", ...recipeLines(ctx, all), "}"] : null,
+    Object.keys(notFeatured).length ? [".card-hover:not(.card-featured):hover {", ...recipeLines(ctx, notFeatured), "}"] : null,
     "",
-    `/* Featured highlight: ${sig.featuredHighlight.label}. One featured item per group */`,
+    `/* Featured highlight: ${sig.featuredHighlight.label}. One per group. Combines with card-hover */`,
     ".card-featured {",
     recipeLines(ctx, sig.featuredHighlight.css),
     "}",
@@ -53,7 +68,7 @@ export function signatureSection(ctx: SkillContext): string[] {
     recipeLines(ctx, sig.iconContainer.css),
     "}",
     "",
-    `/* Focus ring: ${sig.focusRing.label}. Every focusable element gets it */`,
+    `/* Focus ring: ${sig.focusRing.label}. Every focusable element */`,
     ".focus-ring:focus-visible {",
     recipeLines(ctx, sig.focusRing.css),
     "}",
@@ -70,27 +85,15 @@ export function signatureSection(ctx: SkillContext): string[] {
   );
 
   return lines(
-    "## 3. Signature details",
+    "## Signature details",
     "",
-    "These seven choices make the product recognisable. Apply them everywhere, and never swap one.",
-    `Chosen: ${chosen.map(([detail, choice]) => `${detail.toLowerCase()} ${choice.toLowerCase()}`).join("; ")}.`,
-    "",
-    `Put this CSS in ${ctx.tailwind ? "globals.css, after the tokens" : "styles.css, after the tokens"}. It is the exact definition. Colors are token references.`,
+    `Chosen: ${chosen.join("; ")}. Apply them everywhere and never swap one. Add this CSS to ${ctx.tailwind ? "globals.css" : "styles.css"}, after the tokens. It is the exact definition, with token references.`,
     "",
     fence("css", compactCss(css.join("\n")).split("\n")),
     "",
-    table(["Use", "Class", "Rule"], [
-      ["Card, tile, panel", "`card`", "Every container that groups content."],
-      ["Clickable card", "`card card-hover`", "Only cards that are links or buttons."],
-      ["Recommended item", "`card card-featured`", "One per group, such as the recommended plan."],
-      ["The main action", `${ctx.tailwind ? "primary button + " : ""}\`cta\``, "Only one per screen."],
-      ["Icon beside a title or feature", "`icon-tile`", `Icon size ${ctx.t.icons.sizes.md}px, ${ctx.t.icons.style}, stroke ${ctx.t.icons.strokeWidth}px, ${ctx.t.icons.strokeLinecap} ends.`],
-      ["Any focusable element", "`focus-ring`", "Buttons, links, inputs, checkboxes, radios, switches, selects, tabs."],
-      ["Separating sections", "`divider`", "Never a plain `border-t` or `<hr>`."],
-    ]),
-    sig.featuredHighlight.notes ? "" : null,
-    sig.featuredHighlight.notes ? `Featured highlight note: ${sig.featuredHighlight.notes}` : null,
-    cta.notes ? `Primary CTA note: ${cta.notes}` : null,
+    `Every container is a \`card\`, every icon with a title an \`icon-tile\`, every focusable element \`focus-ring\`, and sections are separated by \`divider\`, never a bare \`border-t\` or \`<hr>\`. The primary button ${ctx.tailwind ? "" : "(\`btn--primary\`) "}adds \`cta\` on at most one action per screen.`,
+    sig.featuredHighlight.notes ? `Featured: ${sig.featuredHighlight.notes}` : null,
+    cta.notes ? `CTA: ${cta.notes}` : null,
     "",
   );
 }

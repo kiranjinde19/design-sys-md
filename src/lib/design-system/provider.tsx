@@ -36,8 +36,8 @@ export interface DesignSystemContextValue {
   applyPreset: (presetId: PresetId) => void;
   /** Throw away edits and return to the current preset. */
   reset: () => void;
-  /** Replace everything with settings from an exported file. Invalid values are corrected. */
-  importSettings: (raw: unknown) => void;
+  /** Replace everything with a parsed export file (see parseSkillFile). */
+  importSettings: (result: { presetId: PresetId; settings: DesignSystemSettings }) => void;
 }
 
 const DesignSystemContext = createContext<DesignSystemContextValue | null>(null);

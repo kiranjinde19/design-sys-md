@@ -142,7 +142,9 @@ export function createContext(ds: DesignSystem, options: SkillOptions): SkillCon
 
   const isRole = (name: string) => name in colors.roles || ["primary-hover", "primary-pressed", "destructive-hover", "destructive-pressed", "placeholder"].includes(name);
   const varFor = (name: string) => {
-    // Roles live on :root under their own name. Scales are theme variables in Tailwind, plain variables otherwise.
+    // With shadcn, roles live on :root under their own name. In plain React + Tailwind every color is a
+    // theme variable. In plain CSS every color is a plain variable.
+    if (stack === "react-tailwind") return `--color-${name}`;
     if (isRole(name)) return `--${name}`;
     return tailwind ? `--color-${name}` : `--${name}`;
   };

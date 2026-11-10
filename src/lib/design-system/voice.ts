@@ -11,7 +11,7 @@ import type { VoiceSettings } from "./types";
 export type VoiceAxis = keyof VoiceSettings;
 
 export const VOICE_AXES: { key: VoiceAxis; title: string; low: string; high: string; levels: string[] }[] = [
-  { key: "formality", title: "Formality", low: "Formal", high: "Casual", levels: ["Formal", "Leans formal", "Balanced", "Leans casual", "Casual"] },
+  { key: "formality", title: "Casualness", low: "Formal", high: "Casual", levels: ["Formal", "Leans formal", "Balanced", "Leans casual", "Casual"] },
   { key: "energy", title: "Energy", low: "Calm", high: "Enthusiastic", levels: ["Calm", "Leans calm", "Balanced", "Leans enthusiastic", "Enthusiastic"] },
   { key: "detail", title: "Detail", low: "Concise", high: "Explanatory", levels: ["Concise", "Leans concise", "Balanced", "Leans explanatory", "Explanatory"] },
 ];
@@ -140,21 +140,21 @@ export function voicePrinciples(voice: VoiceSettings): string[] {
   const d = bucket(voice.detail);
   return [
     [
-      "Write complete, polite sentences. No slang, no contractions in headings or buttons. Address the user directly as \"you\".",
+      "Complete, polite sentences. No slang, and no contractions in headings or buttons. Address the user as \"you\".",
       "Plain, neutral sentences. Contractions are fine in body text, never slang. Address the user as \"you\".",
-      "Write like a helpful colleague. Use contractions (you're, we'll, couldn't) and everyday words. Address the user as \"you\".",
+      "Like a helpful colleague: contractions (you're, we'll, couldn't) and everyday words. Address the user as \"you\".",
     ][f],
     [
-      "Stay even. No exclamation marks, no emoji, no hype words. Errors and successes sound equally steady.",
-      "Warm but measured. At most one exclamation mark on a screen, and only for a real success.",
-      "Show energy on good news. Exclamation marks are allowed for successes and first steps, never for errors, warnings or billing.",
+      "Stay even. No exclamation marks, emoji or hype words. Errors and successes sound equally steady.",
+      "Warm but measured. At most one exclamation mark on a screen, only for a real success.",
+      "Show energy on good news. Exclamation marks for successes and first steps, never for errors, warnings or billing.",
     ][e],
     [
-      "Say it in as few words as work. One short sentence for labels and messages. Every error ends with one next step.",
-      "One or two sentences. Say what happened, then what to do next.",
-      "Explain. Say what happened, why it matters and what to do next, in at most three short sentences.",
+      "As few words as work: one short sentence for labels and messages. Every error ends with one next step.",
+      "One or two sentences: what happened, then what to do next.",
+      "Explain in at most three short sentences: what happened, why it matters, what to do next.",
     ][d],
-    "Name things the way the interface does. The word on the button is the word in the message.",
+    "Name things as the interface does: the word on the button is the word in the message.",
   ];
 }
 

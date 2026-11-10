@@ -5,6 +5,7 @@ import { generateColors } from "./colors";
 import { generateControls } from "./controls";
 import { generateElevation } from "./elevation";
 import { generateIcons } from "./icons";
+import { generateLayout } from "./layout";
 import { generateRadius } from "./radius";
 import { generateSignature } from "./signature";
 import { generateSpacing } from "./spacing";
@@ -22,7 +23,9 @@ export function generateTokens(settings: DesignSystemSettings): DesignSystemToke
   const signature = generateSignature(settings.signature, { colors, radius, borders, spacing, elevation });
   const controls = generateControls(settings.controls, { colors, radius, spacing, borders, signature, icons });
 
-  return { colors, typography, icons, radius, spacing, borders, elevation, controls, signature };
+  const layout = generateLayout(spacing, controls);
+
+  return { layout, colors, typography, icons, radius, spacing, borders, elevation, controls, signature };
 }
 
 export function createDesignSystem(settings: DesignSystemSettings): DesignSystem {
