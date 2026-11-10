@@ -5,6 +5,7 @@ import {
   pickReadableText,
   useDesignSystem,
   SCALE_STEPS,
+  EXTRA_ROLE_NAMES,
   SHADCN_ROLE_NAMES,
   type ColorScale,
   type ContrastLevels,
@@ -86,18 +87,21 @@ export function DebugColors() {
         <div>
           <h3 className="text-sm font-medium">Roles (shadcn/ui names)</h3>
           <p className="text-xs text-muted-foreground">
-            Each role maps to the shadcn CSS variable of the same name, for example primary-foreground is --primary-foreground.
+            Each role maps to the shadcn CSS variable of the same name, for example primary-foreground is --primary-foreground. The card role follows the card style: for a tinted bento tile it is the brand 50 tint, with the card-border extra role as its brand 100 border, so bg-card matches the signature card. Chart colors 1 to 5 use distinct hues from the brand and status colors and differ in lightness for color blind readability.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {SHADCN_ROLE_NAMES.map((role) => (
+          {[...SHADCN_ROLE_NAMES, ...EXTRA_ROLE_NAMES].map((role) => (
             <div key={role} className="flex items-center gap-3">
               <div
                 className="size-10 shrink-0 rounded-lg border border-border"
                 style={{ background: colors.roles[role] }}
               />
               <div className="min-w-0">
-                <div className="truncate text-xs font-medium">{role}</div>
+                <div className="truncate text-xs font-medium">
+                  {role}
+                  {(EXTRA_ROLE_NAMES as readonly string[]).includes(role) ? " (extra)" : ""}
+                </div>
                 <div className="font-mono text-xs text-muted-foreground">{colors.roles[role]}</div>
               </div>
             </div>

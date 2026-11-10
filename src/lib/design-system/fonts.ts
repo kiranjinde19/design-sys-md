@@ -129,3 +129,22 @@ export function sanitizeFontName(input: unknown): string {
   if (typeof input !== "string") return "";
   return input.replace(/["'\;{}<>()\n\r\t]/g, "").replace(/\s+/g, " ").trim().slice(0, 60);
 }
+
+/**
+ * Searches the font list.
+ *  - A short search (1 to 2 letters) matches the start of any word in the name, so "pl" finds
+ *    Plus Jakarta Sans, IBM Plex Sans, IBM Plex Mono and Playfair Display.
+ *  - From 3 letters on, it also matches anywhere inside a name, and the start of a tag
+ *    (so "geo" finds the geometric fonts).
+ * The category chip narrows the list further.
+ */
+export function searchFonts(query: string, category: FontCategory | "all" = "all"): FontEntry[] {
+  const q = query.trim().toLowerCase();
+  return FONT_CATALOG.filter((font) => {
+    if (category !== "all" && font.category !== category) return false;
+    if (!q) return true;
+    const name = font.name.toLowerCase();
+    if (name.split(/\s+/).some((word) => word.startsWith(q))) return true;
+    return q.length >= 3 && (name.includes(q) || font.tags.some((tag) => tag.startsWith(q)));
+  });
+}

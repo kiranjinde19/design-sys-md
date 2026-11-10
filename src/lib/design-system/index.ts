@@ -19,6 +19,7 @@ export {
   nearestWeight,
   offeredWeights,
   sanitizeFontName,
+  searchFonts,
   type FontEntry,
 } from "./fonts";
 export {
@@ -44,3 +45,18 @@ export { generateSignature, SIGNATURE_CATALOG } from "./signature";
 export { PRESETS, PRESET_IDS, DEFAULT_PRESET_ID, type PresetId } from "./presets";
 export { normalizeSettings, applyPatch, type SettingsPatch } from "./normalize";
 export { DesignSystemProvider, useDesignSystem } from "./provider";
+export {
+  VOICE_AXES,
+  buildVoiceSamples,
+  sampleText,
+  voiceLevelLabel,
+  voiceSummary,
+  voicePrinciples,
+  voiceWordChoices,
+  voiceMicrocopy,
+  type VoiceAxis,
+  type VoiceSample,
+} from "./voice";
+export { generateSkillFile, type GeneratedFile } from "./skill/generate";
+export { parseSkillFile } from "./skill/data-block";
+export { STACK_LABELS, skillSlug } from "./skill/context";

@@ -51,7 +51,7 @@ A solo founder building a SaaS with Claude Code. They care about functionality, 
 
 | System | Control |
 |---|---|
-| Colors | Brand color picker, auto 10 step scale, drag swatches onto roles (Primary, Surface, Background), live contrast badge |
+| Colors | Brand color picker, auto 10 step scale, an optional secondary color, shadcn-named roles (see "Color roles" below), live contrast checks at 4.5, 3 and 7 |
 | Typography | A pairing gallery of 8 one-click pairings, plus a customize panel with independent heading, body and optional mono pickers (curated Google Fonts list, search, category chips, weights limited to what each font offers), a heading tracking slider (-0.04em to 0.02em), "Use my own font" (a licensed brand font plus a fallback), type scale slider (1.125 to 1.5), base size stepper, line height slider. Even pixel sizes (12px minimum) with 4px line heights. Each font has its own default heading tracking. A tabular-numbers token is included. See "Typography selection" below |
 | Icons | Style (outline, solid, duotone), stroke width slider, round or sharp ends |
 | Radius | One slider (0 to 24px) generating small, medium, large, full |
@@ -60,6 +60,16 @@ A solo founder building a SaaS with Claude Code. They care about functionality, 
 | Elevation and shadows | Levels slider, intensity slider, soft, hard or brand tinted style |
 | Buttons and inputs | Secondary as fill or outline, height, focus ring style. States (hover, pressed, disabled, loading) auto derived. Radio vs checkbox vs switch usage rules generated |
 | Signature details | Pick one per category (below) |
+| Tone of voice | Three sliders (formal to casual, calm to enthusiastic, concise to explanatory, each 1 to 5) with a live preview of five sample lines (button label, empty state, error message, success message, pricing CTA). SaaS Clean defaults: casual, calm, concise. Moved from "Later" into launch scope because the skill file must contain tone of voice |
+
+### Color roles
+
+Roles use the exact shadcn/ui names: background, foreground, card, card-foreground, popover, popover-foreground, primary, primary-foreground, secondary, secondary-foreground, muted, muted-foreground, accent, accent-foreground, destructive, destructive-foreground, border, input, ring, chart-1 to chart-5, plus one extra, card-border.
+
+- **card follows the card style.** For "tinted bento tile" it is the brand 50 tint with a brand 100 border (card-border), so bg-card gives the same result as the signature card. Popover keeps the plain card color.
+- **input** is the lightest neutral that reaches 3:1 on every surface it can sit on (background, card, muted, accent, tinted tile). Placeholder text reaches 4.5:1. Decorative borders (border, card-border) have no contrast requirement.
+- **chart-1 to chart-5** use distinct hues from the brand and status colors. Lightness is searched so the five stay apart under normal vision, deuteranopia, protanopia and tritanopia, and each reaches 3:1 on the background.
+- **secondary and accent** come from the neutral scale unless a secondary color is added. Suggestions never land near the warning or error hues.
 
 ### Typography selection
 
@@ -88,7 +98,7 @@ A solo founder building a SaaS with Claude Code. They care about functionality, 
 
 ### Later (not in the first build)
 
-Motion (speed preset, easing picker), Theme modes for the generated system (light, dark, both with auto dark scale), Voice and tone sliders with sample microcopy, Logo usage rules, Grid and breakpoints.
+Motion (speed preset, easing picker), Theme modes for the generated system (light, dark, both with auto dark scale), Logo usage rules, Grid and breakpoints.
 
 ## Live preview tabs
 
@@ -96,17 +106,26 @@ Dashboard, Tables, Forms, Charts and graphs, Pricing, Buttons and States. Every 
 
 ## What the generated skill file must contain
 
-1. Frontmatter (name, description) and a short "how to use this file" note.
-2. Design tokens: colors (scales and roles), typography, radius, spacing, borders, elevation. Written as CSS variables plus Tailwind mapping.
-3. Component recipes: buttons (all variants and states), inputs, radio vs checkbox vs switch, tables, cards, forms, charts.
-4. Usage rules: when to use which variant, hierarchy, one accent color per screen.
-5. Do and don't examples with short code or description pairs.
-6. Tone of voice: how the product speaks, with sample microcopy.
-7. Signature details: the chosen moves, applied consistently.
-8. Stack specific implementation notes based on the stack selector.
-9. A final checklist the AI must run before finishing any screen.
+The generator lives in `src/lib/design-system/skill/`. Every value comes from the design system object, and nothing is hardcoded in the templates. Colors are written by token name (bg-primary, var(--ring)), never as hex outside the token definitions. The file is tight, with no filler, about 400 to 600 lines. Sections, in this order:
+
+1. Frontmatter (`name`, `description`), then "Hard rules": use only these tokens, never hardcode hex colors or arbitrary pixel values, never invent colors, sizes or fonts, one primary button per view, one accent color per screen, minimum text size 12px, and if something is not covered, derive it from the tokens or ask.
+2. Tokens as real code for the chosen stack: CSS variables with shadcn names, the Tailwind mapping (this project uses Tailwind 4, so CSS-first `@theme`, no tailwind.config), font loading, type scale with line heights, radius, spacing, borders, shadows, the tabular-nums rule.
+3. Component recipes with real class examples and a states table: buttons (4 variants, 6 states), inputs, radio vs checkbox vs switch with use when and avoid when, selects, tables (type hierarchy, right aligned tabular numbers, row height by density), cards, forms, dashboards, charts, pricing cards.
+4. Signature details as exact code, including the reduced motion fallback.
+5. Tone of voice: principles, word choices, do and don't microcopy for buttons, errors, empty states and confirmations.
+6. Accessibility: the verified contrast pairs, focus ring, reduced motion.
+7. Do and don't pairs for common mistakes.
+8. A final checklist the AI runs before finishing any screen.
+9. One small fenced JSON data block at the end, so "Import my previous file" can restore everything.
 
 The file must go beyond a list of values. It should carry rules for decisions, not only values.
+
+### Export formats
+
+- **SKILL.md** (Claude Code): YAML frontmatter on the first line with `name` (lowercase letters, numbers and hyphens, at most 64 characters, never `synced` or `anthropic-skills`) and `description`. The description says what the file does and when to use it, with the key use case first, because Claude Code truncates the combined listing text at 1,536 characters. Install at `.claude/skills/<name>/SKILL.md` (project) or `~/.claude/skills/<name>/SKILL.md` (all projects).
+- **AGENTS.md** (Codex): the same content without frontmatter. Plain Markdown at the repository root, or `~/.codex/AGENTS.md` for all projects. Codex stops reading instruction files once they add up to 32 KiB by default (`project_doc_max_bytes`), so the file must stay under 32 KiB. The Export step shows a size meter.
+- **Stacks:** Next.js + Tailwind + shadcn/ui (default), React + Tailwind, plain HTML/CSS. Each gets code that matches it.
+- **Review page:** `/debug/skill` prints the full SaaS Clean SKILL.md as plain text, rebuilt on every deploy.
 
 ## Pricing page reference scenario (the success test)
 
@@ -125,7 +144,7 @@ If the output looks like any generic SaaS template, the skill file is not strong
 2. Token engine: turns slider and picker values into a design system object.
 3. Skill file generator: turns that object into the markdown file, plus download.
 4. Bento board shell and the system tiles with controls.
-5. Live preview tabs.
+5. Live preview tabs. The editor is a ten step wizard: Colors, Typography, Radius, Spacing, Borders, Shadows, Buttons and inputs, Signature details, Tone of voice, Export.
 6. Autosave, import, presets, polish, final deploy.
 
 ## Working rules for code

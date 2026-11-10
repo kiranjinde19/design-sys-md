@@ -190,8 +190,8 @@ export function generateSignature(
       boxShadow: shadowAt(elevation, 2),
     },
     "tinted-bento-tile": {
-      background: brand[50],
-      border: `${border} ${brand[100]}`,
+      background: colors.roles.card,
+      border: `${border} ${colors.roles["card-border"]}`,
       borderRadius: radius.lg,
     },
     "glass-blur": {

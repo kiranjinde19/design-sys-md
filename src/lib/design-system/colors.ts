@@ -9,6 +9,7 @@
  */
 
 import { hexToOklch, hslHue, normalizeHex, oklchToHex } from "./color-math";
+import { appearanceOf, worstCaseDistance } from "./color-vision";
 import { checkContrast, contrastLevels, contrastRatio, pickReadableText, relativeLuminance } from "./contrast";
 import {
   BRAND_STEP,
@@ -17,6 +18,7 @@ import {
   type ColorScale,
   type ColorSettings,
   type ColorTokens,
+  type CardStyle,
   type ColorRoleTokenName,
   type ContrastPair,
   type ScaleGuidance,
@@ -253,7 +255,79 @@ export function generateScaleReport(scale: ColorScale, ink: string): ScaleReport
   return { contrast, guidance };
 }
 
-export function generateColors(settings: ColorSettings): ColorTokens {
+/**
+ * The lightest shade that reaches the target on every surface in the list. Darker surfaces
+ * are the hardest to beat, so each surface is solved on its own and the darkest answer wins.
+ */
+export function lightestShadeReachingAll(scale: ColorScale, surfaces: string[], target: number): string {
+  const candidates = surfaces.map((surface) => lightestShadeReaching(scale, surface, target));
+  const darkest = candidates.reduce((a, b) => (relativeLuminance(b) < relativeLuminance(a) ? b : a));
+  return darkest;
+}
+
+/** Where each chart color gets its hue. Lightness is searched for, see generateChartColors. */
+const CHART_HUES: ("brand" | SemanticName | "brand+60")[] = ["brand", "warning", "success", "error", "brand+60"];
+
+/** The lightness values tried for each chart color. Colors lighter than this fail 3:1 on white. */
+const CHART_LIGHTNESS = [0.36, 0.4, 0.44, 0.48, 0.52, 0.56, 0.6, 0.64, 0.67];
+
+/**
+ * Five chart colors with distinct hues taken from the brand and status colors. Chart 1 is the
+ * brand color. For the rest, the hue is fixed and lightness is searched: of all the combinations
+ * that reach 3:1 on the background, the one whose closest pair stays furthest apart under normal
+ * vision, deuteranopia, protanopia and tritanopia wins. So the colors differ in lightness as well
+ * as hue, and stay readable for color blind users.
+ */
+export function generateChartColors(brand: ColorScale, semantic: Record<SemanticName, ColorScale>, background: string): string[] {
+  const brandOklch = hexToOklch(brand[BRAND_STEP]);
+  const reaches = (hex: string) => contrastRatio(hex, background) >= 3;
+
+  const steps: ScaleStep[] = [600, 700, 800, 900];
+  const first = brand[steps.find((step) => reaches(brand[step])) ?? 900];
+
+  // For each free slot, every lightness that reaches 3:1.
+  const options = CHART_HUES.slice(1).map((hue) => {
+    const source = hue === "brand+60" ? brandOklch : hexToOklch(semantic[hue as SemanticName][BRAND_STEP]);
+    const h = hue === "brand+60" ? (brandOklch.h + 60) % 360 : source.h;
+    const c = Math.max(source.c, 0.12);
+    return CHART_LIGHTNESS.map((l) => oklchToHex({ l, c, h }))
+      .filter(reaches)
+      .map((hex) => ({ hex, look: appearanceOf(hex) }));
+  });
+  if (options.some((list) => list.length === 0)) {
+    // A very dark background could rule everything out. Fall back to the plain scale steps.
+    return [first, semantic.warning[700], semantic.success[700], semantic.error[700], semantic.info[700]];
+  }
+
+  const firstLook = appearanceOf(first);
+  let best: { score: number; picks: string[] } = { score: -1, picks: [] };
+  const [o1, o2, o3, o4] = options;
+  for (const a of o1) {
+    const dA = worstCaseDistance(firstLook, a.look);
+    if (dA <= best.score) continue;
+    for (const b of o2) {
+      const dB = Math.min(dA, worstCaseDistance(firstLook, b.look), worstCaseDistance(a.look, b.look));
+      if (dB <= best.score) continue;
+      for (const c of o3) {
+        const dC = Math.min(dB, worstCaseDistance(firstLook, c.look), worstCaseDistance(a.look, c.look), worstCaseDistance(b.look, c.look));
+        if (dC <= best.score) continue;
+        for (const d of o4) {
+          const score = Math.min(
+            dC,
+            worstCaseDistance(firstLook, d.look),
+            worstCaseDistance(a.look, d.look),
+            worstCaseDistance(b.look, d.look),
+            worstCaseDistance(c.look, d.look),
+          );
+          if (score > best.score) best = { score, picks: [a.hex, b.hex, c.hex, d.hex] };
+        }
+      }
+    }
+  }
+  return [first, ...best.picks];
+}
+
+export function generateColors(settings: ColorSettings, options: { cardStyle: CardStyle }): ColorTokens {
   const brand = generateBrandScale(settings.brand);
   const neutral = generateNeutralScale(settings.neutralTone, settings.brand);
   const semantic = generateSemanticScales();
@@ -268,10 +342,17 @@ export function generateColors(settings: ColorSettings): ColorTokens {
 
   const background = resolve(r.background);
   const foreground = resolve(r.foreground);
-  const card = resolve(r.card);
   const primary = resolve(r.primary);
   const muted = resolve(r.muted);
   const destructive = resolve(r.destructive);
+
+  // The card role follows the card style. A tinted bento tile is the brand 50 tint with a brand 100
+  // border, so bg-card gives the same result as the signature card.
+  const tinted = options.cardStyle === "tinted-bento-tile";
+  const plainCard = resolve(r.card);
+  const card = tinted ? brand[50] : plainCard;
+  const cardBorder = tinted ? brand[100] : resolve(r.border);
+
   // Secondary and accent use the secondary color's scale when one was added, and the neutral
   // scale when not. Never anything else, so they can not drift toward a status color.
   const quiet = secondary ?? neutral;
@@ -279,16 +360,24 @@ export function generateColors(settings: ColorSettings): ColorTokens {
   const accentFill = quiet[100];
   const onQuiet = (bg: string) => (contrastLevels(quiet[900], bg).normal ? quiet[900] : readable(bg));
 
-  // Outlines of form controls must stay visible: the lightest neutral that reaches 3:1.
-  const input = lightestShadeReaching(neutral, background, 3);
+  // Outlines of form controls must stay visible on every surface they can sit on: the page,
+  // a card, a muted area, an accent area and the tinted bento tile.
+  const tile = brand[50];
+  const inputSurfaces = [background, card, muted, accentFill, tile];
+  const input = lightestShadeReachingAll(neutral, inputSurfaces, 3);
   // Placeholder text is text, so it needs 4.5:1.
   const placeholder = lightestShadeReaching(neutral, background, 4.5);
+
+  const charts = generateChartColors(brand, semantic, background);
 
   const roles: ColorTokens["roles"] = {
     background,
     foreground,
     card,
     "card-foreground": foreground,
+    // A popover is a floating menu, so it keeps the plain card color even when cards are tinted.
+    popover: plainCard,
+    "popover-foreground": foreground,
     primary,
     "primary-foreground": readable(primary),
     secondary: secondaryFill,
@@ -302,21 +391,29 @@ export function generateColors(settings: ColorSettings): ColorTokens {
     border: resolve(r.border),
     input,
     ring: resolve(r.ring),
+    "chart-1": charts[0],
+    "chart-2": charts[1],
+    "chart-3": charts[2],
+    "chart-4": charts[3],
+    "chart-5": charts[4],
+    "card-border": cardBorder,
   };
 
+  type Surface = ColorRoleTokenName | { name: "tinted-tile"; hex: string };
   const pair = (
     foregroundRole: ColorRoleTokenName | "placeholder",
-    backgroundRole: ColorRoleTokenName,
+    surface: Surface,
     kind: "text" | "ui" = "text",
-    label = `${foregroundRole} on ${backgroundRole}`,
+    label?: string,
   ): ContrastPair => {
     const fg = foregroundRole === "placeholder" ? placeholder : roles[foregroundRole];
-    const bg = roles[backgroundRole];
+    const backgroundRole = typeof surface === "string" ? surface : surface.name;
+    const bg = typeof surface === "string" ? roles[surface] : surface.hex;
     const levels = contrastLevels(fg, bg);
     const required = kind === "text" ? 4.5 : 3;
     return {
       id: `${foregroundRole}-on-${backgroundRole}`,
-      label,
+      label: label ?? `${foregroundRole} on ${backgroundRole}`,
       foregroundRole,
       backgroundRole,
       foreground: fg,
@@ -333,6 +430,7 @@ export function generateColors(settings: ColorSettings): ColorTokens {
     // Every shadcn foreground on its own background
     pair("foreground", "background"),
     pair("card-foreground", "card"),
+    pair("popover-foreground", "popover"),
     pair("primary-foreground", "primary"),
     pair("secondary-foreground", "secondary"),
     pair("muted-foreground", "muted"),
@@ -341,11 +439,21 @@ export function generateColors(settings: ColorSettings): ColorTokens {
     // Common real-world combinations
     pair("muted-foreground", "background"),
     pair("primary", "background", "text", "primary as link text on background"),
-    // Interface parts the user must be able to see, held to 3:1.
-    // Decorative borders and dividers have no WCAG requirement, so they are not checked.
-    pair("input", "background", "ui", "input border on background"),
     pair("placeholder", "background", "text", "placeholder text on input background"),
+    // Interface parts the user must be able to see, held to 3:1. The input border is checked on
+    // every surface it can sit on. Decorative borders and dividers have no WCAG requirement.
+    pair("input", "background", "ui", "input border on background"),
+    pair("input", "card", "ui", "input border on card"),
+    pair("input", "muted", "ui", "input border on muted"),
+    pair("input", "accent", "ui", "input border on accent"),
+    pair("input", { name: "tinted-tile", hex: tile }, "ui", "input border on tinted bento tile"),
     pair("ring", "background", "ui", "focus ring on background"),
+    // Chart colors, each on the page background
+    pair("chart-1", "background", "ui", "chart 1 on background"),
+    pair("chart-2", "background", "ui", "chart 2 on background"),
+    pair("chart-3", "background", "ui", "chart 3 on background"),
+    pair("chart-4", "background", "ui", "chart 4 on background"),
+    pair("chart-5", "background", "ui", "chart 5 on background"),
   ];
 
   const reports: ColorTokens["reports"] = {

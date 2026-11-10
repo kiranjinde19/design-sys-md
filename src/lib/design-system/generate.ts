@@ -12,7 +12,7 @@ import { generateTypography } from "./typography";
 import type { DesignSystem, DesignSystemSettings, DesignSystemTokens } from "./types";
 
 export function generateTokens(settings: DesignSystemSettings): DesignSystemTokens {
-  const colors = generateColors(settings.colors);
+  const colors = generateColors(settings.colors, { cardStyle: settings.signature.cardStyle });
   const typography = generateTypography(settings.typography);
   const icons = generateIcons(settings.icons);
   const radius = generateRadius(settings.radius);

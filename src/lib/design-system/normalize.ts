@@ -25,6 +25,9 @@ import {
   type IconSettings,
   type RadiusSettings,
   type ScaleName,
+  type ProjectSettings,
+  type VoiceSettings,
+  STACK_IDS,
   type SignatureSettings,
   type SpacingSettings,
   type TypographySettings,
@@ -77,6 +80,12 @@ function weightFor(value: unknown, choice: FontChoice, fallback: FontWeight): Fo
   return nearestWeight(wanted, offeredWeights(choice));
 }
 
+/** Free text that ends up in a file header: one line, no angle brackets, no control characters. */
+function oneLine(value: unknown, fallback: string, max: number): string {
+  if (typeof value !== "string") return fallback;
+  return value.replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+}
+
 const SCALE_NAMES: readonly ScaleName[] = ["brand", "neutral", "success", "warning", "error", "info"];
 
 function normalizeColorRef(value: unknown, fallback: ColorRef): ColorRef {
@@ -100,6 +109,8 @@ export function normalizeSettings(input: unknown, base: DesignSystemSettings): D
   const elevation = asRecord(root.elevation);
   const controls = asRecord(root.controls);
   const signature = asRecord(root.signature);
+  const voice = asRecord(root.voice);
+  const project = asRecord(root.project);
   const rolesIn = asRecord(colors.roles);
 
   const roles = {} as Record<ColorRoleName, ColorRef>;
@@ -162,6 +173,16 @@ export function normalizeSettings(input: unknown, base: DesignSystemSettings): D
       height: num(controls.height, 32, 56, base.controls.height, 4),
     },
     signature: signatureOut as unknown as SignatureSettings,
+    voice: {
+      formality: num(voice.formality, 1, 5, base.voice.formality, 1),
+      energy: num(voice.energy, 1, 5, base.voice.energy, 1),
+      detail: num(voice.detail, 1, 5, base.voice.detail, 1),
+    },
+    project: {
+      name: oneLine(project.name, base.project.name, 60),
+      description: oneLine(project.description, base.project.description, 200),
+      stack: oneOf(project.stack, STACK_IDS, base.project.stack),
+    },
   };
 }
 
@@ -176,6 +197,8 @@ export interface SettingsPatch {
   elevation?: Partial<ElevationSettings>;
   controls?: Partial<ControlSettings>;
   signature?: Partial<SignatureSettings>;
+  voice?: Partial<VoiceSettings>;
+  project?: Partial<ProjectSettings>;
 }
 
 /** Applies a patch on top of existing settings, then validates the result. */

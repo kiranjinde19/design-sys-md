@@ -87,11 +87,19 @@ export function updateSettings(patch: SettingsPatch) {
   commit({ ...current, settings: applyPatch(current.settings, patch) });
 }
 
+/** Switching preset changes the look, but keeps the product name, description and stack. */
 export function applyPreset(presetId: PresetId) {
-  commit({ presetId, settings: PRESETS[presetId].settings });
+  const { settings } = getSnapshot();
+  commit({ presetId, settings: { ...PRESETS[presetId].settings, project: settings.project } });
 }
 
 export function resetToPreset() {
+  const { presetId, settings } = getSnapshot();
+  commit({ presetId, settings: { ...PRESETS[presetId].settings, project: settings.project } });
+}
+
+/** Replaces everything, for importing a previously exported file. The settings are validated first. */
+export function importSettings(raw: unknown) {
   const { presetId } = getSnapshot();
-  commit({ presetId, settings: PRESETS[presetId].settings });
+  commit({ presetId, settings: normalizeSettings(raw, PRESETS[presetId].settings) });
 }

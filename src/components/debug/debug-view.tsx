@@ -10,11 +10,13 @@ import { DebugSignature } from "./debug-components";
 import { DebugControls } from "./debug-controls";
 import { DebugBorders, DebugRadius, DebugShadows, DebugSpacing } from "./debug-shape";
 import { DebugType } from "./debug-type";
+import { ExportPanel } from "@/components/export/export-panel";
+import { VoiceEditor } from "@/components/voice/voice-editor";
 import { TypographyEditor } from "@/components/typography/typography-editor";
 import { useSelectedFonts } from "@/components/typography/google-fonts";
 
 /** Each tab has its own link, e.g. /debug#buttons, so a section can be bookmarked or shared. */
-const TAB_IDS = ["colors", "typography", "radius", "spacing", "borders", "shadows", "buttons", "signature", "raw"];
+const TAB_IDS = ["colors", "typography", "radius", "spacing", "borders", "shadows", "buttons", "signature", "voice", "export"];
 
 function tabFromHash(): number {
   if (typeof window === "undefined") return 0;
@@ -23,7 +25,7 @@ function tabFromHash(): number {
 }
 
 export function DebugView() {
-  const { ready, tokens } = useDesignSystem();
+  const { ready } = useDesignSystem();
   // Load only the fonts currently selected, so every tab previews with the real fonts.
   useSelectedFonts();
   const [active, setActiveState] = useState(tabFromHash);
@@ -49,14 +51,8 @@ export function DebugView() {
     { label: "Shadows", content: <DebugShadows /> },
     { label: "Buttons and inputs", content: <DebugButtons /> },
     { label: "Signature details", content: <DebugSignature /> },
-    {
-      label: "Raw tokens",
-      content: (
-        <pre className="max-h-[70vh] overflow-auto rounded-xl border border-border p-4 font-mono text-xs">
-          {JSON.stringify(tokens, null, 2)}
-        </pre>
-      ),
-    },
+    { label: "Tone of voice", content: <VoiceEditor /> },
+    { label: "Export", content: <ExportPanel /> },
   ];
   const last = tabs.length - 1;
 

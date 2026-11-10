@@ -11,9 +11,9 @@ import {
   isDisplayFont,
   offeredWeights,
   sanitizeFontName,
+  searchFonts,
   type FontCategory,
   type FontChoice,
-  type FontEntry,
   type FontWeight,
 } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
@@ -36,13 +36,6 @@ interface FontPickerProps {
   markDisplay?: boolean;
   /** Extra controls shown at the bottom, such as the tracking slider. */
   children?: ReactNode;
-}
-
-function matches(font: FontEntry, query: string, filter: CategoryFilter) {
-  if (filter !== "all" && font.category !== filter) return false;
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
-  return font.name.toLowerCase().includes(q) || font.tags.some((tag) => tag.includes(q));
 }
 
 /** Fields for the user's own licensed font. The preview uses the chosen fallback. */
@@ -115,7 +108,7 @@ export function FontPicker({
   const [filter, setFilter] = useState<CategoryFilter>(initialCategory);
   const [brandMode, setBrandMode] = useState(choice.kind === "brand");
 
-  const visible = FONT_CATALOG.filter((font) => matches(font, query, filter));
+  const visible = searchFonts(query, filter);
   const weights = offeredWeights(choice);
   const current = effectiveFont(choice);
 
@@ -147,6 +140,9 @@ export function FontPicker({
               </Button>
             ))}
           </div>
+          <p className="text-xs text-muted-foreground" aria-live="polite">
+            {visible.length} of {FONT_CATALOG.filter((font) => filter === "all" || font.category === filter).length} fonts
+          </p>
           <ul className="max-h-56 overflow-y-auto rounded-lg border border-border" role="listbox" aria-label={`${title} fonts`}>
             {visible.length === 0 ? (
               <li className="p-3 text-sm text-muted-foreground">No fonts match.</li>

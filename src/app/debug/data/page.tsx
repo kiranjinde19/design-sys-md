@@ -8,6 +8,7 @@ import { fontNamesUrl, selectedFontsUrl } from "@/lib/design-system/font-loading
 import { SIGNATURE_CATALOG } from "@/lib/design-system/signature";
 import {
   SCALE_STEPS,
+  EXTRA_ROLE_NAMES,
   SHADCN_ROLE_NAMES,
   type ColorScale,
   type ContrastLevels,
@@ -83,7 +84,14 @@ const sections: { title: string; body: string }[] = [
   },
   {
     title: "Color roles (shadcn/ui names, each maps to the CSS variable of the same name)",
-    body: SHADCN_ROLE_NAMES.map((role) => `${pad(`--${role}`, 26)}${tokens.colors.roles[role]}`).join("\n"),
+    body: [
+      ...[...SHADCN_ROLE_NAMES, ...EXTRA_ROLE_NAMES].map(
+        (role) => `${pad(`--${role}`, 26)}${tokens.colors.roles[role]}${(EXTRA_ROLE_NAMES as readonly string[]).includes(role) ? "   (extra, not a shadcn role)" : ""}`,
+      ),
+      "",
+      `Card style: ${preset.settings.signature.cardStyle}. The card role follows it: a tinted bento tile makes card the brand 50 tint with card-border as its brand 100 border.`,
+      "Chart colors 1 to 5: distinct hues from the brand and status colors, searched for the best separation under normal, deuteranopia, protanopia and tritanopia vision, each at least 3:1 on the background.",
+    ].join("\n"),
   },
   {
     title: "Role contrast checks",

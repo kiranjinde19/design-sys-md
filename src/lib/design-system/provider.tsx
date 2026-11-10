@@ -14,6 +14,7 @@ import {
   applyPreset,
   getServerSnapshot,
   getSnapshot,
+  importSettings,
   resetToPreset,
   subscribe,
   updateSettings,
@@ -35,6 +36,8 @@ export interface DesignSystemContextValue {
   applyPreset: (presetId: PresetId) => void;
   /** Throw away edits and return to the current preset. */
   reset: () => void;
+  /** Replace everything with settings from an exported file. Invalid values are corrected. */
+  importSettings: (raw: unknown) => void;
 }
 
 const DesignSystemContext = createContext<DesignSystemContextValue | null>(null);
@@ -58,6 +61,7 @@ export function DesignSystemProvider({ children }: { children: ReactNode }) {
       update: updateSettings,
       applyPreset,
       reset: resetToPreset,
+      importSettings,
     };
   }, [stored, ready]);
 

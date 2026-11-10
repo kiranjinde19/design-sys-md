@@ -6,6 +6,7 @@ import {
   SETTINGS_SCHEMA_VERSION,
   type ColorRef,
   type DesignSystemSettings,
+  type ProjectSettings,
   type ScaleStep,
 } from "./types";
 
@@ -36,6 +37,8 @@ const DEFAULT_ROLES = {
   ring: ref("brand", 500),
 };
 
+const DEFAULT_PROJECT: ProjectSettings = { name: "", description: "", stack: "next-tailwind-shadcn" };
+
 const SAAS_CLEAN: DesignSystemSettings = {
   schemaVersion: SETTINGS_SCHEMA_VERSION,
   colors: { brand: "#4F46E5", secondary: null, neutralTone: "cool", roles: DEFAULT_ROLES },
@@ -57,6 +60,9 @@ const SAAS_CLEAN: DesignSystemSettings = {
   elevation: { levels: 5, intensity: 50, style: "soft" },
   controls: { secondaryStyle: "fill", height: 40 },
   signature: SAAS_CLEAN_SIGNATURE,
+  // Casual, calm, concise.
+  voice: { formality: 4, energy: 2, detail: 2 },
+  project: DEFAULT_PROJECT,
 };
 
 const BLANK_SLATE: DesignSystemSettings = {
@@ -80,6 +86,8 @@ const BLANK_SLATE: DesignSystemSettings = {
   elevation: { levels: 3, intensity: 30, style: "soft" },
   controls: { secondaryStyle: "fill", height: 40 },
   signature: BLANK_SLATE_SIGNATURE,
+  voice: { formality: 3, energy: 3, detail: 3 },
+  project: DEFAULT_PROJECT,
 };
 
 export const PRESETS: Record<PresetId, Preset> = {

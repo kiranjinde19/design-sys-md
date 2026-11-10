@@ -37,6 +37,8 @@ export const SHADCN_ROLE_NAMES = [
   "foreground",
   "card",
   "card-foreground",
+  "popover",
+  "popover-foreground",
   "primary",
   "primary-foreground",
   "secondary",
@@ -50,15 +52,26 @@ export const SHADCN_ROLE_NAMES = [
   "border",
   "input",
   "ring",
+  "chart-1",
+  "chart-2",
+  "chart-3",
+  "chart-4",
+  "chart-5",
 ] as const;
-export type ColorRoleTokenName = (typeof SHADCN_ROLE_NAMES)[number];
+
+/** Roles shadcn does not define but this system needs. */
+export const EXTRA_ROLE_NAMES = ["card-border"] as const;
+
+export type ColorRoleTokenName = (typeof SHADCN_ROLE_NAMES)[number] | (typeof EXTRA_ROLE_NAMES)[number];
 
 /**
  * The roles a user can assign to a swatch. The rest are worked out automatically:
  * the foregrounds that sit on a colored fill are picked for readable contrast,
- * card-foreground follows foreground, input is the lightest neutral that reaches
- * 3:1 on the background, and secondary and accent follow the optional secondary
- * color (or the neutral grays when there is none).
+ * card-foreground follows foreground, card follows the card style (the brand 50
+ * tint for "tinted bento tile"), input is the lightest neutral that reaches 3:1 on
+ * every surface it can sit on, popover follows the plain card color, the chart colors
+ * come from the brand and status hues, and secondary and accent follow the optional
+ * secondary color (or the neutral grays when there is none).
  */
 export const COLOR_ROLE_NAMES = [
   "background",
@@ -177,6 +190,28 @@ export interface SignatureSettings {
   divider: DividerStyle;
 }
 
+/** The stack the generated skill file is written for. */
+export type StackId = "next-tailwind-shadcn" | "react-tailwind" | "html-css";
+export const STACK_IDS: readonly StackId[] = ["next-tailwind-shadcn", "react-tailwind", "html-css"];
+
+/** Three tone sliders, each from 1 to 5. */
+export interface VoiceSettings {
+  /** 1 formal, 5 casual. */
+  formality: number;
+  /** 1 calm, 5 enthusiastic. */
+  energy: number;
+  /** 1 concise, 5 explanatory. */
+  detail: number;
+}
+
+/** Facts about the product the skill file is written for. */
+export interface ProjectSettings {
+  name: string;
+  /** One line describing the product. */
+  description: string;
+  stack: StackId;
+}
+
 export const SETTINGS_SCHEMA_VERSION = 1;
 
 export interface DesignSystemSettings {
@@ -190,6 +225,8 @@ export interface DesignSystemSettings {
   elevation: ElevationSettings;
   controls: ControlSettings;
   signature: SignatureSettings;
+  voice: VoiceSettings;
+  project: ProjectSettings;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -246,7 +283,8 @@ export interface ContrastPair {
   label: string;
   /** Role names, e.g. "primary-foreground" on "primary". */
   foregroundRole: ColorRoleTokenName | "placeholder";
-  backgroundRole: ColorRoleTokenName;
+  /** "tinted-tile" is the signature bento tile surface, which is not a role of its own. */
+  backgroundRole: ColorRoleTokenName | "tinted-tile";
   foreground: string;
   background: string;
   /** "text" pairs need 4.5:1. "ui" pairs (borders, input outlines, focus rings) need 3:1. */
