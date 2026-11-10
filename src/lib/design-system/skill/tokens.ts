@@ -1,7 +1,7 @@
 import { SYSTEM_STACKS, nearestWeight } from "../fonts";
 import { selectedFontsUrl } from "../font-loading";
 import { SCALE_STEPS, type ColorScale, type FontToken, type SemanticName } from "../types";
-import { fence, lines, remOf, shadowClass, unit, type SkillContext } from "./context";
+import { compactCss, fence, lines, recipeLines, remOf, shadowClass, spaceVar, unit, type SkillContext } from "./context";
 
 /** Semantic scale steps written out. Enough for status text, badges and alerts. */
 const SEMANTIC_STEPS = [50, 600, 700, 800] as const;
@@ -120,7 +120,7 @@ function roleVars(ctx: SkillContext, withRadius: boolean, prefix = "--"): string
   const v = controls.buttons.variants;
   const role = (name: string) => `${prefix}${name}: ${colors.roles[name as keyof typeof colors.roles]};`;
   return lines(
-    "  /* Roles (shadcn names) and derived button states. Replace the values init wrote */",
+    ctx.shadcn ? "  /* Roles (shadcn names) and derived button states. Replace the values init wrote */" : "  /* Roles (shadcn names) and derived button states */",
     ROLE_GROUPS.map((group) => `  ${group.map(role).join(" ")}`),
     `  ${prefix}placeholder: ${colors.placeholder};${withRadius ? ` --radius: ${radius.md}px;` : ""} ${prefix}primary-hover: ${v.primary.hover.background}; ${prefix}primary-pressed: ${v.primary.pressed.background};`,
     `  ${prefix}destructive-hover: ${v.destructive.hover.background}; ${prefix}destructive-pressed: ${v.destructive.pressed.background};`,
@@ -174,24 +174,24 @@ function tailwindCss(ctx: SkillContext): string[] {
   const radiusLine = `  --radius-sm: ${radius.sm}px; --radius-md: ${radius.md}px; --radius-lg: ${radius.lg}px; --radius-full: ${radius.full}px;`;
   const commonNoRadius = common.filter((line) => !line.includes("--radius-sm:"));
   return lines(
-    ":root {",
-    roleVars(ctx, true),
-    "}",
-    "",
+    "/* Order in globals.css: 1 imports, 2 this @theme (with the reset), 3 shadcn's own @theme inline, 4 the final @theme inline, 5 :root values, 6 the base layer rule */",
     "@theme {",
-    "  /* FIRST, above shadcn's own @theme inline block: the reset erases role mappings defined before it",
-    "     (build error: Cannot apply unknown utility class `border-border`) */",
+    "  /* Must come before shadcn's block: the reset erases earlier role mappings (build error: unknown utility `border-border`) */",
     "  --color-*: initial; --text-*: initial; --shadow-*: initial;",
     commonNoRadius,
     "}",
     "",
-    "/* shadcn's @theme inline block (from init) stays here, untouched */",
+    "/* (3) shadcn's @theme inline block from init stays here, untouched */",
     "",
     "@theme inline {",
-    "  /* LAST, below shadcn's block, so radius and fonts win over its values. Custom role mappings: */",
+    "  /* Must come after shadcn's block, so radius and fonts win. Custom role mappings: */",
     map(CUSTOM_ROLES),
     radiusLine,
     fontBlock,
+    "}",
+    "",
+    ":root {",
+    roleVars(ctx, true),
     "}",
     "",
     "@layer base { h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); } }",
@@ -200,6 +200,11 @@ function tailwindCss(ctx: SkillContext): string[] {
 
 function plainCss(ctx: SkillContext): string[] {
   const { colors, typography: ty, radius, elevation, spacing, controls } = ctx.t;
+  const sel = controls.selection;
+  const switchPad = (sel.switch.height - 2 * sel.borderWidth - sel.switch.thumb) / 2;
+  const switchTravel = sel.switch.width - 2 * sel.borderWidth - 2 * switchPad - sel.switch.thumb;
+  // Table row height: input padding twice plus the base line height.
+  const rowHeight = spacing.semantic.inputPaddingY * 2 + ty.sizes.find((size) => size.name === "base")!.lineHeightPx;
   return lines(
     ":root {",
     roleVars(ctx, false),
@@ -208,7 +213,7 @@ function plainCss(ctx: SkillContext): string[] {
     colors.secondary ? scaleLines("--", colors.secondary, "secondary", SECONDARY_STEPS) : null,
     (Object.keys(colors.semantic) as SemanticName[]).flatMap((name) => scaleLines("--", colors.semantic[name], name, SEMANTIC_STEPS)),
     `  --font-heading: ${ty.stacks.heading};`,
-    `  --font-body: ${ty.stacks.body};`,
+    `  --font-body: ${ty.stacks.body === ty.stacks.heading ? "var(--font-heading)" : ty.stacks.body};`,
     `  --font-mono: ${ty.stacks.mono};`,
     pack(ty.sizes.map((size) => `--text-${size.name}: ${remOf(size.px)}; --leading-${size.name}: ${remOf(size.lineHeightPx)};`), 2),
     `  --tracking-heading: ${ty.sizes.find((s) => s.step === 3)!.letterSpacing}; --tracking-heading-sm: ${ty.sizes.find((s) => s.step === 2)!.letterSpacing}; --tracking-heading-xs: ${ty.sizes.find((s) => s.step === 1)!.letterSpacing};`,
@@ -216,9 +221,14 @@ function plainCss(ctx: SkillContext): string[] {
     elevation.shadows.filter((s) => s.level > 0).map((s) => `  --shadow-${s.level}: ${s.css};`),
     pack(spacing.scale.map((step) => `--space-${step.key.replace(".", "_")}: ${step.px}px;`), 6),
     `  --control-h-sm: ${controls.buttons.height.sm}px; --control-h: ${controls.buttons.height.md}px; --control-h-lg: ${controls.buttons.height.lg}px; --button-px: ${spacing.semantic.buttonPaddingX}px; --button-py: ${spacing.semantic.buttonPaddingY}px; --input-px: ${spacing.semantic.inputPaddingX}px; --input-py: ${spacing.semantic.inputPaddingY}px;`,
+    `  --border-w: ${ctx.t.borders.width}px; --gap-inline: ${spaceVar(ctx, spacing.semantic.inlineGap)}; --gap-stack: ${spaceVar(ctx, spacing.semantic.stackGap)}; --pad-card: ${spaceVar(ctx, spacing.semantic.cardPadding)}; --gap-section: ${spaceVar(ctx, spacing.semantic.sectionGap)};`,
+    `  --check-size: ${sel.size}px; --switch-w: ${sel.switch.width}px; --switch-h: ${sel.switch.height}px; --switch-thumb: ${sel.switch.thumb}px; --switch-pad: ${switchPad}px; --switch-travel: ${switchTravel}px; --row-h: ${rowHeight}px;`,
+    `  --header-h: ${ctx.t.layout.headerHeight}px; --sidebar-w: ${ctx.t.layout.sidebar.width}px; --content-max: ${ctx.t.layout.maxContentWidth}px; --dialog-w: ${ctx.t.layout.dialogWidth}px;`,
     "}",
     "body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: var(--text-base); line-height: var(--leading-base); }",
     "h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",
+    // Automatic focus ring: the offset ring from the signature details, on every control and link.
+    compactCss([".btn:focus-visible, .input:focus-visible, .check:focus-visible, .radio:focus-visible, .switch:focus-visible, .tab:focus-visible, .menu__item:focus-visible, a:focus-visible {", ...recipeLines(ctx, ctx.t.signature.focusRing.css), "}"].join("\n"), 400).split("\n"),
   );
 }
 
@@ -246,11 +256,13 @@ export function tokensSection(ctx: SkillContext): string[] {
     fontLoading(ctx),
     "### Type, radius, spacing, borders, shadows",
     "",
-    `- **Type** (px size/line height, all whole even sizes, line heights multiples of 4): ${sizeLine}. Use xs for captions, sm for labels and helper text, base for body, inputs and buttons, lg for card titles, xl for section titles, 2xl to 3xl for page titles, 4xl to 5xl for marketing only.`,
+    `- **Type** (${tw ? `px size/line height, all whole even sizes, line heights multiples of 4): ${sizeLine}` : `${ty.sizes[0].px}px to ${ty.sizes[ty.sizes.length - 1].px}px, each with its \`--leading-*\` line height, which is a multiple of 4px)`}. Use xs for captions, sm for labels and helper text, base for body, inputs and buttons, lg for card titles, xl for section titles, 2xl to 3xl for page titles, 4xl to 5xl for marketing only.`,
     `- **Fonts:** headings ${ty.heading.name} ${ty.headingWeight}${tw ? " (`font-heading`)" : ""}, body ${ty.body.name} ${ty.bodyWeight}, labels and buttons ${ty.weights.medium}${ty.mono ? `, mono ${ty.mono.name}` : ", code in the system monospace stack"}. Heading tracking: ${tw ? "`tracking-heading` from 2xl up, `-sm` at xl, `-xs` at lg" : "`--tracking-heading` from 2xl up, `-sm` at xl, `-xs` at lg"}. Body text has no tracking.`,
     `- **Tabular numbers:** ${tw ? `\`${ty.tabularNumbers.className}\`` : "`font-variant-numeric: tabular-nums`"} on any column of numbers, price or metric. Right align numbers.`,
-    `- **Radius:** sm ${radius.sm}px ${tw ? "`rounded-sm`" : ""} checkboxes; md ${radius.md}px ${tw ? "`rounded-md`" : ""} buttons, inputs, selects, icon tiles; lg ${radius.lg}px ${tw ? "`rounded-lg`" : ""} cards, dialogs, popovers; full ${tw ? "`rounded-full`" : ""} radios, switches, avatars, badges.${tw ? "" : " Variables: `--radius-sm` to `--radius-full`."}`,
-    `- **Spacing** (${spacing.base}px grid, ${spacing.density}): ladder ${spacing.scale.map((s) => s.px).join(", ")}px${tw ? "; the class number is px divided by 4 (16px is `p-4`)" : " as `--space-N`"}. Inline gap ${sp(spacing.semantic.inlineGap)}, stack gap ${sp(spacing.semantic.stackGap)}, button padding ${sp(spacing.semantic.buttonPaddingX)} by ${sp(spacing.semantic.buttonPaddingY)}, input padding ${sp(spacing.semantic.inputPaddingX)} by ${sp(spacing.semantic.inputPaddingY)}, card padding ${sp(spacing.semantic.cardPadding)}, section gap ${sp(spacing.semantic.sectionGap)}.`,
+    tw
+      ? `- **Radius:** sm ${radius.sm}px \`rounded-sm\` checkboxes; md ${radius.md}px \`rounded-md\` buttons, inputs, selects, icon tiles; lg ${radius.lg}px \`rounded-lg\` cards, dialogs, popovers; full \`rounded-full\` radios, switches, avatars, badges.`
+      : `- **Radius:** \`--radius-sm\` ${radius.sm}px checkboxes; \`--radius-md\` ${radius.md}px buttons, inputs, selects, icon tiles; \`--radius-lg\` ${radius.lg}px cards, dialogs, popovers; \`--radius-full\` radios, switches, avatars, badges.`,
+    `- **Spacing** (${spacing.base}px grid, ${spacing.density}): ladder ${spacing.scale.map((s) => s.px).join(", ")}px${tw ? "; the class number is px divided by 4 (16px is `p-4`)" : " as `--space-N`"}. ${tw ? `Inline gap ${sp(spacing.semantic.inlineGap)}, stack gap ${sp(spacing.semantic.stackGap)}, button padding ${sp(spacing.semantic.buttonPaddingX)} by ${sp(spacing.semantic.buttonPaddingY)}, input padding ${sp(spacing.semantic.inputPaddingX)} by ${sp(spacing.semantic.inputPaddingY)}, card padding ${sp(spacing.semantic.cardPadding)}, section gap ${sp(spacing.semantic.sectionGap)}.` : `Roles: \`--gap-inline\` ${spacing.semantic.inlineGap}px, \`--gap-stack\` ${spacing.semantic.stackGap}px, \`--button-px\` and \`--button-py\`, \`--input-px\` and \`--input-py\`, \`--pad-card\` ${spacing.semantic.cardPadding}px, \`--gap-section\` ${spacing.semantic.sectionGap}px.`}`,
     `- **Borders** ${borders.width}px. Dividers and card edges use ${tw ? "`border-border`" : "`var(--border)`"}. Form controls use ${tw ? "`border-input`" : "`var(--input)`"}, the lightest neutral that reaches 3:1 on every surface. Never \`border\` on a form control.`,
     `- **Shadows:** ${elevation.levels === 0 ? "off. Separate surfaces with borders and tints." : `${elevation.levels} levels, ${elevation.style}. ${shadows}.`}`,
     "",

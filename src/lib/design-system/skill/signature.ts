@@ -87,11 +87,11 @@ export function signatureSection(ctx: SkillContext): string[] {
   return lines(
     "## Signature details",
     "",
-    `Chosen: ${chosen.join("; ")}. Apply them everywhere and never swap one. Add this CSS to ${ctx.tailwind ? "globals.css" : "styles.css"}, after the tokens. It is the exact definition, with token references.`,
+    `Chosen: ${chosen.join("; ")}. Apply them everywhere and never swap one. Add this CSS to ${ctx.shadcn ? "globals.css" : ctx.tailwind ? "src/index.css" : "styles.css"}, after the tokens. It is the exact definition, with token references.`,
     "",
     fence("css", compactCss(css.join("\n")).split("\n")),
     "",
-    `Every container is a \`card\`, every icon with a title an \`icon-tile\`, every focusable element \`focus-ring\`, and sections are separated by \`divider\`, never a bare \`border-t\` or \`<hr>\`. The primary button ${ctx.tailwind ? "" : "(\`btn--primary\`) "}adds \`cta\` on at most one action per screen.`,
+    `Every container is a \`card\`, every icon with a title an \`icon-tile\`, every focusable element ${ctx.tailwind ? "`focus-ring`" : "ringed (automatic on controls and links, `focus-ring` on anything custom)"}, and sections are separated by \`divider\`, never a bare border or \`<hr>\`. The primary button ${ctx.tailwind ? "" : "(\`btn--primary\`) "}adds \`cta\` on at most one action per screen.`,
     sig.featuredHighlight.notes ? `Featured: ${sig.featuredHighlight.notes}` : null,
     cta.notes ? `CTA: ${cta.notes}` : null,
     "",

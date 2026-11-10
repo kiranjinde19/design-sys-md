@@ -296,6 +296,13 @@ export function readableStep(scale: ColorScale, surfaces: string[], contrast: (a
   return order.find((step) => surfaces.every((surface) => contrast(scale[step], surface) >= 4.5)) ?? 900;
 }
 
+/** The spacing variable (plain CSS) closest to a px value, e.g. var(--space-3). Never a raw pixel value. */
+export function spaceVar(ctx: SkillContext, px: number): string {
+  const steps = ctx.t.spacing.scale;
+  const best = steps.reduce((a, b) => (Math.abs(b.px - px) < Math.abs(a.px - px) ? b : a));
+  return `var(--space-${best.key.replace(".", "_")})`;
+}
+
 export const DENSITIES: Density[] = ["compact", "comfortable", "spacious"];
 
 export const spacingFor = (ctx: SkillContext, density: Density) => generateSpacing({ base: ctx.s.spacing.base, density }).semantic;
@@ -325,3 +332,14 @@ export function paintClasses(ctx: SkillContext, style: ControlStateStyle, prefix
 }
 
 export { nearestWeight };
+
+/**
+ * Plain CSS only: removes the spaces around braces, colons and semicolons so component CSS costs
+ * fewer bytes. Values keep their inner spaces, so calc(), font shorthands and selectors stay valid.
+ */
+export function tight(ctx: SkillContext, css: string[]): string[] {
+  if (ctx.tailwind) return css;
+  return css.map((line) =>
+    line.startsWith("/*") ? line : line.replace(/:\s+/g, ":").replace(/;\s*}/g, "}").replace(/;\s+/g, ";").replace(/\s*{\s*/g, "{").replace(/\s*}\s*/g, "}"),
+  );
+}
