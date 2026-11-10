@@ -49,6 +49,12 @@ function scaleText(scale: ColorScale, report: ScaleReport) {
   ].join("\n");
 }
 
+
+const stateCell = (style: { background: string; color: string; borderColor: string; opacity: number; spinner: boolean }) =>
+  `bg ${style.background} text ${style.color} border ${style.borderColor}${style.spinner ? " +spinner" : ""}${style.opacity < 1 ? ` opacity ${style.opacity}` : ""}`;
+
+const controls = tokens.controls;
+
 const sections: { title: string; body: string }[] = [
   {
     title: "How to read the contrast columns",
@@ -126,6 +132,83 @@ const sections: { title: string; body: string }[] = [
   {
     title: `Shadow levels (${tokens.elevation.style}, intensity ${tokens.elevation.intensity})`,
     body: tokens.elevation.shadows.map((shadow) => `Level ${shadow.level}: ${shadow.css}`).join("\n"),
+  },
+  {
+    title: "Borders",
+    body: [
+      `Width ${tokens.borders.width}px`,
+      "",
+      "Decorative (dividers and cards, no contrast requirement):",
+      `  colorSubtle  ${tokens.borders.colorSubtle}`,
+      `  color        ${tokens.borders.color}`,
+      `  colorStrong  ${tokens.borders.colorStrong}`,
+      "",
+      "Form controls (inputs, checkboxes, radios, switches):",
+      `  input        ${tokens.borders.input}   lightest neutral that reaches 3:1 on the background`,
+      `               neutral 400 ${tokens.colors.neutral[400]} is too light, neutral 500 ${tokens.colors.neutral[500]} passes, so an in-between shade is generated`,
+      `  placeholder  ${tokens.colors.placeholder}   lightest neutral that reaches 4.5:1 on the background`,
+      "",
+      ...tokens.colors.contrastPairs
+        .filter((pair) => pair.id === "input-on-background" || pair.id === "placeholder-on-background")
+        .map((pair) => `${pad(pair.label, 40)}${pad(`${pair.foreground} on ${pair.background}`, 24)}${contrastCell(pair.levels)}  => ${pair.passes ? "PASS" : "FAIL"} (needs ${pair.required}:1)`),
+    ].join("\n"),
+  },
+  {
+    title: "Control padding (comfortable density, split between buttons and inputs)",
+    body: [
+      `Buttons  horizontal ${controls.buttons.paddingX.md}px (sm ${controls.buttons.paddingX.sm}, lg ${controls.buttons.paddingX.lg}), vertical ${controls.buttons.paddingY}px, height ${controls.buttons.height.md}px`,
+      `Inputs   horizontal ${controls.inputs.paddingX}px, vertical ${controls.inputs.paddingY}px, height ${controls.inputs.height}px`,
+    ].join("\n"),
+  },
+  {
+    title: `Button states (secondary is ${controls.secondaryStyle}, from the ${tokens.colors.secondary ? "secondary color" : "neutral"} scale)`,
+    body: [
+      "Focus = same colors as default plus the signature focus ring. Loading = full color plus a spinner. Only disabled is faded.",
+      "",
+      ...(Object.keys(controls.buttons.variants) as (keyof typeof controls.buttons.variants)[]).flatMap((variant) => [
+        variant.toUpperCase(),
+        ...(Object.keys(controls.buttons.variants[variant]) as (keyof (typeof controls.buttons.variants)["primary"])[]).map(
+          (state) => `  ${pad(state, 10)}${stateCell(controls.buttons.variants[variant][state])}`,
+        ),
+        "",
+      ]),
+    ].join("\n"),
+  },
+  {
+    title: "Focus ring (shown on focus for buttons, inputs, checkboxes, radios and switches)",
+    body: Object.entries(controls.focusRing)
+      .map(([property, value]) => `${property}: ${value}`)
+      .join("\n"),
+  },
+  {
+    title: "Loading spinner CSS",
+    body: `Size ${controls.buttons.spinner.size}px, stroke ${controls.buttons.spinner.strokeWidth}px\n\n${controls.buttons.spinner.stylesheet}`,
+  },
+  {
+    title: "Input states (focus adds the brand border and the focus ring)",
+    body: [
+      `Placeholder color ${controls.inputs.placeholderColor}`,
+      "",
+      ...(Object.keys(controls.inputs.states) as (keyof typeof controls.inputs.states)[]).map(
+        (state) => `${pad(state, 10)}${stateCell(controls.inputs.states[state])}`,
+      ),
+    ].join("\n"),
+  },
+  {
+    title: "Radio, checkbox and switch states (mark = check, dot, or switch thumb)",
+    body: [
+      `Checkbox and radio ${controls.selection.size}px, switch ${controls.selection.switch.width} x ${controls.selection.switch.height}px with a ${controls.selection.switch.thumb}px thumb, border ${controls.selection.borderWidth}px`,
+      `Radius: checkbox ${controls.selection.radius.checkbox}px, radio ${controls.selection.radius.radio}px, switch ${controls.selection.radius.switch}px`,
+      "",
+      ...(Object.keys(controls.selection.states) as (keyof typeof controls.selection.states)[]).flatMap((control) => [
+        control.toUpperCase(),
+        ...(Object.keys(controls.selection.states[control]) as (keyof (typeof controls.selection.states)["checkbox"])[]).map((state) => {
+          const st = controls.selection.states[control][state];
+          return `  ${pad(state, 10)}bg ${st.background} border ${st.borderColor} mark ${st.markColor}${state === "focus" ? " +focus ring" : ""}`;
+        }),
+        "",
+      ]),
+    ].join("\n"),
   },
   {
     title: "Signature detail defaults",

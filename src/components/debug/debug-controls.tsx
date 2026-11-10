@@ -146,7 +146,7 @@ function SecondaryColor() {
           type="checkbox"
           className="size-4 accent-primary"
           checked={secondary !== null}
-          onChange={(event) => update({ colors: { secondary: event.target.checked ? suggestions[1].hex : null } })}
+          onChange={(event) => update({ colors: { secondary: event.target.checked ? suggestions[0].hex : null } })}
         />
         Add a secondary color
       </label>

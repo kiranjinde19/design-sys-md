@@ -4,20 +4,13 @@ import type { CSSProperties } from "react";
 import {
   SIGNATURE_CATALOG,
   useDesignSystem,
-  type ButtonState,
-  type ButtonVariant,
   type CssRecipe,
-  type InputState,
 } from "@/lib/design-system";
 import { Section } from "./section";
 
 const asStyle = (recipe: CssRecipe) => recipe as CSSProperties;
 
-const BUTTON_VARIANTS: ButtonVariant[] = ["primary", "secondary", "tertiary", "destructive"];
-const BUTTON_STATES: ButtonState[] = ["default", "hover", "pressed", "disabled", "loading"];
-const INPUT_STATES: InputState[] = ["default", "hover", "focus", "error", "disabled"];
-
-export function DebugComponents({ part }: { part: "buttons" | "signature" }) {
+export function DebugSignature() {
   const { tokens } = useDesignSystem();
   const { controls, colors, typography, borders, signature, icons, spacing, radius } = tokens;
   const body = typography.sizes.find((size) => size.name === "base")!;
@@ -35,103 +28,6 @@ export function DebugComponents({ part }: { part: "buttons" | "signature" }) {
 
   return (
     <>
-      {part === "buttons" ? (
-        <>
-      <Section
-        title="Buttons"
-        description={`Secondary is ${controls.secondaryStyle}. Every state is derived from the brand color. Focus ring comes from the signature details.`}
-      >
-        <div className="overflow-x-auto" style={stage}>
-          <div className="grid min-w-[40rem] gap-3" style={{ gridTemplateColumns: "6rem repeat(5, 1fr)" }}>
-            <div />
-            {BUTTON_STATES.map((state) => (
-              <div key={state} className="text-xs" style={{ color: colors.roles["muted-foreground"] }}>
-                {state}
-              </div>
-            ))}
-            {BUTTON_VARIANTS.map((variant) => (
-              <div key={variant} className="contents">
-                <div className="self-center text-xs" style={{ color: colors.roles["muted-foreground"] }}>
-                  {variant}
-                </div>
-                {BUTTON_STATES.map((state) => {
-                  const s = controls.buttons.variants[variant][state];
-                  return (
-                    <button
-                      key={state}
-                      type="button"
-                      tabIndex={-1}
-                      style={{
-                        height: controls.buttons.height.md,
-                        paddingInline: controls.buttons.paddingX.md,
-                        borderRadius: controls.buttons.radius,
-                        fontWeight: controls.buttons.fontWeight,
-                        fontSize: body.px,
-                        fontFamily: "inherit",
-                        border: `${controls.buttons.borderWidth}px solid ${s.borderColor}`,
-                        background: s.background,
-                        color: s.color,
-                        opacity: s.opacity,
-                        cursor: state === "disabled" || state === "loading" ? "not-allowed" : "default",
-                      }}
-                    >
-                      {state === "loading" ? "Saving…" : "Button"}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-      </Section>
-
-      <Section title="Inputs" description="Default, hover, focus, error and disabled.">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" style={stage}>
-          {INPUT_STATES.map((state) => {
-            const s = controls.inputs.states[state];
-            return (
-              <div key={state} className="space-y-1.5">
-                <div style={{ fontSize: small.px, color: colors.roles["muted-foreground"] }}>{state}</div>
-                <input
-                  readOnly
-                  disabled={state === "disabled"}
-                  placeholder="Placeholder"
-                  style={{
-                    width: "100%",
-                    height: controls.inputs.height,
-                    paddingInline: controls.inputs.paddingX,
-                    borderRadius: controls.inputs.radius,
-                    border: `${controls.inputs.borderWidth}px solid ${s.borderColor}`,
-                    background: s.background,
-                    color: s.color,
-                    fontSize: body.px,
-                    fontFamily: "inherit",
-                    outline: "none",
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {controls.selectionRules.map((rule) => (
-            <div key={rule.control} className="rounded-lg border border-border p-3 text-sm">
-              <div className="font-semibold capitalize">{rule.control}</div>
-              <p className="mt-1 text-muted-foreground">
-                <span className="font-medium text-foreground">Use when: </span>
-                {rule.useWhen}
-              </p>
-              <p className="mt-1 text-muted-foreground">
-                <span className="font-medium text-foreground">Avoid when: </span>
-                {rule.avoidWhen}
-              </p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-        </>
-      ) : (
       <Section title="Signature details" description="The seven chosen moves, shown on small samples.">
         {cta.stylesheet ? <style>{cta.stylesheet}</style> : null}
         <div className="grid gap-4 md:grid-cols-2" style={stage}>
@@ -229,7 +125,6 @@ export function DebugComponents({ part }: { part: "buttons" | "signature" }) {
           . Icons: {icons.style}, {icons.strokeWidth}px stroke, {icons.strokeLinecap} ends.
         </p>
       </Section>
-      )}
     </>
   );
 }

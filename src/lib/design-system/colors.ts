@@ -9,7 +9,7 @@
  */
 
 import { hexToOklch, hslHue, normalizeHex, oklchToHex } from "./color-math";
-import { checkContrast, contrastLevels, pickReadableText } from "./contrast";
+import { checkContrast, contrastLevels, contrastRatio, pickReadableText, relativeLuminance } from "./contrast";
 import {
   BRAND_STEP,
   SCALE_STEPS,
@@ -130,19 +130,80 @@ export interface SecondarySuggestion {
   hex: string;
 }
 
+/** Secondary colors should never be mistaken for the status colors, so suggestions keep clear of them. */
+const KEEP_CLEAR_OF: SemanticName[] = ["warning", "error"];
+const KEEP_CLEAR_DEGREES = 45;
+
+const hueDistance = (a: number, b: number) => Math.abs(((a - b + 540) % 360) - 180);
+
 /**
  * Three starting points for an optional secondary color, all derived from the brand
- * color by turning its hue. The user can pick one or type their own.
+ * color by turning its hue. Turns that would land close to the warning or error
+ * hues are skipped. The first suggestion is always the safest default.
  */
 export function suggestSecondaryColors(brandHex: string): SecondarySuggestion[] {
   const { l, c, h } = hexToOklch(normalizeHex(brandHex) ?? FALLBACK_BRAND);
-  const make = (turn: number) =>
-    oklchToHex({ l: clamp(l, 0.55, 0.7), c: Math.max(c * 0.9, 0.12), h: (h + turn) % 360 });
-  return [
-    { label: "Analogous", hex: make(30) },
-    { label: "Split complement", hex: make(150) },
-    { label: "Complement", hex: make(180) },
+  const avoid = KEEP_CLEAR_OF.map((name) => hexToOklch(SEMANTIC_ANCHORS[name]).h);
+
+  const candidates = [
+    { label: "Analogous", turn: 30 },
+    { label: "Split complement", turn: 150 },
+    { label: "Complement", turn: 180 },
+    { label: "Analogous (other side)", turn: -30 },
+    { label: "Split complement (other side)", turn: 210 },
+    { label: "Triadic", turn: 120 },
+    { label: "Triadic (other side)", turn: 240 },
   ];
+
+  const picked: SecondarySuggestion[] = [];
+  for (const { label, turn } of candidates) {
+    const hue = (h + turn + 360) % 360;
+    if (avoid.some((target) => hueDistance(hue, target) < KEEP_CLEAR_DEGREES)) continue;
+    picked.push({
+      label,
+      hex: oklchToHex({ l: clamp(l, 0.55, 0.7), c: Math.max(c * 0.9, 0.12), h: hue }),
+    });
+    if (picked.length === 3) break;
+  }
+  return picked;
+}
+
+/**
+ * The lightest shade of a scale that reaches a contrast ratio against a background.
+ * Steps are coarse, so if the target falls between two steps, an in-between shade is
+ * generated, which keeps the result as light as the target allows.
+ */
+export function lightestShadeReaching(scale: ColorScale, background: string, target: number): string {
+  const steps = SCALE_STEPS.map((step) => scale[step]);
+  const lightBackground = relativeLuminance(background) > 0.4;
+  // Walk away from the background: light backgrounds go down the scale to black, dark ones up to white.
+  const path = lightBackground ? [...steps, BLACK] : [...steps].reverse().concat(WHITE);
+  const reaches = (hex: string) => contrastRatio(hex, background) >= target;
+
+  const first = path.findIndex(reaches);
+  if (first === -1) return path[path.length - 1];
+  if (first === 0) return path[0];
+
+  const from = hexToOklch(path[first - 1]);
+  const to = hexToOklch(path[first]);
+  const mix = (t: number) =>
+    oklchToHex({ l: from.l + (to.l - from.l) * t, c: from.c + (to.c - from.c) * t, h: from.h });
+
+  let low = 0;
+  let high = 1;
+  for (let i = 0; i < 24; i++) {
+    const mid = (low + high) / 2;
+    if (reaches(mix(mid))) high = mid;
+    else low = mid;
+  }
+  // Rounding to a hex color can land a hair under the target, so nudge until it truly passes.
+  let t = high;
+  let hex = mix(t);
+  while (!reaches(hex) && t < 1) {
+    t = Math.min(1, t + 0.004);
+    hex = mix(t);
+  }
+  return hex;
 }
 
 export function generateSemanticScales(): Record<SemanticName, ColorScale> {
@@ -203,10 +264,17 @@ export function generateColors(settings: ColorSettings): ColorTokens {
   const primary = resolve(r.primary);
   const muted = resolve(r.muted);
   const destructive = resolve(r.destructive);
-  // With a secondary color, secondary is that color and accent is its tint.
-  // Without one, both are the quiet neutral fill, like a default shadcn project.
-  const secondaryFill = secondary ? secondary[BRAND_STEP] : neutral[100];
-  const accentFill = secondary ? secondary[100] : neutral[100];
+  // Secondary and accent use the secondary color's scale when one was added, and the neutral
+  // scale when not. Never anything else, so they can not drift toward a status color.
+  const quiet = secondary ?? neutral;
+  const secondaryFill = quiet[100];
+  const accentFill = quiet[100];
+  const onQuiet = (bg: string) => (contrastLevels(quiet[900], bg).normal ? quiet[900] : readable(bg));
+
+  // Outlines of form controls must stay visible: the lightest neutral that reaches 3:1.
+  const input = lightestShadeReaching(neutral, background, 3);
+  // Placeholder text is text, so it needs 4.5:1.
+  const placeholder = lightestShadeReaching(neutral, background, 4.5);
 
   const roles: ColorTokens["roles"] = {
     background,
@@ -216,25 +284,25 @@ export function generateColors(settings: ColorSettings): ColorTokens {
     primary,
     "primary-foreground": readable(primary),
     secondary: secondaryFill,
-    "secondary-foreground": readable(secondaryFill),
+    "secondary-foreground": onQuiet(secondaryFill),
     muted,
     "muted-foreground": resolve(r["muted-foreground"]),
     accent: accentFill,
-    "accent-foreground": readable(accentFill),
+    "accent-foreground": onQuiet(accentFill),
     destructive,
     "destructive-foreground": readable(destructive),
     border: resolve(r.border),
-    input: resolve(r.input),
+    input,
     ring: resolve(r.ring),
   };
 
   const pair = (
-    foregroundRole: ColorRoleTokenName,
+    foregroundRole: ColorRoleTokenName | "placeholder",
     backgroundRole: ColorRoleTokenName,
     kind: "text" | "ui" = "text",
     label = `${foregroundRole} on ${backgroundRole}`,
   ): ContrastPair => {
-    const fg = roles[foregroundRole];
+    const fg = foregroundRole === "placeholder" ? placeholder : roles[foregroundRole];
     const bg = roles[backgroundRole];
     const levels = contrastLevels(fg, bg);
     const required = kind === "text" ? 4.5 : 3;
@@ -267,7 +335,8 @@ export function generateColors(settings: ColorSettings): ColorTokens {
     pair("primary", "background", "text", "primary as link text on background"),
     // Interface parts the user must be able to see, held to 3:1.
     // Decorative borders and dividers have no WCAG requirement, so they are not checked.
-    pair("input", "background", "ui", "input outline on background"),
+    pair("input", "background", "ui", "input border on background"),
+    pair("placeholder", "background", "text", "placeholder text on input background"),
     pair("ring", "background", "ui", "focus ring on background"),
   ];
 
@@ -283,5 +352,5 @@ export function generateColors(settings: ColorSettings): ColorTokens {
     },
   };
 
-  return { brand, secondary, neutral, semantic, roles, contrastPairs, reports };
+  return { brand, secondary, neutral, semantic, roles, placeholder, contrastPairs, reports };
 }

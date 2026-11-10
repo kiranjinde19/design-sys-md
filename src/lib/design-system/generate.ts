@@ -17,10 +17,10 @@ export function generateTokens(settings: DesignSystemSettings): DesignSystemToke
   const icons = generateIcons(settings.icons);
   const radius = generateRadius(settings.radius);
   const spacing = generateSpacing(settings.spacing);
-  const borders = generateBorders(settings.borders, colors.neutral);
+  const borders = generateBorders(settings.borders, colors.neutral, colors.roles.input);
   const elevation = generateElevation(settings.elevation, colors);
   const signature = generateSignature(settings.signature, { colors, radius, borders, spacing, elevation });
-  const controls = generateControls(settings.controls, { colors, radius, spacing, borders });
+  const controls = generateControls(settings.controls, { colors, radius, spacing, borders, signature, icons });
 
   return { colors, typography, icons, radius, spacing, borders, elevation, controls, signature };
 }

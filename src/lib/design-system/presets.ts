@@ -32,7 +32,6 @@ const DEFAULT_ROLES = {
   "muted-foreground": ref("neutral", 600),
   destructive: ref("error", 600),
   border: ref("neutral", 200),
-  input: ref("neutral", 300),
   ring: ref("brand", 500),
 };
 

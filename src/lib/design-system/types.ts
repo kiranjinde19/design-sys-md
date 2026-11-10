@@ -56,8 +56,9 @@ export type ColorRoleTokenName = (typeof SHADCN_ROLE_NAMES)[number];
 /**
  * The roles a user can assign to a swatch. The rest are worked out automatically:
  * the foregrounds that sit on a colored fill are picked for readable contrast,
- * card-foreground follows foreground, and secondary and accent follow the
- * optional secondary color (or the neutral grays when there is none).
+ * card-foreground follows foreground, input is the lightest neutral that reaches
+ * 3:1 on the background, and secondary and accent follow the optional secondary
+ * color (or the neutral grays when there is none).
  */
 export const COLOR_ROLE_NAMES = [
   "background",
@@ -68,7 +69,6 @@ export const COLOR_ROLE_NAMES = [
   "muted-foreground",
   "destructive",
   "border",
-  "input",
   "ring",
 ] as const;
 export type ColorRoleName = (typeof COLOR_ROLE_NAMES)[number];
@@ -231,7 +231,7 @@ export interface ContrastPair {
   id: string;
   label: string;
   /** Role names, e.g. "primary-foreground" on "primary". */
-  foregroundRole: ColorRoleTokenName;
+  foregroundRole: ColorRoleTokenName | "placeholder";
   backgroundRole: ColorRoleTokenName;
   foreground: string;
   background: string;
@@ -252,6 +252,8 @@ export interface ColorTokens {
   semantic: Record<SemanticName, ColorScale>;
   /** All 17 shadcn roles as hex colors. */
   roles: Record<ColorRoleTokenName, string>;
+  /** Placeholder text color: the lightest neutral shade that reaches 4.5:1 on the background. */
+  placeholder: string;
   /** Contrast at three levels for every step, plus safe-fill guidance, for every scale. */
   reports: {
     brand: ScaleReport;
@@ -329,6 +331,12 @@ export interface SpacingTokens {
 
 export interface BorderTokens {
   width: number;
+  /**
+   * Outline for inputs, checkboxes, radios and switches: the lightest neutral shade
+   * that reaches 3:1 on the background. Use color, colorSubtle and colorStrong for
+   * decorative dividers and cards instead.
+   */
+  input: string;
   color: string;
   colorSubtle: string;
   colorStrong: string;
@@ -371,7 +379,7 @@ export interface IconTokens {
 
 // Buttons and inputs
 export type ButtonVariant = "primary" | "secondary" | "tertiary" | "destructive";
-export type ButtonState = "default" | "hover" | "pressed" | "disabled" | "loading";
+export type ButtonState = "default" | "hover" | "pressed" | "focus" | "disabled" | "loading";
 export type InputState = "default" | "hover" | "focus" | "error" | "disabled";
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -380,6 +388,18 @@ export interface ControlStateStyle {
   color: string;
   borderColor: string;
   opacity: number;
+  /** Show a small spinner before the label (loading state). */
+  spinner: boolean;
+}
+
+export type SelectionControl = "checkbox" | "radio" | "switch";
+export type SelectionState = "default" | "hover" | "checked" | "focus" | "disabled" | "error";
+
+export interface SelectionStateStyle {
+  background: string;
+  borderColor: string;
+  /** The check mark, the radio dot, or the switch thumb. */
+  markColor: string;
 }
 
 export interface SelectionRule {
@@ -390,7 +410,10 @@ export interface SelectionRule {
 
 export interface ControlTokens {
   secondaryStyle: SecondaryButtonStyle;
+  /** The signature focus ring. Applied on focus to buttons, inputs, checkboxes, radios and switches. */
+  focusRing: CssRecipe;
   buttons: {
+    spinner: { size: number; strokeWidth: number; className: string; stylesheet: string };
     height: Record<ButtonSize, number>;
     paddingX: Record<ButtonSize, number>;
     paddingY: number;
@@ -407,6 +430,14 @@ export interface ControlTokens {
     borderWidth: number;
     placeholderColor: string;
     states: Record<InputState, ControlStateStyle>;
+  };
+  selection: {
+    /** Width and height of the checkbox box and the radio circle. */
+    size: number;
+    switch: { width: number; height: number; thumb: number };
+    radius: Record<SelectionControl, number>;
+    borderWidth: number;
+    states: Record<SelectionControl, Record<SelectionState, SelectionStateStyle>>;
   };
   selectionRules: SelectionRule[];
 }

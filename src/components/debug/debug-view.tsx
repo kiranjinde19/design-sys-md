@@ -5,14 +5,28 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useDesignSystem } from "@/lib/design-system";
 import { DebugColors } from "./debug-colors";
-import { DebugComponents } from "./debug-components";
+import { DebugButtons } from "./debug-buttons";
+import { DebugSignature } from "./debug-components";
 import { DebugControls } from "./debug-controls";
 import { DebugBorders, DebugRadius, DebugShadows, DebugSpacing } from "./debug-shape";
 import { DebugType } from "./debug-type";
 
+/** Each tab has its own link, e.g. /debug#buttons, so a section can be bookmarked or shared. */
+const TAB_IDS = ["colors", "typography", "radius", "spacing", "borders", "shadows", "buttons", "signature", "raw"];
+
+function tabFromHash(): number {
+  if (typeof window === "undefined") return 0;
+  const index = TAB_IDS.indexOf(window.location.hash.replace("#", ""));
+  return index === -1 ? 0 : index;
+}
+
 export function DebugView() {
   const { ready, tokens } = useDesignSystem();
-  const [active, setActive] = useState(0);
+  const [active, setActiveState] = useState(tabFromHash);
+  const setActive = (index: number) => {
+    setActiveState(index);
+    window.history.replaceState(null, "", `#${TAB_IDS[index]}`);
+  };
 
   const tabs: { label: string; content: ReactNode }[] = [
     { label: "Colors", content: <DebugColors /> },
@@ -21,8 +35,8 @@ export function DebugView() {
     { label: "Spacing", content: <DebugSpacing /> },
     { label: "Borders", content: <DebugBorders /> },
     { label: "Shadows", content: <DebugShadows /> },
-    { label: "Buttons and inputs", content: <DebugComponents part="buttons" /> },
-    { label: "Signature details", content: <DebugComponents part="signature" /> },
+    { label: "Buttons and inputs", content: <DebugButtons /> },
+    { label: "Signature details", content: <DebugSignature /> },
     {
       label: "Raw tokens",
       content: (

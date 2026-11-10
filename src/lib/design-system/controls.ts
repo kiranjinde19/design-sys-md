@@ -1,14 +1,20 @@
 /**
  * Buttons and inputs generator.
  *
- * Every state (hover, pressed, disabled, loading) is derived from the base colors,
+ * Every state (hover, pressed, focus, disabled, loading) is derived from the base colors,
  * so changing the brand color or the secondary style updates all of them at once.
- * The focus ring comes from the signature details, not from here.
+ *
+ * Rules this file keeps:
+ *  - Secondary comes from the neutral scale, or from the secondary color's scale if one was
+ *    added. It never uses a status color such as warning.
+ *  - Loading keeps the full button color and adds a spinner. Only disabled is faded.
+ *  - Every focusable control shows the signature focus ring.
+ *  - Form control outlines use the "input" border: the lightest neutral that reaches 3:1.
  */
 
 import { shiftLightness } from "./color-math";
 import { pickReadableText } from "./contrast";
-import { WHITE } from "./colors";
+import { WHITE, lightestShadeReaching } from "./colors";
 import type {
   BorderTokens,
   ButtonState,
@@ -17,16 +23,20 @@ import type {
   ControlSettings,
   ControlStateStyle,
   ControlTokens,
+  IconTokens,
   InputState,
   RadiusTokens,
+  SelectionControl,
   SelectionRule,
+  SelectionState,
+  SelectionStateStyle,
+  SignatureTokens,
   SpacingTokens,
 } from "./types";
 
 const TRANSPARENT = "transparent";
 const HOVER_SHIFT = -0.06;
 const PRESSED_SHIFT = -0.12;
-const LOADING_OPACITY = 0.7;
 
 /** Rules for choosing between the three selection controls. */
 export const SELECTION_RULES: SelectionRule[] = [
@@ -52,65 +62,81 @@ interface ControlContext {
   radius: RadiusTokens;
   spacing: SpacingTokens;
   borders: BorderTokens;
+  signature: SignatureTokens;
+  icons: IconTokens;
 }
+
+const SELECTION_SIZE = 16;
+const SWITCH = { width: 36, height: 20, thumb: 14 };
+const SPINNER_CLASS = "ds-spinner";
 
 const style = (
   background: string,
   color: string,
   borderColor: string,
   opacity = 1,
-): ControlStateStyle => ({ background, color, borderColor, opacity });
+  spinner = false,
+): ControlStateStyle => ({ background, color, borderColor, opacity, spinner });
+
+/** Focus and loading both look like the default state. Focus adds the ring, loading adds a spinner. */
+const withStates = (
+  base: ControlStateStyle,
+  hover: ControlStateStyle,
+  pressed: ControlStateStyle,
+  disabled: ControlStateStyle,
+): Record<ButtonState, ControlStateStyle> => ({
+  default: base,
+  hover,
+  pressed,
+  focus: { ...base },
+  disabled,
+  loading: { ...base, spinner: true },
+});
 
 export function generateControls(settings: ControlSettings, ctx: ControlContext): ControlTokens {
-  const { colors, radius, spacing, borders } = ctx;
-  const neutral = colors.neutral;
-  const text = colors.roles.foreground;
-  const { roles } = colors;
+  const { colors, radius, spacing, borders, signature, icons } = ctx;
+  const { roles, neutral, brand } = colors;
   const readable = (bg: string) => pickReadableText(bg, WHITE, neutral[900]);
 
   /** Solid-filled button (primary, destructive): darker on hover and press. */
   const solid = (base: string): Record<ButtonState, ControlStateStyle> => {
     const hover = shiftLightness(base, HOVER_SHIFT);
     const pressed = shiftLightness(base, PRESSED_SHIFT);
-    return {
-      default: style(base, readable(base), TRANSPARENT),
-      hover: style(hover, readable(hover), TRANSPARENT),
-      pressed: style(pressed, readable(pressed), TRANSPARENT),
-      disabled: style(neutral[100], neutral[400], TRANSPARENT),
-      loading: style(base, readable(base), TRANSPARENT, LOADING_OPACITY),
-    };
+    return withStates(
+      style(base, readable(base), TRANSPARENT),
+      style(hover, readable(hover), TRANSPARENT),
+      style(pressed, readable(pressed), TRANSPARENT),
+      style(neutral[100], neutral[400], TRANSPARENT),
+    );
   };
 
-  // Secondary follows the "secondary" role: the optional secondary color, or a quiet neutral fill.
-  const secondaryBase = roles.secondary;
-  const secondaryHover = shiftLightness(secondaryBase, HOVER_SHIFT);
-  const secondaryPressed = shiftLightness(secondaryBase, PRESSED_SHIFT);
-  const secondary: Record<ButtonState, ControlStateStyle> =
+  // Secondary: the neutral scale, or the secondary color's scale if one was added.
+  const quiet = colors.secondary ?? neutral;
+  const quietBorder = colors.secondary
+    ? lightestShadeReaching(colors.secondary, roles.background, 3)
+    : roles.input;
+  const secondary =
     settings.secondaryStyle === "fill"
-      ? {
-          default: style(secondaryBase, roles["secondary-foreground"], TRANSPARENT),
-          hover: style(secondaryHover, readable(secondaryHover), TRANSPARENT),
-          pressed: style(secondaryPressed, readable(secondaryPressed), TRANSPARENT),
-          disabled: style(neutral[100], neutral[400], TRANSPARENT),
-          loading: style(secondaryBase, roles["secondary-foreground"], TRANSPARENT, LOADING_OPACITY),
-        }
-      : {
-          default: style(TRANSPARENT, text, roles.input),
-          hover: style(neutral[50], text, roles.input),
-          pressed: style(neutral[100], text, roles.input),
-          disabled: style(TRANSPARENT, neutral[400], roles.border),
-          loading: style(TRANSPARENT, text, roles.input, LOADING_OPACITY),
-        };
+      ? withStates(
+          style(quiet[100], quiet[900], TRANSPARENT),
+          style(quiet[200], quiet[900], TRANSPARENT),
+          style(quiet[300], quiet[900], TRANSPARENT),
+          style(neutral[100], neutral[400], TRANSPARENT),
+        )
+      : withStates(
+          style(TRANSPARENT, quiet[900], quietBorder),
+          style(quiet[100], quiet[900], quietBorder),
+          style(quiet[200], quiet[900], quietBorder),
+          style(TRANSPARENT, neutral[400], roles.border),
+        );
 
-  // Tertiary (ghost) buttons highlight with the "accent" role, like shadcn.
-  const accentPressed = shiftLightness(roles.accent, HOVER_SHIFT);
-  const tertiary: Record<ButtonState, ControlStateStyle> = {
-    default: style(TRANSPARENT, text, TRANSPARENT),
-    hover: style(roles.accent, roles["accent-foreground"], TRANSPARENT),
-    pressed: style(accentPressed, readable(accentPressed), TRANSPARENT),
-    disabled: style(TRANSPARENT, neutral[400], TRANSPARENT),
-    loading: style(TRANSPARENT, text, TRANSPARENT, LOADING_OPACITY),
-  };
+  // Tertiary: no fill, brand text, a faint brand tint on hover and press.
+  const tertiary = withStates(
+    style(TRANSPARENT, brand[600], TRANSPARENT),
+    style(brand[50], brand[600], TRANSPARENT),
+    style(brand[100], brand[600], TRANSPARENT),
+    style(TRANSPARENT, neutral[400], TRANSPARENT),
+  );
 
   const variants: Record<ButtonVariant, Record<ButtonState, ControlStateStyle>> = {
     primary: solid(roles.primary),
@@ -119,20 +145,62 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
     destructive: solid(roles.destructive),
   };
 
+  // Inputs: the input border by default, a brand border on focus (plus the focus ring).
+  const field = (borderColor: string, background = roles.background, color = roles.foreground) =>
+    style(background, color, borderColor);
   const inputStates: Record<InputState, ControlStateStyle> = {
-    default: style(roles.background, text, roles.input),
-    hover: style(roles.background, text, neutral[400]),
-    focus: style(roles.background, text, roles.ring),
-    error: style(roles.background, text, roles.destructive),
-    disabled: style(roles.muted, neutral[500], roles.border),
+    default: field(roles.input),
+    hover: field(neutral[500]),
+    focus: field(roles.primary),
+    error: field(roles.destructive),
+    disabled: field(roles.border, roles.muted, neutral[500]),
+  };
+
+  // Checkbox, radio and switch share one set of states. For the switch, markColor is the thumb.
+  const selectionStates = (control: SelectionControl): Record<SelectionState, SelectionStateStyle> => {
+    const off = control === "switch" ? roles.input : TRANSPARENT;
+    const offHover = control === "switch" ? neutral[500] : TRANSPARENT;
+    const offDisabled = control === "switch" ? neutral[300] : TRANSPARENT;
+    const offError = control === "switch" ? roles.destructive : TRANSPARENT;
+    return {
+      default: { background: roles.background, borderColor: roles.input, markColor: off },
+      hover: { background: roles.background, borderColor: neutral[500], markColor: offHover },
+      checked: { background: roles.primary, borderColor: roles.primary, markColor: roles["primary-foreground"] },
+      focus: { background: roles.background, borderColor: roles.primary, markColor: off },
+      disabled: { background: roles.muted, borderColor: roles.border, markColor: offDisabled },
+      error: { background: roles.background, borderColor: roles.destructive, markColor: offError },
+    };
   };
 
   const height = settings.height;
   const buttonPaddingX = spacing.semantic.buttonPaddingX;
+  const spinnerSize = icons.sizes.sm;
 
   return {
     secondaryStyle: settings.secondaryStyle,
+    focusRing: signature.focusRing.css,
     buttons: {
+      spinner: {
+        size: spinnerSize,
+        strokeWidth: 2,
+        className: SPINNER_CLASS,
+        // Reduced motion slows the spinner down instead of stopping it, so loading still reads as "working".
+        stylesheet: [
+          `@keyframes ds-spin {`,
+          `  to { transform: rotate(360deg); }`,
+          `}`,
+          ``,
+          `.${SPINNER_CLASS} {`,
+          `  animation: ds-spin 0.8s linear infinite;`,
+          `}`,
+          ``,
+          `@media (prefers-reduced-motion: reduce) {`,
+          `  .${SPINNER_CLASS} {`,
+          `    animation-duration: 2.4s;`,
+          `  }`,
+          `}`,
+        ].join("\n"),
+      },
       height: { sm: height - 8, md: height, lg: height + 8 },
       paddingX: { sm: buttonPaddingX - 4, md: buttonPaddingX, lg: buttonPaddingX + 4 },
       paddingY: spacing.semantic.buttonPaddingY,
@@ -147,8 +215,19 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
       paddingY: spacing.semantic.inputPaddingY,
       radius: radius.md,
       borderWidth: borders.width,
-      placeholderColor: neutral[500],
+      placeholderColor: colors.placeholder,
       states: inputStates,
+    },
+    selection: {
+      size: SELECTION_SIZE,
+      switch: SWITCH,
+      radius: { checkbox: radius.sm, radio: radius.full, switch: radius.full },
+      borderWidth: borders.width,
+      states: {
+        checkbox: selectionStates("checkbox"),
+        radio: selectionStates("radio"),
+        switch: selectionStates("switch"),
+      },
     },
     selectionRules: SELECTION_RULES,
   };
