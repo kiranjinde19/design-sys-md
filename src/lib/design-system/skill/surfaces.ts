@@ -71,15 +71,16 @@ function chartsSection(ctx: SkillContext): string[] {
 function pricingSection(ctx: SkillContext): string[] {
   const { spacing, typography } = ctx.t;
   const big = typography.sizes.find((s) => s.name === "4xl")!;
+  const descLines = typography.sizes.find((s) => s.name === "sm")!.lineHeightPx * 2;
   const tw = ctx.tailwind;
   return lines(
     "### Pricing cards",
     "",
-    `${tw ? "Grid" : "A `.plans` grid"} with ${spacing.semantic.stackGap}px gaps, equal height. The section title and intro are centered; everything inside the cards (plan name, description, price, feature list) is left aligned. Every plan is \`card card-hover\`. The recommended plan adds \`card-featured\`: a hovered featured card lifts and keeps its glow. Only it has the primary button with \`cta\`; the others are secondary. Price ${big.px}px, heading font, tabular figures.`,
+    `${tw ? "Grid" : "A `.plans` grid"} with ${spacing.semantic.stackGap}px gaps, equal height. The section title and intro are centered; everything inside the cards (plan name, description, price, feature list) is left aligned. Every plan is \`card card-hover\`. The recommended plan adds \`card-featured\`: a hovered featured card lifts and keeps its glow. Only it has the primary button with \`cta\`; the others are secondary. Price ${big.px}px, heading font, tabular figures. Each card is a flex column: the description reserves two lines (${tw ? `\`min-h-${unit(descLines)}\`` : "`.plan__desc`"}, two lines at its size) so price, divider and feature list line up across cards, and the button sits at the bottom (${tw ? "`mt-auto`" : "`.plan__cta`; cards are `plan`"}).`,
     "",
-    tw ? fence("tsx", [`<div className="grid gap-${unit(spacing.semantic.stackGap)} md:grid-cols-3">`, `  <div className="card card-hover">…</div>`, `  <div className="card card-hover card-featured">…<Button variant="primary" className="cta">…</Button></div>`, "</div>"]) : null,
+    tw ? fence("tsx", [`<div className="grid gap-${unit(spacing.semantic.stackGap)} md:grid-cols-3">`, `  <div className="card card-hover flex flex-col"><h3>…</h3><p className="min-h-${unit(descLines)} text-sm ${ctx.twColor("text", ctx.t.colors.roles["muted-foreground"], ["muted-foreground"])}">…</p>…<Button variant="secondary" className="mt-auto">…</Button></div>`, `  <div className="card card-hover card-featured flex flex-col">…<Button variant="primary" className="cta mt-auto">…</Button></div>`, "</div>"]) : null,
     tw ? null : "",
-    tw ? null : fence("css", tight(ctx, [`.plans { display: grid; gap: var(--gap-stack); } @media (min-width: ${ctx.t.layout.breakpoints.md}px) { .plans { grid-template-columns: repeat(3, 1fr); } }`])),
+    tw ? null : fence("css", tight(ctx, [`.plans { display: grid; gap: var(--gap-stack); } @media (min-width: ${ctx.t.layout.breakpoints.md}px) { .plans { grid-template-columns: repeat(3, 1fr); } } .plan { display: flex; flex-direction: column; } .plan__desc { min-height: calc(var(--leading-sm) * 2); } .plan__cta { margin-top: auto; }`])),
     "",
   );
 }

@@ -30,9 +30,8 @@ export function accessibilitySection(ctx: SkillContext): string[] {
     row("muted-foreground on card", { required: 4.5, levels: { ratio: ratio(r["muted-foreground"], r.card) }, passes: ratio(r["muted-foreground"], r.card) >= 4.5 } as (typeof pairs)[number]),
     low(`badge text on its 50 tint (${tints.every((t) => t.step === 700) ? "700" : "700, or 800 where 700 is lower"}): ${tints.map((t) => t.n).join(", ")} (lowest)`, tints.map((t) => t.v)),
     low("error-700 on background, card (lowest)", [ratio(err, r.background), ratio(err, r.card)]),
-    low("primary-foreground on primary hover, pressed (lowest)", states("primary")),
-    low("destructive-foreground on destructive hover, pressed (lowest)", states("destructive")),
-    low("secondary-foreground on secondary hover, pressed (lowest)", states("secondary")),
+    low("button text on hover and pressed, all variants (lowest)", [...states("primary"), ...states("destructive"), ...states("secondary")]),
+    low("link text hover, pressed, visited on background (lowest)", [variants.primary.hover.background, variants.primary.pressed.background, colors.brand[800]].map((c) => ratio(c, r.background))),
   ];
   const rows = [
     ...tight.map((p) => row(p.label, p)),

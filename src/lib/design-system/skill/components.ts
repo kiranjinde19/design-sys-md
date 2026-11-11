@@ -54,11 +54,9 @@ function buttonsSection(ctx: SkillContext): string[] {
         "};",
         `const sizes = { ${Object.entries(sizes).map(([k, v]) => `${k}: "${v}"`).join(", ")} };`,
         "",
-        "type Props = React.ComponentProps<\"button\"> & { variant?: keyof typeof variants; size?: keyof typeof sizes; loading?: boolean };",
-        "",
-        'export function Button({ variant = "primary", size = "md", loading = false, className, children, disabled, type = "button", ...props }: Props) {',
+        'export function Button({ variant = "primary", size = "md", loading = false, className, children, disabled, ...props }: React.ComponentProps<"button"> & { variant?: keyof typeof variants; size?: keyof typeof sizes; loading?: boolean }) {',
         "  return (",
-        "    <button type={type} className={cx(base, variants[variant], sizes[size], className)} aria-busy={loading || undefined} disabled={disabled || loading} {...props}>",
+        '    <button type="button" className={cx(base, variants[variant], sizes[size], className)} aria-busy={loading || undefined} disabled={disabled || loading} {...props}>',
         `      {loading && <span className="ds-spinner size-${unit(b.spinner.size)} rounded-full border-${b.spinner.strokeWidth} border-current border-t-transparent" aria-hidden="true" />}`,
         "      {children}",
         "    </button>",
@@ -228,7 +226,7 @@ function selectionSection(ctx: SkillContext): string[] {
     'export const Checkbox = (props: Props) => <Choice type="checkbox" {...props} />;',
     'export const Radio = (props: Props) => <Choice type="radio" {...props} />;',
     "",
-    '// Switch: <button role="switch" aria-checked={on} onClick={() => setOn(!on)} className={cx(track, stateClasses)}><span className={thumb} /></button>',
+    '// Switch: <button role="switch" aria-checked={on} className={cx(track, stateClasses)}><span className={thumb} /></button>',
     `const track = "${track}";`,
     `const thumb = "${thumbClasses}";`,
     `const stateClasses = "${stateClasses}";`,
@@ -271,6 +269,34 @@ function tablesSection(ctx: SkillContext): string[] {
   );
 }
 
+/** Links: text links with every state, and a bare variant for logos and navigation. Tokens only. */
+function linksSection(ctx: SkillContext): string[] {
+  const { colors, controls } = ctx.t;
+  const v = controls.buttons.variants.primary;
+  const tw = ctx.tailwind;
+  const r = colors.roles;
+  const hover = v.hover.background;
+  const pressed = v.pressed.background;
+  const visited = colors.brand[800];
+  const code = tw
+    ? [
+        `link: "${join([ctx.twColor("text", r.primary, ["primary"]), "underline underline-offset-2", ctx.twColor("hover:text", hover, ["primary-hover"]), ctx.twColor("active:text", pressed, ["primary-pressed"]), ctx.twColor("visited:text", visited), "focus-ring"])}"`,
+        `bare (logo, nav): "${join(["no-underline", ctx.twColor("text", r.foreground, ["foreground"]), ctx.twColor("hover:text", r.primary, ["primary"]), "focus-ring"])}"`,
+      ]
+    : tightCss([
+        `.link { color: ${ctx.cssVar(r.primary, "text", ["primary"])}; text-decoration: underline; text-underline-offset: ${spaceVar(ctx, 2)}; } .link:visited { color: ${ctx.cssVar(visited, "text")}; } .link:hover { color: ${ctx.cssVar(hover, "text", ["primary-hover"])}; } .link:active { color: ${ctx.cssVar(pressed, "text", ["primary-pressed"])}; }`,
+        `.link--bare { color: ${ctx.cssVar(r.foreground, "text", ["foreground"])}; text-decoration: none; } .link--bare:visited { color: ${ctx.cssVar(r.foreground, "text", ["foreground"])}; } .link--bare:hover { color: ${ctx.cssVar(r.primary, "text", ["primary"])}; }`,
+      ]);
+  return lines(
+    "### Links",
+    "",
+    `Text links are underlined in the brand color; hover, pressed and visited each get a darker color, and focus shows the ring. The underline stays in every state. Logos and nav links are bare: no underline, foreground color, \`primary\` on hover, visited unchanged${tw ? "" : " (`.link`, or `.link.link--bare`)"}.`,
+    "",
+    fence(tw ? "tsx" : "css", code),
+    "",
+  );
+}
+
 export function componentsSection(ctx: SkillContext, rest: string[][]): string[] {
   return lines(
     "## Components",
@@ -278,6 +304,7 @@ export function componentsSection(ctx: SkillContext, rest: string[][]): string[]
     ctx.shadcn ? "Use shadcn components as the base and pass these classes. Do not restyle a component any other way." : ctx.tailwind ? "Plain React components with these classes." : "Use these classes. Add a modifier class for a variant, never inline styles.",
     "",
     buttonsSection(ctx),
+    linksSection(ctx),
     inputsSection(ctx),
     selectionSection(ctx),
     tablesSection(ctx),

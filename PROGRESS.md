@@ -3,6 +3,7 @@
 Plain-language log of what is built. Newest first.
 
 ## Latest
+- **Catch-up list.** Skipped because already done: HTML checkbox tick and radio dot, React checkbox tick exception sentence, import feedback and the round trip test. Done now: pricing cards keep price, divider and features aligned (two lines reserved for the description, button pinned to the bottom); the placeholder rule covers all copy including page titles and meta descriptions (meta description uses the product line the user entered, or is omitted) and requires inert buttons and links to be reported; a new "Links" recipe in all three stacks (default, hover, active, visited, focus, and a bare logo or nav variant), with its contrast row in Accessibility and links added to the interactive states checklist item. Size work (not finished): shorter signature comments, selection rules, plain HTML focus ring as one rule.
 - **Import feedback.** The "Import my previous file" step now shows a status box next to the button: the file name plus either a summary ("Restored SaaS Clean with 7 changes, product name Acme Billing, stack ...") or the exact reason it failed (no data block, invalid JSON, unsupported version, damaged block). The file name stays visible after the picker resets, the same file can be imported twice, and any .md, .markdown or .txt file is accepted. Checked: the data block already stores product name, description, stack, preset version and every setting that differs from the preset, so no format change was needed and older files still import.
 - **Automated round trip test.** `npm run test:roundtrip` generates files from 13 different settings sets in all 3 stacks, imports both SKILL.md and AGENTS.md, generates again and checks the files are identical (44 tests, all pass). It also covers failure messages, same file twice, renamed copies and old files.
 - **Checkbox and radio marks, icon exception, size pass.** Plain HTML checked checkboxes now show a tick and checked radios a dot (token-colored `::before` shapes, markup shown). React's checkbox tick (stroke 3, 12px) is named as the only exception to the Icons rule. CSS blocks in all stacks are now minified; repeated rules were merged (form control states, button disabled styles, badge and toast tones); prose that restated the code was cut. No rule was removed.
@@ -13,12 +14,12 @@ Plain-language log of what is built. Newest first.
 ## File sizes (AGENTS.md, with a secondary color)
 | Stack | Normal | Worst case (60 char name, 200 char description) | Target 28.5 KiB |
 |---|---|---|---|
-| Next.js | 26.99 KiB | 27.29 KiB | met |
-| React | 28.35 KiB | 28.65 KiB | met normally, 0.15 KiB over in the worst case |
-| Plain HTML | 29.78 KiB | 30.08 KiB | over by about 1.3 KiB |
+| Next.js | 27.91 KiB | 28.21 KiB | met |
+| React | 29.20 KiB | 29.50 KiB | over by about 0.7 KiB |
+| Plain HTML | 30.65 KiB | 30.95 KiB | over by about 2.2 KiB |
 
 ## Open decision
-Plain HTML needs about 1.3 KiB more savings. What is left to cut is content, not wording: markup examples, the overlays CSS (dialog, toast, tabs, badge, avatar, skeleton) or the `--space-N` and palette steps nobody references. Or accept ~29.8 KiB, which is still under Codex's 32 KiB cap.
+The new Links and pricing alignment content cost about 1.2 KiB per stack. React and HTML are over the target and no wording is left to cut. Options: cut content from those two stacks (markup examples, overlays CSS, unused palette steps), or treat 32 KiB (Codex's limit) as their cap.
 
 ## Built so far
 1. Project setup, GitHub, Vercel deploy.

@@ -47,7 +47,7 @@ export function header(ctx: SkillContext): string[] {
     "9. Animation respects `prefers-reduced-motion` with a static fallback.",
     `10. Light mode only: no \`${tw ? "dark:" : "prefers-color-scheme: dark"}\` styles or \`.dark\` theme unless this file defines one.`,
     "11. All copy follows Tone of voice.",
-    "12. Placeholder content: when real product facts (plan names, prices, features) are not given, use sample content kept in one clearly marked data file and list every placeholder in the final report. Never claim terms (cancellation, trials, refunds, plan changes, security, uptime) unless the user provided them.",
+    "12. Placeholder content: when real product facts (plan names, prices, features) are missing, use sample content in one clearly marked data file. This covers all copy, including page titles and meta descriptions: a meta description uses the product line the user entered, or is omitted if none was. Report every placeholder, including inert buttons and links with no destination. Never claim terms (cancellation, trials, refunds, plan changes, security, uptime) unless the user provided them.",
     "",
   ).concat(s ? [] : []);
 }

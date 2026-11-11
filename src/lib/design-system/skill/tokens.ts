@@ -228,7 +228,7 @@ function plainCss(ctx: SkillContext): string[] {
     "body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: var(--text-base); line-height: var(--leading-base); }",
     "h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",
     // Automatic focus ring: the offset ring from the signature details, on every control and link.
-    compactCss([".btn:focus-visible, .input:focus-visible, .check:focus-visible, .radio:focus-visible, .switch:focus-visible, .tab:focus-visible, .menu__item:focus-visible, a:focus-visible {", ...recipeLines(ctx, ctx.t.signature.focusRing.css), "}"].join("\n"), 400).split("\n"),
+    compactCss([":focus-visible {", ...recipeLines(ctx, ctx.t.signature.focusRing.css), "}"].join("\n"), 400).split("\n"),
   );
 }
 

@@ -41,18 +41,18 @@ const PRESSED_SHIFT = -0.12;
 export const SELECTION_RULES: SelectionRule[] = [
   {
     control: "radio",
-    useWhen: "Exactly one choice from 2 to 5 options, all visible at once.",
-    avoidWhen: "Long lists (use a select) or settings that apply instantly (use a switch).",
+    useWhen: "Exactly one choice from 2 to 5 visible options.",
+    avoidWhen: "Long lists (use a select) or instant settings (use a switch).",
   },
   {
     control: "checkbox",
-    useWhen: "Zero, one or several options, or consent, submitted with a form.",
-    avoidWhen: "Settings that apply instantly (use a switch) or a single choice (use radio).",
+    useWhen: "Zero, one or several options, or consent, in a form.",
+    avoidWhen: "Instant settings (use a switch) or a single choice (use radio).",
   },
   {
     control: "switch",
     useWhen: "An on or off setting that applies immediately, with no save button.",
-    avoidWhen: "Anything submitted with a form (use a checkbox), or three or more states (use radio).",
+    avoidWhen: "Form fields (use a checkbox) or three or more states (use radio).",
   },
 ];
 
