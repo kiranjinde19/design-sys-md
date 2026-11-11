@@ -11,6 +11,7 @@ import {
   SIGNATURE_CATALOG,
   suggestSecondaryColors,
   useDesignSystem,
+  type ColorSettings,
   type Density,
   type ElevationStyle,
   type NeutralTone,
@@ -19,7 +20,7 @@ import {
 import { Choice, ChoiceButton, Field, HexColorField, Range } from "./controls";
 
 /** The secondary color is optional: off by default, and removed again with one click. */
-function SecondaryColor() {
+function SecondaryColor({ onRemoved }: { onRemoved?: (info: { secondary: string; overrides: NonNullable<ColorSettings["roleOverrides"]> } | null) => void }) {
   const { settings, update } = useDesignSystem();
   const secondary = settings.colors.secondary;
   const suggestions = suggestSecondaryColors(settings.colors.brand);
@@ -31,7 +32,15 @@ function SecondaryColor() {
           type="checkbox"
           className="size-4 accent-primary"
           checked={secondary !== null}
-          onChange={(event) => update({ colors: { secondary: event.target.checked ? suggestions[0].hex : null } })}
+          onChange={(event) => {
+            if (onRemoved) {
+              // Roles that were assigned a swatch of the secondary scale go back to automatic; the caller can offer Undo.
+              // Adding a color (or removing one nobody used) clears an older message.
+              const affected = event.target.checked || secondary === null ? {} : Object.fromEntries(Object.entries(settings.colors.roleOverrides ?? {}).filter(([, ref]) => ref.scale === "secondary"));
+              onRemoved(Object.keys(affected).length && secondary !== null ? { secondary, overrides: affected } : null);
+            }
+            update({ colors: { secondary: event.target.checked ? suggestions[0].hex : null } });
+          }}
         />
         Add a secondary color
       </label>
@@ -61,14 +70,14 @@ function SecondaryColor() {
   );
 }
 
-export function ColorsControls({ afterBrand, after }: { afterBrand?: ReactNode; after?: ReactNode }) {
+export function ColorsControls({ afterBrand, after, onSecondaryRemoved }: { afterBrand?: ReactNode; after?: ReactNode; onSecondaryRemoved?: (info: { secondary: string; overrides: NonNullable<ColorSettings["roleOverrides"]> } | null) => void }) {
   const { settings, update } = useDesignSystem();
   const { colors } = settings;
   return (
     <div className="space-y-4">
       <HexColorField label="Brand color" value={colors.brand} onCommit={(brand) => update({ colors: { brand, brandMode: "exact" } })} />
       {afterBrand}
-      <SecondaryColor />
+      <SecondaryColor onRemoved={onSecondaryRemoved} />
       <Choice<NeutralTone>
         label="Neutral tone"
         value={colors.neutralTone}

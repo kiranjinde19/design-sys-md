@@ -910,3 +910,48 @@ test("the tray sticks to the top of the editor panel while the roles list scroll
   assert.equal(await ev(`!${roleRow("primary")}.querySelector('button[aria-label="Reset Primary"]')`), true, "no Reset on an automatic role");
   assert.ok(await ev(`${swatch("brand-700")}.title.includes("Drag onto a role, or click then click a role")`), "tray tooltip says what a click does");
 });
+
+test("removing the secondary color sends roles that used it back to automatic, with a message and Undo; nothing stale is saved", async () => {
+  await fresh();
+  await openEditor();
+  const box = `[...${EDITOR}.querySelectorAll("label")].find(l=>l.textContent.includes("secondary color")).querySelector("input")`;
+  const saved = () => ev(`(()=>{const o=JSON.parse(localStorage.getItem("design-sys-md:design-system")||"{}");return {secondary:o.settings?.colors?.secondary??null,overrides:JSON.stringify(o.settings?.colors?.roleOverrides??{})}})()`);
+  await click(box);
+  assert.equal(await ev(`${box}.checked`), true, "secondary color added");
+  const hex = (await saved()).secondary;
+  assert.ok(hex, "the secondary color is saved");
+  await rolesView();
+  // Pick up a swatch of the secondary scale and place it on Surface.
+  await click(swatch("secondary-50"));
+  await click(`${roleRow("card")}.querySelector(".truncate")`);
+  assert.match(await roleText("card"), /Custom[\s\S]*secondary 50/);
+  assert.match((await saved()).overrides, /"card":\{"scale":"secondary","step":50\}/, "saved while the secondary color exists");
+  // Remove the secondary color.
+  await ev(`${EDITOR}.querySelector("[data-role-scroll]").scrollTo(0, 0)`);
+  await click(box);
+  assert.equal(await ev(`${box}.checked`), false);
+  await rolesView();
+  const text = await roleText("card");
+  assert.ok(!/Custom/.test(text), "Surface went back to automatic");
+  assert.match(text, /Secondary color was removed, so Surface \(cards\) went back to automatic\./);
+  assert.match(text, /Undo/);
+  const after = await saved();
+  assert.equal(after.secondary, null, "the secondary color is gone from autosave");
+  assert.ok(!/secondary/.test(after.overrides), `no stale override in autosave (${after.overrides})`);
+  assert.match(await liveText(), /Secondary color was removed/);
+  // Undo restores both.
+  await click(findButton("card", "Undo"));
+  await sleep(300);
+  assert.equal(await ev(`${box}.checked`), true, "the secondary color is back");
+  assert.match(await roleText("card"), /Custom[\s\S]*secondary 50/, "Surface uses the secondary swatch again");
+  assert.ok(!/Secondary color was removed/.test(await roleText("card")), "the message is gone");
+  const restored = await saved();
+  assert.equal(restored.secondary, hex, "the same secondary color");
+  assert.match(restored.overrides, /"card":\{"scale":"secondary","step":50\}/, "the override is saved again");
+  // Removing it again and adding a color by hand ends the message.
+  await ev(`${EDITOR}.querySelector("[data-role-scroll]").scrollTo(0, 0)`);
+  await click(box);
+  await click(box);
+  await rolesView();
+  assert.ok(!/Secondary color was removed/.test(await roleText("card")), "adding a color again clears the message");
+});

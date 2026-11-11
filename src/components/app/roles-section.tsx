@@ -240,6 +240,15 @@ function RoleRow({ role, open, onToggle, onClose }: { role: OverridableRole; ope
         />
       ) : null}
 
+      {dnd.removed && !settings.colors.secondary && row.key in dnd.removed.overrides ? (
+        <div id={`role-removed-${role}`} className="mt-2 flex items-center justify-between gap-2 rounded-[10px] bg-muted p-2 text-xs leading-4 text-muted-foreground">
+          <p>Secondary color was removed, so {row.label} went back to automatic.</p>
+          <button type="button" onClick={() => dnd.undoSecondaryRemoved()} className="tool-link h-6 shrink-0 rounded-[5px] px-1 text-sm leading-5">
+            Undo
+          </button>
+        </div>
+      ) : null}
+
       {rejection ? (
         <div id={`role-msg-${role}`} className="mt-2 rounded-[10px] bg-[var(--t-warning-50)] p-2 text-xs leading-4 text-[var(--t-warning-700)]">
           <p>{rejection.message}</p>

@@ -60,21 +60,30 @@ function ColorScales() {
   );
 }
 
+/** The Colors controls with the Roles section. Inside the roles provider, so removing the secondary color can offer Undo. */
+function ColorsWithRoles() {
+  const dnd = useRolesDnd();
+  return (
+    <ColorsControls
+      afterBrand={
+        <>
+          <BrandNotice />
+          <ColorScales />
+        </>
+      }
+      after={<RolesSection />}
+      onSecondaryRemoved={dnd?.noteSecondaryRemoved}
+    />
+  );
+}
+
 /** The controls for one system. Every one of these is shared with /debug. */
 function EditorBody({ id }: { id: SystemId }) {
   switch (id) {
     case "colors":
       return (
         <RolesDnd>
-          <ColorsControls
-            afterBrand={
-              <>
-                <BrandNotice />
-                <ColorScales />
-              </>
-            }
-            after={<RolesSection />}
-          />
+          <ColorsWithRoles />
         </RolesDnd>
       );
     case "typography":

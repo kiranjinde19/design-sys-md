@@ -42,8 +42,18 @@ interface Hold {
   over: OverridableRole | null;
 }
 
+/** What was lost when the secondary color was removed, so Undo can bring it back. */
+export interface SecondaryRemoved {
+  secondary: string;
+  overrides: Partial<Record<OverridableRole, ColorRef>>;
+}
+
 interface Dnd {
   hold: Hold | null;
+  /** Roles that went back to automatic because the secondary color was removed (with Undo). */
+  removed: SecondaryRemoved | null;
+  noteSecondaryRemoved: (info: SecondaryRemoved | null) => void;
+  undoSecondaryRemoved: () => void;
   rejections: Partial<Record<OverridableRole, Rejection>>;
   /** Applies a swatch to a role after the safety check. Returns true when it was applied. */
   assign: (role: OverridableRole, ref: ColorRef) => boolean;
@@ -63,6 +73,12 @@ interface Dnd {
 const Context = createContext<Dnd | null>(null);
 export const useRolesDnd = () => useContext(Context);
 
+const withoutRole = (info: SecondaryRemoved | null, role: OverridableRole): SecondaryRemoved | null => {
+  if (!info || !(role in info.overrides)) return info;
+  const overrides = { ...info.overrides };
+  delete overrides[role];
+  return Object.keys(overrides).length ? { ...info, overrides } : null;
+};
 const label = (key: OverridableRole) => ROLE_ROWS.find((row) => row.key === key)!.label;
 const roleAt = (point: { x: number; y: number }): OverridableRole | null => {
   const row = document.elementFromPoint(point.x, point.y)?.closest<HTMLElement>("[data-role-row]");
@@ -85,6 +101,7 @@ export function RolesDnd({ children }: { children: ReactNode }) {
   const [hold, setHold] = useState<Hold | null>(null);
   const [rejections, setRejections] = useState<Dnd["rejections"]>({});
   const [message, setMessage] = useState("");
+  const [removed, setRemoved] = useState<SecondaryRemoved | null>(null);
   // The latest values, for handlers that run later (pointer moves outside React).
   const live = useRef({ hold, settings });
   useEffect(() => {
@@ -112,6 +129,7 @@ export function RolesDnd({ children }: { children: ReactNode }) {
       }
       update({ colors: { roleOverrides: result.settings.colors.roleOverrides ?? {} } });
       clearRejection(role);
+      setRemoved((current) => withoutRole(current, role));
       announce(`Dropped on ${label(role)}. ${label(role)} now uses ${refLabel(ref)}.`);
       return true;
     },
@@ -120,10 +138,29 @@ export function RolesDnd({ children }: { children: ReactNode }) {
 
   const dismiss = useCallback((role: OverridableRole) => clearRejection(role), []);
 
+  // Secondary color removed: remember what the roles pointed at, so the row can say so and offer Undo.
+  const noteSecondaryRemoved = useCallback(
+    (info: SecondaryRemoved | null) => {
+      setRemoved(info);
+      if (!info) return;
+      const names = Object.keys(info.overrides).map((key) => label(key as OverridableRole));
+      announce(`Secondary color was removed, so ${names.join(" and ")} went back to automatic.`);
+    },
+    [announce],
+  );
+  const undoSecondaryRemoved = useCallback(() => {
+    const info = removed;
+    if (!info) return;
+    update({ colors: { secondary: info.secondary, roleOverrides: { ...live.current.settings.colors.roleOverrides, ...info.overrides } } });
+    setRemoved(null);
+    announce("Secondary color and its role assignments are back.");
+  }, [removed, update, announce]);
+
   const reset = useCallback(
     (role?: OverridableRole) => {
       const next = resetRoles(live.current.settings, role);
       update({ colors: { roleOverrides: next.colors.roleOverrides ?? {} } });
+      setRemoved((current) => (role ? withoutRole(current, role) : null));
       setRejections((current) => {
         if (!role) return {};
         const copy = { ...current };
@@ -314,8 +351,8 @@ export function RolesDnd({ children }: { children: ReactNode }) {
   }, [assign, announce]);
 
   const value = useMemo<Dnd>(
-    () => ({ hold, rejections, assign, dismiss, reset, announce, startPointer, pickUp, place, move, drop, cancel }),
-    [hold, rejections, assign, dismiss, reset, announce, startPointer, pickUp, place, move, drop, cancel],
+    () => ({ hold, removed, noteSecondaryRemoved, undoSecondaryRemoved, rejections, assign, dismiss, reset, announce, startPointer, pickUp, place, move, drop, cancel }),
+    [hold, removed, noteSecondaryRemoved, undoSecondaryRemoved, rejections, assign, dismiss, reset, announce, startPointer, pickUp, place, move, drop, cancel],
   );
 
   return (

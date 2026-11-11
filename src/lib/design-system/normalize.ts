@@ -161,11 +161,15 @@ export function normalizeSettings(input: unknown, base: DesignSystemSettings): D
   // Roles the user assigned by hand. Absent means nothing was changed (the key is left out, so presets stay as they are).
   const overridesIn = colors.roleOverrides === undefined ? base.colors.roleOverrides : asRecord(colors.roleOverrides);
   const roleOverrides: Partial<Record<OverridableRole, ColorRef>> = {};
+  const secondaryKept = colors.secondary === null ? null : (normalizeHex(colors.secondary) ?? base.colors.secondary);
   for (const key of OVERRIDABLE_ROLES) {
     const raw = (overridesIn as UnknownRecord | undefined)?.[key];
     if (raw === undefined || raw === null) continue;
     const ref = normalizeColorRef(raw, { scale: "white" });
     // normalizeColorRef falls back to white for junk; only keep references that were really valid.
+    // An override that points at the secondary scale only exists while there is a secondary color. When the color is
+    // gone the role is automatic again, so no stale override stays in autosave, the data block or the file.
+    if (ref.scale === "secondary" && !secondaryKept) continue;
     if (colorRefFromText(raw)) roleOverrides[key] = ref;
     else if (isRecord(raw) && (raw.scale === "white" || raw.scale === "black" || (typeof raw.scale === "string" && (SCALE_NAMES as readonly string[]).includes(raw.scale)))) roleOverrides[key] = ref;
   }

@@ -313,7 +313,7 @@ test("role overrides: saved in the data block (format 3), restored, shown in the
   for (const stack of STACKS) {
     const file = generateSkillFile(createDesignSystem(settings), { stack, presetId: "saas-clean" }).skill;
     assert.match(file, /"version":3/);
-    assert.match(file, /Custom roles \(never change them\): primary brand 700/);
+    assert.match(file, /Custom roles \(never change them\): primary, background, muted-foreground\./);
     assert.match(file, /Custom roles unchanged/);
     const back = parseSkillFile(file);
     assert.ok(back.ok);
@@ -342,4 +342,41 @@ test("role overrides: saved in the data block (format 3), restored, shown in the
   const parsed = parseSkillFile(junk);
   assert.ok(parsed.ok);
   assert.deepEqual(parsed.settings.colors.roleOverrides, { ring: { scale: "brand", step: 500 } });
+});
+
+test("removing the secondary color sends roles that used it back to automatic, leaves no stale override anywhere, and undo restores it", () => {
+  const withSecondary = applyPatch(saas, {
+    colors: { secondary: "#9243CD", roleOverrides: { card: { scale: "secondary", step: 50 }, ring: { scale: "secondary", step: 600 }, primary: { scale: "brand", step: 700 } } },
+  });
+  assert.equal(Object.keys(withSecondary.colors.roleOverrides).length, 3);
+  // Remove the secondary color.
+  const removed = applyPatch(withSecondary, { colors: { secondary: null } });
+  assert.equal(removed.colors.secondary, null);
+  assert.deepEqual(removed.colors.roleOverrides, { primary: { scale: "brand", step: 700 } }, "only the override that did not use the secondary scale is left");
+  // Autosave (the settings object) and the data block hold no stale override.
+  assert.ok(!JSON.stringify(removed.colors.roleOverrides).includes("secondary"), "no secondary reference left in the saved settings");
+  for (const stack of STACKS) {
+    const file = generateSkillFile(createDesignSystem(removed), { stack, presetId: "saas-clean" }).skill;
+    const block = file.slice(file.lastIndexOf("```json"));
+    assert.ok(!/secondary-\d+/.test(block), `${stack}: no secondary override in the data block`);
+    assert.match(file, /Custom roles \(never change them\): primary\./);
+    // Export, import, export is identical.
+    const back = parseSkillFile(file);
+    assert.ok(back.ok);
+    assert.deepEqual(back.settings.colors.roleOverrides, removed.colors.roleOverrides);
+    assert.equal(generateSkillFile(createDesignSystem(back.settings), { stack, presetId: "saas-clean" }).skill, file);
+  }
+  // The tokens use the automatic values for those roles again.
+  const auto = createDesignSystem(applyPatch(saas, { colors: { roleOverrides: { primary: { scale: "brand", step: 700 } } } })).tokens.colors;
+  const afterRemoval = createDesignSystem(removed).tokens.colors;
+  assert.equal(afterRemoval.roles.card, auto.roles.card);
+  assert.equal(afterRemoval.roles.ring, auto.roles.ring);
+  // Undo: the secondary color and the overrides come back, exactly as they were.
+  const undone = applyPatch(removed, { colors: { secondary: "#9243CD", roleOverrides: { ...removed.colors.roleOverrides, card: { scale: "secondary", step: 50 }, ring: { scale: "secondary", step: 600 } } } });
+  assert.deepEqual(undone.colors, withSecondary.colors);
+  // A file that holds a secondary override but no secondary color drops it on import.
+  const stale = '# X\n\n```json\n{"format":"design-sys-md","version":3,"preset":"saas-clean","presetVersion":4,"settings":{"colors":{"roleOverrides":{"card":"secondary-50","ring":"brand-800"}}}}\n```\n';
+  const parsed = parseSkillFile(stale);
+  assert.ok(parsed.ok);
+  assert.deepEqual(parsed.settings.colors.roleOverrides, { ring: { scale: "brand", step: 800 } });
 });

@@ -1,7 +1,6 @@
 import { SYSTEM_STACKS, nearestWeight } from "../fonts";
 import { selectedFontsUrl } from "../font-loading";
-import { refLabel } from "../roles";
-import { SCALE_STEPS, type ColorRef, type ColorScale, type FontToken, type SemanticName } from "../types";
+import { SCALE_STEPS, type ColorScale, type FontToken, type SemanticName } from "../types";
 import { compactCss, fence, lines, recipeLines, remOf, shadowClass, spaceVar, tightCss, unit, type SkillContext } from "./context";
 
 /** Semantic scale steps written out. Enough for status text, badges and alerts. */
@@ -254,10 +253,9 @@ function plainCss(ctx: SkillContext): string[] {
 
 /** One line, only when the user assigned roles by hand. Never in a default file, so sizes stay as they are. */
 function customRolesLine(ctx: SkillContext): string[] {
-  const overrides = Object.entries(ctx.s.colors.roleOverrides ?? {});
-  if (overrides.length === 0) return [];
-  const label = (key: string, ref: ColorRef) => `${key} ${refLabel(ref)}`;
-  return [`Custom roles (never change them): ${overrides.map(([key, ref]) => label(key, ref as ColorRef)).join(", ")}.`, ""];
+  const names = Object.keys(ctx.s.colors.roleOverrides ?? {});
+  // Names only: the values are already in the tokens above.
+  return names.length === 0 ? [] : [`Custom roles (never change them): ${names.join(", ")}.`, ""];
 }
 
 export function tokensSection(ctx: SkillContext): string[] {
