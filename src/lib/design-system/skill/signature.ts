@@ -1,5 +1,4 @@
-import { SIGNATURE_CATALOG } from "../signature";
-import type { CssRecipe, SignatureSettings } from "../types";
+import type { CssRecipe } from "../types";
 import { compactCss, fence, lines, recipeLines, unit, type SkillContext } from "./context";
 
 /**
@@ -38,7 +37,6 @@ export function signatureSection(ctx: SkillContext): string[] {
   const transition = hoverCss.transition;
   delete hoverCss.transition;
   const { all, notFeatured } = splitHover(hoverCss, sig.featuredHighlight.css);
-  const chosen = (Object.keys(SIGNATURE_CATALOG) as (keyof SignatureSettings)[]).map((key) => `${SIGNATURE_CATALOG[key].label.toLowerCase()} ${sig[key].label.toLowerCase()}`);
 
   const css = lines(
     `/* Card: ${sig.cardStyle.label} */`,
@@ -87,7 +85,7 @@ export function signatureSection(ctx: SkillContext): string[] {
   return lines(
     "## Signature details",
     "",
-    `Chosen: ${chosen.join("; ")}. Apply them everywhere and never swap one. Add this CSS to ${ctx.shadcn ? "globals.css" : ctx.tailwind ? "src/index.css" : "styles.css"}, after the tokens. It is the exact definition, with token references.`,
+    `Apply these everywhere and never swap one. Add this CSS to ${ctx.shadcn ? "globals.css" : ctx.tailwind ? "src/index.css" : "styles.css"}, after the tokens. It is the exact definition.`,
     "",
     fence("css", compactCss(css.join("\n")).split("\n")),
     "",

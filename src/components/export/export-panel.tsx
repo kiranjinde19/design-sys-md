@@ -199,6 +199,9 @@ export function ExportPanel() {
             </ol>
           </div>
         </div>
+        <p className="mt-4 text-sm">
+          <span className="font-medium">Then:</span> replace or restyle the starter home page your framework creates, because it uses its own colors.
+        </p>
       </Section>
 
       <Section

@@ -37,17 +37,17 @@ export function header(ctx: SkillContext): string[] {
     tw
       ? `1. Use only the tokens in this file. Never hardcode hex, rgb() or pixel values, and never use arbitrary values such as \`bg-[${t.colors.brand[600]}]\` or \`p-[${t.spacing.semantic.cardPadding + 1}px]\`. Tailwind's default palette is disabled, so \`bg-blue-500\` does not exist.`
       : "1. Use only the tokens in this file. Never write a raw color or size in a component. Reference `var(--token)` only.",
-    "2. Never invent colors, sizes, fonts or radii. If it is not covered, derive it from the tokens or ask.",
+    "2. Never invent design values (colors, sizes, fonts, radii). If something is not covered, derive it from the tokens or ask.",
     "3. One primary button per view. Every other action is secondary or tertiary.",
-    `4. One accent color per screen: the brand color. The only other colors allowed are status colors, for status only, and the chart series inside charts.${t.colors.secondary ? " The secondary color appears only through the `secondary` and `accent` roles." : ""}`,
-    `5. Minimum text size is ${minText}px (\`${tw ? "text-xs" : "var(--text-xs)"}\`). Nothing smaller.`,
+    `4. One accent color per screen: the brand color. Other colors are for status (status only) and chart series.${t.colors.secondary ? " The secondary color appears only through the `secondary` and `accent` roles." : ""}`,
+    `5. Minimum text size is ${minText}px (\`${tw ? "text-xs" : "var(--text-xs)"}\`).`,
     "6. Use only the text and background pairs verified under Accessibility.",
-    "7. Radius, spacing and shadows come only from their scales. One radius per component family.",
-    "8. Headings use the heading font, other text the body font. The mono font is for code, IDs and keys only.",
-    "9. Numbers in tables, dashboards and prices use tabular figures.",
-    "10. Animation respects `prefers-reduced-motion` and has a static fallback.",
-    `11. Light mode only. Do not add \`${tw ? "dark:" : "prefers-color-scheme: dark"}\` styles, a \`.dark\` theme or any dark variant unless this file later defines one.`,
-    "12. All copy follows Tone of voice.",
+    "7. Radius, spacing and shadows come only from their scales, one radius per component family.",
+    "8. Headings use the heading font, other text the body font, code and IDs the mono font. Numbers in tables, dashboards and prices use tabular figures.",
+    "9. Animation respects `prefers-reduced-motion` with a static fallback.",
+    `10. Light mode only: no \`${tw ? "dark:" : "prefers-color-scheme: dark"}\` styles or \`.dark\` theme unless this file defines one.`,
+    "11. All copy follows Tone of voice.",
+    "12. Placeholder content: when real product facts (plan names, prices, features) are not given, use sample content kept in one clearly marked data file and list every placeholder in the final report. Never claim terms (cancellation, trials, refunds, plan changes, security, uptime) unless the user provided them.",
     "",
   ).concat(s ? [] : []);
 }

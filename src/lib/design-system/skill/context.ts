@@ -6,6 +6,7 @@
  * and printed as the name of the token that holds it.
  */
 
+import { contrastRatio } from "../contrast";
 import { generateSpacing } from "../spacing";
 import { MIN_FONT_SIZE } from "../typography";
 import { nearestWeight } from "../fonts";
@@ -342,4 +343,9 @@ export function tight(ctx: SkillContext, css: string[]): string[] {
   return css.map((line) =>
     line.startsWith("/*") ? line : line.replace(/:\s+/g, ":").replace(/;\s*}/g, "}").replace(/;\s+/g, ";").replace(/\s*{\s*/g, "{").replace(/\s*}\s*/g, "}"),
   );
+}
+
+/** The first text step of a scale that reads at 4.5:1 on its own 50 tint, for badges. */
+export function onTint(scale: ColorScale): 700 | 800 {
+  return ([700, 800] as const).find((step) => contrastRatio(scale[step], scale[50]) >= 4.5) ?? 800;
 }

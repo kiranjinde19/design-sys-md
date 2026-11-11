@@ -1,13 +1,8 @@
-import { contrastRatio } from "../contrast";
-import { compactCss, fence, lines, shadowClass, spaceVar, unit, weightClass, type SkillContext, tight } from "./context";
+import { onTint, compactCss, fence, lines, shadowClass, spaceVar, unit, weightClass, type SkillContext, tight } from "./context";
 import { maxWidthClass } from "./layout-nav";
 import { statusTextClass } from "./components";
-import type { ColorScale, SemanticName } from "../types";
+import type { SemanticName } from "../types";
 
-/** The first text step of a scale that reads at 4.5:1 on its own 50 tint, for badges. */
-function onTint(scale: ColorScale): number {
-  return ([700, 800] as const).find((step) => contrastRatio(scale[step], scale[50]) >= 4.5) ?? 800;
-}
 
 /** Overlays and feedback for plain CSS: variables and classes the file defines, with no Tailwind names. */
 function overlaysCss(ctx: SkillContext): string[] {
@@ -83,7 +78,7 @@ export function iconsSection(ctx: SkillContext): string[] {
   return lines(
     "## Icons",
     "",
-    `${tw ? `Use \`lucide-react\` only, with \`strokeWidth={${icons.strokeWidth}}\`.` : `Use inline SVG copied from lucide with \`stroke-width="${icons.strokeWidth}"\`.`} Sizes ${sizes.join(", ")}px${tw ? ` (\`size-${unit(sizes[0])}\`, \`size-${unit(sizes[1])}\`, \`size-${unit(sizes[2])}\`)` : ""}: ${sizes[0]} in buttons and inputs, ${sizes[1]} beside text and in icon tiles, ${sizes[2]} in empty states. Color is \`currentColor\`. An icon-only button needs an \`aria-label\`; an icon beside a label is \`aria-hidden\`. Never mix icon sets.${icons.style !== "outline" ? ` The chosen style is ${icons.style}; lucide draws outlines only, so match that look with the same stroke and sizes.` : ""}`,
+    `${tw ? `Use \`lucide-react\` only, with \`strokeWidth={${icons.strokeWidth}}\`.` : `Use inline SVG copied from lucide with \`stroke-width="${icons.strokeWidth}"\`.`} Sizes ${sizes.join(", ")}px${tw ? ` (\`size-${unit(sizes[0])}\`, \`size-${unit(sizes[1])}\`, \`size-${unit(sizes[2])}\`)` : ""}: ${sizes[0]} in buttons and inputs, ${sizes[1]} beside text and in icon tiles, ${sizes[2]} in empty states. An icon-only button needs an \`aria-label\`; an icon beside a label is \`aria-hidden\`.${icons.style !== "outline" ? ` The chosen style is ${icons.style}; lucide draws outlines only, so match that look with the same stroke and sizes.` : ""}`,
     "",
   );
 }

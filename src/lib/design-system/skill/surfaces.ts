@@ -43,7 +43,7 @@ function dashboardsSection(ctx: SkillContext): string[] {
   return lines(
     "### Dashboards",
     "",
-    `Section gaps ${spacing.semantic.sectionGap}px, card grid gaps ${spacing.semantic.stackGap}px. Metrics first, then charts, then the table. A metric card: small muted label, the number (${big.px}px, heading font, tabular figures), one optional change line in \`${statusRef(ctx, "success")}\` or \`${statusRef(ctx, "error")}\` with an arrow or sign. One primary action per dashboard.`,
+    `Section gaps ${spacing.semantic.sectionGap}px, card grid gaps ${spacing.semantic.stackGap}px. Metrics first, then charts, then the table. A metric card: small muted label, the number (${big.px}px, heading font, tabular figures), one optional change line in \`${statusRef(ctx, "success")}\` or \`${statusRef(ctx, "error")}\` with an arrow or sign.`,
     "",
     fence(tw ? "tsx" : "html", tw
       ? `<div className="grid gap-${unit(spacing.semantic.stackGap)} sm:grid-cols-2 lg:grid-cols-4"><div className="card"><p className="text-sm ${TILE}">Label</p><p className="font-heading text-${big.name} ${weightClass(typography.headingWeight)} tracking-heading ${typography.tabularNumbers.className}">11,111</p></div></div>`
@@ -64,7 +64,7 @@ function chartsSection(ctx: SkillContext): string[] {
   return lines(
     "### Charts",
     "",
-    `Series colors, in order: ${[1, 2, 3, 4, 5].map((n) => (tw ? `\`fill-chart-${n}\`` : `\`var(--chart-${n})\``)).join(", ")}${tw ? " (and `stroke-chart-N`)" : ""}. Chart 1 is the brand color and the other four are spaced around the hue wheel with varied lightness. Never reorder them or add a sixth: group extras as "Other" in ${tw ? "`fill-neutral-400`" : "`var(--neutral-400)`"}. ${claim}`,
+    `Series colors, in order: ${[1, 2, 3, 4, 5].map((n) => (tw ? `\`fill-chart-${n}\`` : `\`var(--chart-${n})\``)).join(", ")}${tw ? " (and `stroke-chart-N`)" : ""}. Chart 1 is the brand color. Never reorder them or add a sixth: group extras as "Other" in ${tw ? "`fill-neutral-400`" : "`var(--neutral-400)`"}. ${claim}`,
     `Axis and legend text ${tw ? "`text-xs fill-muted-foreground`" : "`var(--text-xs)` in `var(--muted-foreground)`"}; grid lines ${tw ? "`stroke-border`" : "`var(--border)`"}, horizontal only; no borders, 3D or gradients. Tooltips are floating layers (${tw ? "`bg-popover text-popover-foreground border border-border rounded-md shadow-md`" : "popover colors, border, radius md, shadow 3"}) with tabular figures. Every chart has a title, a unit and a text summary for screen readers.`,
     "",
   );
@@ -77,7 +77,7 @@ function pricingSection(ctx: SkillContext): string[] {
   return lines(
     "### Pricing cards",
     "",
-    `Grid with ${spacing.semantic.stackGap}px gaps, centered headings, equal height. Every plan is \`card card-hover\`, so all lift on hover. The recommended plan adds \`card-featured\`: a hovered featured card lifts and keeps its glow. Only it has the primary button with \`cta\`; the others are secondary. Price ${big.px}px, heading font, tabular figures. Write the button and the line under it so they are true for the product, in the Tone of voice.`,
+    `Grid with ${spacing.semantic.stackGap}px gaps, equal height. The section title and intro are centered; everything inside the cards (plan name, description, price, feature list) is left aligned. Every plan is \`card card-hover\`. The recommended plan adds \`card-featured\`: a hovered featured card lifts and keeps its glow. Only it has the primary button with \`cta\`; the others are secondary. Price ${big.px}px, heading font, tabular figures.`,
     "",
     fence(tw ? "tsx" : "html", tw
       ? [`<div className="grid gap-${unit(spacing.semantic.stackGap)} md:grid-cols-3">`, `  <div className="card card-hover">…</div>`, `  <div className="card card-hover card-featured">…<Button variant="primary" className="cta">…</Button></div>`, "</div>"]
