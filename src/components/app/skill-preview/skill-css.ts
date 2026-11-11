@@ -59,7 +59,13 @@ export function scopeSkillCss(css: string, extra = ""): string {
       nested.push(`${head.split(",").flatMap(scopeSelector).join(",")}${body}`);
     }
   }
-  return `${hoisted.join("\n")}\n${SCOPE}{\n${nested.join("\n")}\n${extra}\n}`;
+  // @keyframes can not live inside a nested rule (the browser drops them), so they come out of the extra CSS too.
+  const extraNested: string[] = [];
+  for (const chunk of topLevel(extra)) {
+    const head = chunk.slice(0, chunk.indexOf("{")).trim();
+    (head.startsWith("@keyframes") || head.startsWith("@property") ? hoisted : extraNested).push(chunk);
+  }
+  return `${hoisted.join("\n")}\n${SCOPE}{\n${nested.join("\n")}\n${extraNested.join("\n")}\n}`;
 }
 
 /** Every css code block of a generated skill file, joined. */

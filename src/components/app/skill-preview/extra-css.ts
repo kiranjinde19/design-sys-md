@@ -17,7 +17,9 @@ export const EXTRA_CSS = `
 .pvx-choice { display: flex; align-items: center; gap: var(--gap-inline); font-size: var(--text-base); }
 .pvx-spin { flex: none; animation: pvx-spin 0.9s linear infinite; }
 @keyframes pvx-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .pvx-spin { animation: none; } }
+/* The spinner always turns. Under reduced motion it is replaced by a static indicator (three dots). */
+.pvx-spin-static { display: none; flex: none; }
+@media (prefers-reduced-motion: reduce) { .pvx-spin { display: none; } .pvx-spin-static { display: inline-block; } }
 .pvx-icon { width: var(--control-h); padding: 0; }
 .pvx-split { display: flex; align-items: center; justify-content: space-between; gap: var(--gap-stack); }
 .pvx-actions { display: flex; justify-content: flex-end; gap: var(--gap-inline); }

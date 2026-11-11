@@ -10,6 +10,7 @@ import { PRESETS, generateTokens } from "@/lib/design-system";
 const own = generateTokens(PRESETS["saas-clean"].settings);
 const { roles, brand, neutral, semantic } = own.colors;
 const shadow = (level: number) => own.elevation.shadows[level].css;
+const variants = own.controls.buttons.variants;
 
 const shared = {
   // shadcn derives its "md" radius as 0.8 of this, which makes every small control 10px.
@@ -44,6 +45,10 @@ const LIGHT: Record<string, string> = {
   "--input": roles.input,
   "--ring": roles.ring,
   "--t-surface": neutral[50],
+  "--t-primary-hover": variants.primary.hover.background,
+  "--t-primary-pressed": variants.primary.pressed.background,
+  "--t-secondary-hover": variants.secondary.hover.background,
+  "--t-secondary-pressed": variants.secondary.pressed.background,
   "--t-brand-600": brand[600],
   "--t-brand-700": brand[700],
   "--t-success-50": semantic.success[50],
@@ -75,6 +80,10 @@ const DARK: Record<string, string> = {
   "--input": neutral[500],
   "--ring": brand[400],
   "--t-surface": neutral[800],
+  "--t-primary-hover": brand[300],
+  "--t-primary-pressed": brand[200],
+  "--t-secondary-hover": neutral[600],
+  "--t-secondary-pressed": neutral[500],
   "--t-brand-600": brand[400],
   "--t-brand-700": brand[300],
   "--t-success-50": neutral[800],

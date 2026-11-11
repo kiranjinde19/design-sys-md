@@ -52,6 +52,10 @@
   transform: translateY(-2px);
   box-shadow: var(--t-shadow-md);
 }
+.tool-item:active {
+  transform: none;
+  box-shadow: none;
+}
 .tool-item[aria-current="true"] {
   border: 2px solid var(--t-brand-600);
   padding: 0 11px;
@@ -74,6 +78,43 @@
   font-weight: 500;
 }
 
+/* The tool's own buttons: the primary and secondary look of the SaaS Clean file, with real hover, pressed and disabled states. */
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--t-radius-md);
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+.tool-btn--primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.tool-btn--primary:hover {
+  background: var(--t-primary-hover);
+}
+.tool-btn--primary:active {
+  background: var(--t-primary-pressed);
+}
+.tool-btn--secondary {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+.tool-btn--secondary:hover {
+  background: var(--t-secondary-hover);
+}
+.tool-btn--secondary:active {
+  background: var(--t-secondary-pressed);
+}
+.tool-btn:disabled {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  cursor: not-allowed;
+}
+
 /* Link style buttons (Back to board, Reset): brand colored, 500 weight. */
 .tool-link {
   color: var(--t-brand-600);
@@ -85,6 +126,10 @@
 }
 .tool-link:hover {
   color: var(--t-brand-700);
+  background: var(--card);
+}
+.tool-link:active {
+  background: var(--card-border);
 }
 
 /* Tab strips scroll only when they must, and never show a scrollbar. */
@@ -97,7 +142,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .tool-tile,
-  .tool-item {
+  .tool-item,
+  .tool-btn {
     transition: none;
   }
   .tool-hover:hover,

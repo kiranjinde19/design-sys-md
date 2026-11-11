@@ -157,7 +157,7 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
                 Previous
               </button>
             ) : null}
-            <button type="button" onClick={goNext} className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-transparent bg-secondary px-4 text-base font-medium leading-6 text-secondary-foreground">
+            <button type="button" onClick={goNext} className="tool-btn tool-btn--secondary h-10 px-4 text-base font-medium leading-6">
               {next ? `Next: ${next.label}` : "Finish"}
               <ChevronRight aria-hidden className="size-4" />
             </button>

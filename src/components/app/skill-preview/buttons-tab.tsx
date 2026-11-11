@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleAlert, LoaderCircle, Trash2 } from "lucide-react";
+import { CircleAlert, Ellipsis, LoaderCircle, Trash2 } from "lucide-react";
 import { SELECTION_RULES, useDesignSystem } from "@/lib/design-system";
 import { PvIcon } from "../preview-icon";
 
@@ -60,6 +60,7 @@ export function ButtonsTab() {
           {VARIANTS.map((variant) => (
             <button key={variant} type="button" className={`btn btn--${variant}`} aria-busy="true">
               <PvIcon icon={LoaderCircle} className="pvx-spin" />
+              <PvIcon icon={Ellipsis} className="pvx-spin-static" />
               Saving
             </button>
           ))}

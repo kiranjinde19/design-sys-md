@@ -32,10 +32,10 @@ export function TopBar({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: 
           <Upload aria-hidden className="size-4" />
           Import file
         </Link>
-        <button type="button" aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} onClick={onToggleTheme} className="inline-flex size-10 items-center justify-center rounded-[10px] border border-transparent bg-secondary text-secondary-foreground">
+        <button type="button" aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} onClick={onToggleTheme} className="tool-btn tool-btn--secondary size-10">
           {dark ? <Moon aria-hidden className="size-4" /> : <Sun aria-hidden className="size-4" />}
         </button>
-        <Link href="/debug#export" className={`${BUTTON} bg-primary text-primary-foreground hover:opacity-95`}>
+        <Link href="/debug#export" className={`${BUTTON} tool-btn tool-btn--primary`}>
           <Download aria-hidden className="size-4" />
           Export file
         </Link>

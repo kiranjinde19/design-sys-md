@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { generateSkillFile, useDesignSystem } from "@/lib/design-system";
 import { cssBlocks, scopeSkillCss } from "./skill-css";
 import { EXTRA_CSS } from "./extra-css";
@@ -16,14 +16,10 @@ export function SkillScope({ children }: { children: ReactNode }) {
     return scopeSkillCss(cssBlocks(file.skill), EXTRA_CSS);
   }, [settings, tokens, presetId]);
 
-  // This is a preview, not a form: nothing in it takes keyboard focus or submits.
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    ref.current?.querySelectorAll<HTMLElement>("button, input, select, textarea, a").forEach((element) => (element.tabIndex = -1));
-  });
-
   return (
-    <div ref={ref} className="pv-skill" style={{ minHeight: "100%" }} onSubmit={(event) => event.preventDefault()} onMouseDown={(event) => event.preventDefault()}>
+    // The controls are live: they take focus, typing and clicks. Only a form submit (which would reload the page) and a
+    // link jump are stopped. A mouse click leaves no focus ring because the CSS only draws one for :focus-visible.
+    <div className="pv-skill" style={{ minHeight: "100%" }} onSubmit={(event) => event.preventDefault()}>
       <style>{css}</style>
       {children}
     </div>

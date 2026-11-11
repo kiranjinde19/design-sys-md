@@ -3,6 +3,7 @@
 Plain-language log of what is built. Newest first.
 
 ## Latest
+- **Live behavior restored and tested.** Audit with a real browser against the commit before the mockup pass (93d59a0) and now. Found: the loading spinner never rotated (since the Preview fixes commit 3440c31: its `@keyframes` sat inside the nested preview block, where CSS drops it) and preview inputs could not take typing, and the select could not open (since the Color engine commit 181647b: every mouse press in the preview was blocked and every control removed from keyboard focus). The mockup pass itself replaced the shadcn buttons in the top bar and the Next button with plain buttons, which lost their hover, pressed and disabled states; nothing was replaced by static markup from `design/reference`. Fixed: `@keyframes` are hoisted out of the nested block so the spinner always rotates, and under reduced motion it is replaced by three still dots; the preview controls are live again (a mouse click still shows no focus ring because the ring is drawn only for `:focus-visible`); the tool's own primary and secondary buttons (`tool-btn`) have real hover, pressed and disabled states, links and list items have pressed states. New `npm run test:live` (11 tests, real headless Chrome, no new packages): spinner rotation and reduced motion fallback, border beam and its fallback, six tabs, checkbox, radio, switch, typing, select focus, focus ring rules, segmented controls, hover on tiles, tabs, buttons, list items and top bar buttons, card lift, keyboard focus rings, dark mode, Back, Next, Previous, Reset, reviewed ticks. Passes on the dev server and on the production build, with reduced motion off and on. New CLAUDE.md rule: the mockups are a visual reference, not a behavior spec. Round trip tests: 75 of 75.
 - **Visual match to the mockups.** `/app` now matches `design/reference` in layout, spacing, radii, type sizes and tile anatomy, with every value still coming from the design system. See "Differences from the mockups" for what was kept on purpose. Round trip tests: 75 of 75.
 - **Mockups added and first comparison done.** `Main.dc.html` and `Editor.dc.html` were in Downloads and are now in `design/reference/` (not shipped, linted or built). Nothing was changed in the app yet; the differences are listed below ("Differences from the mockups") for decisions.
 - **Plain HTML size decision applied (options 1 and 2).** Shortened the tinted-destructive wording in the button recipe, the do and don't row and the Accessibility line; the solid red confirm button is now `btn--confirm` and reuses the existing `--destructive`, `--destructive-hover` and `--destructive-pressed` tokens. Found and fixed a bug on the way: in red-brand files `--destructive-hover` and `--destructive-pressed` held the pale tint colors, so the solid confirm button would have turned pale on hover; they now hold the solid red values (new test). No rule was cut, no input is limited. Worst case (red brand, 60 character name, 200 character description, secondary color, own fonts): plain HTML 32.165 KiB (was 32.329), still 169 bytes over 32 KiB, accepted for this extreme combination (the Export step warns above 30 and 32 KiB and mentions `project_doc_max_bytes`; the SKILL.md route has no limit). Next.js 29.97 and React 30.81 KiB for the same input. Default brand worst case is unchanged: Next.js 29.40, React 30.24, plain HTML 31.496 KiB (Dashboard and Charts recipes included). Round trip tests: 75 of 75.
@@ -39,9 +40,9 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 | Stage 2: Token engine | 10 | 10 |
 | Stage 3: Skill file generator | 6 | 7 |
 | Stage 4: The tool's own screen (shell) | 7 | 7 |
-| Stage 5: Live preview and editors | 8 | 12 |
+| Stage 5: Live preview and editors | 9 | 13 |
 | Stage 6: Landing page and final polish | 0 | 4 |
-| **Overall** | **36** | **45** |
+| **Overall** | **37** | **46** |
 
 ## Checklist by stage
 
@@ -91,6 +92,7 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 - [x] Preview tab: Dashboard
 - [x] Preview tab: Charts
 - [x] Charts accessible: summary, hidden data table, shape as well as color
+- [x] Live behavior tests (`npm run test:live`) pass: spinner, beam, tabs, controls, segmented controls, hover, focus, dark mode, flows
 - [ ] Colors editor: roles drag and drop
 - [ ] Real Export screen (links to `/debug` for now)
 - [ ] Real Import screen (links to `/debug` for now)
