@@ -2,20 +2,38 @@
 
 /**
  * The small live samples inside each board tile. They are drawn from the user's current design
- * system (so they change as the user edits), using the token values directly.
+ * system (so they change as the user edits), using the real token values. Content is top aligned
+ * with 8px gaps, and every sample has a small caption.
  */
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { VOICE_AXES, voiceLevelLabel, useDesignSystem, type SystemId } from "@/lib/design-system";
 import { asStyle } from "@/components/preview/preview-stage";
 
-const row: CSSProperties = { display: "flex", gap: 3 };
+const Caption = ({ children }: { children: ReactNode }) => <div className="truncate text-xs leading-4 text-muted-foreground">{children}</div>;
+const Stack = ({ children }: { children: ReactNode }) => (
+  <div aria-hidden className="flex flex-col gap-2">
+    {children}
+  </div>
+);
 
-function Scale({ scale, height = 22 }: { scale: Record<number, string>; height?: number }) {
+function Swatches({ scale, height, mark }: { scale: Record<number, string>; height: number; mark?: number }) {
   return (
-    <div style={row} aria-hidden>
+    <div className="flex gap-0.5">
       {Object.entries(scale).map(([step, hex]) => (
-        <div key={step} style={{ flex: 1, height, background: hex, borderRadius: 4, border: "1px solid var(--border)" }} />
+        <div
+          key={step}
+          title={`${step}`}
+          style={{
+            flex: 1,
+            height,
+            background: hex,
+            borderRadius: 4,
+            border: "1px solid var(--border)",
+            // Step 600 is the exact brand color. A dark outline marks it.
+            ...(mark !== undefined && Number(step) === mark ? { outline: "2px solid var(--foreground)", outlineOffset: -2 } : {}),
+          }}
+        />
       ))}
     </div>
   );
@@ -23,56 +41,64 @@ function Scale({ scale, height = 22 }: { scale: Record<number, string>; height?:
 
 function ColorsSample() {
   const { tokens } = useDesignSystem();
-  const { brand, neutral, secondary, semantic } = tokens.colors;
+  const { brand, neutral, semantic, contrastPairs } = tokens.colors;
+  const failing = contrastPairs.filter((pair) => pair.kind === "text" && !pair.passes).length;
   return (
-    <div className="flex h-full flex-col justify-end gap-2">
-      <div className="space-y-1">
-        <Label>Brand</Label>
-        <Scale scale={brand} height={44} />
+    <Stack>
+      <div className="flex flex-col gap-1">
+        <Swatches scale={brand} height={32} mark={600} />
+        <Caption>Brand, step 600 is {brand[600]}</Caption>
       </div>
-      <div className="space-y-1">
-        <Label>Neutral</Label>
-        <Scale scale={neutral} height={22} />
+      <div className="flex flex-col gap-1">
+        <Swatches scale={neutral} height={28} />
+        <Caption>Neutral, {tokens.colors.neutral[500]} at the middle</Caption>
       </div>
-      {secondary ? (
-        <div className="space-y-1">
-          <Label>Secondary</Label>
-          <Scale scale={secondary} height={22} />
-        </div>
-      ) : null}
-      <div style={row} aria-hidden>
+      <div className="flex justify-between">
         {(["success", "warning", "error", "info"] as const).map((name) => (
-          <div key={name} style={{ flex: 1, height: 22, borderRadius: 11, background: semantic[name][600] }} />
+          <span key={name} className="flex items-center gap-1.5 text-xs leading-4 text-muted-foreground">
+            <span style={{ width: 8, height: 8, borderRadius: 4, background: semantic[name][600] }} />
+            {name[0].toUpperCase() + name.slice(1)}
+          </span>
         ))}
       </div>
-    </div>
+      <span
+        className="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium leading-4"
+        style={{ background: failing ? "var(--t-warning-50)" : "var(--t-success-50)", color: failing ? "var(--t-warning-700)" : "var(--t-success-700)", border: "1px solid color-mix(in srgb, currentColor 25%, transparent)" }}
+      >
+        {failing ? `${failing} text pair${failing === 1 ? "" : "s"} below AA` : "All text pairs pass AA"}
+      </span>
+    </Stack>
   );
-}
-
-function Label({ children }: { children: string }) {
-  return <div className="text-xs text-muted-foreground">{children}</div>;
 }
 
 function TypographySample() {
   const { tokens } = useDesignSystem();
-  const { heading, body } = tokens.typography;
+  const { heading, body, baseSize, scaleRatio, headingWeight, headingTracking, sizes } = tokens.typography;
+  const size = (name: string) => sizes.find((s) => s.name === name)!;
+  const rows: { label: string; font: string; weight: number; px: number }[] = [
+    { label: "Title", font: heading.previewStack, weight: headingWeight, px: size("lg").px },
+    { label: "Body", font: body.previewStack, weight: tokens.typography.bodyWeight, px: size("base").px },
+    { label: "Caption", font: body.previewStack, weight: tokens.typography.bodyWeight, px: size("xs").px },
+  ];
   return (
-    <div className="flex h-full flex-col justify-between">
-      <div
-        aria-hidden
-        style={{ fontFamily: heading.previewStack, fontWeight: tokens.typography.headingWeight, fontSize: 56, lineHeight: 1, letterSpacing: `${tokens.typography.headingTracking}em` }}
-      >
-        Aa
-      </div>
-      <div className="space-y-1">
-        <div className="truncate text-sm font-medium" style={{ fontFamily: heading.previewStack }}>
-          {heading.name}
+    <Stack>
+      <div style={{ fontFamily: heading.previewStack, fontWeight: headingWeight, fontSize: 56, lineHeight: "56px", letterSpacing: `${headingTracking}em` }}>Aa</div>
+      <div>
+        <div className="truncate text-sm font-medium leading-5">
+          {heading.name} + {body.name}
         </div>
-        <div className="truncate text-xs text-muted-foreground" style={{ fontFamily: body.previewStack }}>
-          {body.name} · {tokens.typography.baseSize}px
-        </div>
+        <Caption>
+          Scale {scaleRatio}, base {baseSize}px
+        </Caption>
       </div>
-    </div>
+      <div className="flex flex-col">
+        {rows.map((row) => (
+          <div key={row.label} className="truncate" style={{ fontFamily: row.font, fontWeight: row.weight, fontSize: row.px, lineHeight: `${Math.max(row.px + 4, 16)}px` }}>
+            {row.label}
+          </div>
+        ))}
+      </div>
+    </Stack>
   );
 }
 
@@ -80,50 +106,77 @@ function RadiusSample() {
   const { tokens } = useDesignSystem();
   const { radius, colors } = tokens;
   return (
-    <div className="flex h-full items-end gap-2" aria-hidden>
-      {([radius.sm, radius.md, radius.lg, radius.full] as const).map((r, index) => (
-        <div
-          key={index}
-          style={{ width: 30, height: 30, background: colors.brand[100], border: `2px solid ${colors.brand[600]}`, borderRadius: Math.min(r, 15) }}
-        />
-      ))}
-    </div>
+    <Stack>
+      <div className="flex gap-2">
+        {([radius.sm, radius.md, radius.lg, radius.full] as const).map((r, index) => (
+          <div key={index} style={{ width: 28, height: 28, background: colors.brand[100], border: `2px solid ${colors.brand[600]}`, borderRadius: Math.min(r, 14) }} />
+        ))}
+      </div>
+      <Caption>
+        {radius.sm}, {radius.md}, {radius.lg}px, full
+      </Caption>
+    </Stack>
   );
 }
 
 function SpacingSample() {
   const { tokens } = useDesignSystem();
-  const steps = tokens.spacing.scale.filter((_, index) => index % 2 === 0).slice(0, 5);
+  const { spacing, colors } = tokens;
+  const steps = spacing.scale.filter((step) => [4, 8, 16, 24, 32].includes(step.px));
   return (
-    <div className="flex h-full flex-col justify-end gap-1" aria-hidden>
-      {steps.map((step) => (
-        <div key={step.key} style={{ width: Math.min(step.px * 2.4, 120), height: 8, background: tokens.colors.brand[400], borderRadius: 2 }} />
-      ))}
-    </div>
+    <Stack>
+      <div className="flex items-end gap-1.5" style={{ height: 32 }}>
+        {steps.map((step) => (
+          <div key={step.key} style={{ width: step.px, height: step.px, background: colors.brand[400], borderRadius: 2 }} />
+        ))}
+      </div>
+      <Caption>
+        {spacing.base}px grid, {spacing.density}
+      </Caption>
+    </Stack>
   );
 }
 
 function BordersSample() {
   const { tokens } = useDesignSystem();
   const { borders } = tokens;
+  // Subtle, default and the input border: each shown as a solid chip and as a line at the real width.
+  const rows: [string, string][] = [
+    ["subtle", borders.colorSubtle],
+    ["default", borders.color],
+    ["input", borders.input],
+  ];
   return (
-    <div className="flex h-full flex-col justify-end gap-2" aria-hidden>
-      {[borders.colorSubtle, borders.color, borders.colorStrong].map((color, index) => (
-        <div key={index} style={{ height: 14, border: `${borders.width}px solid ${color}`, borderRadius: 4, background: tokens.colors.roles.background }} />
-      ))}
-    </div>
+    <Stack>
+      <div className="flex flex-col gap-1">
+        {rows.map(([name, color]) => (
+          <div key={name} className="flex items-center gap-2" title={`${name} ${color}`}>
+            <span style={{ width: 20, height: 12, borderRadius: 3, background: color, border: "1px solid var(--border)" }} />
+            <span style={{ flex: 1, height: borders.width, background: color }} />
+          </div>
+        ))}
+      </div>
+      <Caption>{borders.width}px, subtle, default, input</Caption>
+    </Stack>
   );
 }
 
 function ShadowsSample() {
   const { tokens } = useDesignSystem();
-  const { shadows } = tokens.elevation;
-  const picks = [1, 3, 5].map((level) => shadows[Math.min(level, shadows.length - 1)]);
+  const { shadows, levels, style } = tokens.elevation;
+  const all = shadows.slice(1);
   return (
-    <div className="flex h-full items-end gap-3 pb-1" aria-hidden>
-      {picks.map((shadow, index) => (
-        <div key={index} style={{ width: 30, height: 30, borderRadius: 8, background: tokens.colors.roles.background, boxShadow: shadow.css }} />
-      ))}
+    <div aria-hidden className="flex flex-col gap-2">
+      <div className="flex gap-2 px-0.5 pt-0.5">
+        {all.length ? (
+          all.map((shadow) => <div key={shadow.level} style={{ width: 20, height: 20, borderRadius: 6, background: tokens.colors.roles.background, boxShadow: shadow.css }} />)
+        ) : (
+          <div style={{ width: 20, height: 20, borderRadius: 6, background: tokens.colors.roles.background, border: "1px solid var(--border)" }} />
+        )}
+      </div>
+      <Caption>
+        {levels} levels, {style}
+      </Caption>
     </div>
   );
 }
@@ -131,67 +184,80 @@ function ShadowsSample() {
 function ButtonsSample() {
   const { tokens } = useDesignSystem();
   const { buttons, inputs } = tokens.controls;
-  const variant = (name: "primary" | "secondary" | "tertiary") => buttons.variants[name].default;
   const style = (name: "primary" | "secondary" | "tertiary"): CSSProperties => ({
     height: 28,
     padding: "0 12px",
     borderRadius: buttons.radius,
-    background: variant(name).background,
-    color: variant(name).color,
-    border: `${buttons.borderWidth}px solid ${variant(name).borderColor}`,
+    background: buttons.variants[name].default.background,
+    color: buttons.variants[name].default.color,
+    border: `${buttons.borderWidth}px solid ${buttons.variants[name].default.borderColor}`,
     fontWeight: buttons.fontWeight,
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: "20px",
     fontFamily: tokens.typography.body.previewStack,
+    display: "inline-flex",
+    alignItems: "center",
   });
   return (
-    <div className="flex h-full flex-col justify-end gap-2" aria-hidden>
-      <div style={row}>
+    <Stack>
+      <div className="flex items-center gap-1.5">
         {(["primary", "secondary", "tertiary"] as const).map((name) => (
-          <span key={name} style={{ ...style(name), display: "inline-flex", alignItems: "center" }}>
+          <span key={name} style={style(name)}>
             {name === "primary" ? "Save" : name === "secondary" ? "Cancel" : "Skip"}
           </span>
         ))}
+        <span
+          style={{
+            flex: 1,
+            height: 28,
+            minWidth: 0,
+            borderRadius: inputs.radius,
+            border: `${inputs.borderWidth}px solid ${inputs.states.default.borderColor}`,
+            background: inputs.states.default.background,
+            color: inputs.placeholderColor,
+            fontSize: 14,
+            lineHeight: "20px",
+            padding: "0 10px",
+            display: "flex",
+            alignItems: "center",
+            fontFamily: tokens.typography.body.previewStack,
+          }}
+        >
+          Email
+        </span>
       </div>
-      <div
-        style={{
-          height: 28,
-          borderRadius: inputs.radius,
-          border: `${inputs.borderWidth}px solid ${inputs.states.default.borderColor}`,
-          background: inputs.states.default.background,
-          color: inputs.placeholderColor,
-          fontSize: 12,
-          padding: "0 10px",
-          display: "flex",
-          alignItems: "center",
-          fontFamily: tokens.typography.body.previewStack,
-        }}
-      >
-        Email address
-      </div>
-    </div>
+      <Caption>
+        Height {buttons.height.md}px, radius {buttons.radius}px, secondary {tokens.controls.secondaryStyle}
+      </Caption>
+    </Stack>
   );
 }
 
 function SignatureSample() {
   const { tokens } = useDesignSystem();
-  const { signature, colors } = tokens;
+  const { signature, radius, colors, controls } = tokens;
   return (
-    <div className="flex h-full items-end gap-3" aria-hidden>
-      {/* The featured highlight on a card. The border beam is only ever shown in the preview. */}
-      <div style={{ flex: 1, height: 48, borderRadius: tokens.radius.lg, ...asStyle(signature.cardStyle.css), ...asStyle(signature.featuredHighlight.css) }} />
-      <div style={{ width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", ...asStyle(signature.iconContainer.css), fontSize: 16 }}>★</div>
-      <div style={{ flex: 1, alignSelf: "center" }}>
-        <div style={asStyle(signature.divider.css)} />
-        <div style={{ marginTop: 10, height: 6, width: "60%", background: colors.brand[200], borderRadius: 3 }} />
+    <Stack>
+      <div className="flex items-center gap-3">
+        {/* The featured highlight on a card. The border beam is only ever shown in the preview. */}
+        <div style={{ width: 64, height: 28, borderRadius: radius.lg, ...asStyle(signature.cardStyle.css), ...asStyle(signature.featuredHighlight.css) }} />
+        <div style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", ...asStyle(signature.iconContainer.css), fontSize: 14 }}>★</div>
+        <div style={{ flex: 1 }}>
+          <div style={asStyle(signature.divider.css)} />
+        </div>
+        <div style={{ width: 28, height: 28, borderRadius: controls.buttons.radius, background: colors.roles.background, border: `1px solid ${colors.roles.border}`, ...asStyle(signature.focusRing.css) }} />
       </div>
-    </div>
+      <Caption>
+        {signature.featuredHighlight.label}, {signature.primaryCta.label}, {signature.hover.label}
+      </Caption>
+    </Stack>
   );
 }
 
 function VoiceSample() {
   const { settings } = useDesignSystem();
   return (
-    <div className="flex h-full flex-col justify-end gap-1" aria-hidden>
+    <div aria-hidden className="flex flex-col gap-1">
       {VOICE_AXES.map((axis) => {
         const value = settings.voice[axis.key];
         return (

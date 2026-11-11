@@ -7,6 +7,7 @@ import { PricingPreview } from "./pricing-preview";
 import { previewVars } from "./preview-vars";
 import "./preview.css";
 
+const SCALE = 0.65;
 const TABS = ["Pricing", "Buttons and states", "Forms", "Tables", "Dashboard", "Charts"] as const;
 
 /** The live preview tile: tabs, a framed stage at 65% scale, and a footer of small token chips. */
@@ -25,7 +26,7 @@ export function Preview() {
 
   return (
     <section aria-label="Live preview" className="tool-tile flex min-w-0 flex-col overflow-hidden" style={{ height: 648 }}>
-      <div role="tablist" aria-label="Preview pages" className="flex gap-1 overflow-x-auto border-b border-[var(--card-border)] px-3 pt-2">
+      <div role="tablist" aria-label="Preview pages" className="tool-tabs flex gap-1 overflow-x-auto border-b border-[var(--card-border)] px-3 pt-2">
         {TABS.map((name) => (
           <button
             key={name}
@@ -34,7 +35,7 @@ export function Preview() {
             aria-selected={name === tab}
             onClick={() => setTab(name)}
             className={cn(
-              "-mb-px shrink-0 rounded-t-md border-b-2 px-3 py-2 text-sm font-medium",
+              "-mb-px h-10 shrink-0 rounded-t-[10px] border-b-2 px-3 text-sm font-medium leading-5",
               name === tab ? "border-[var(--t-brand-600)] text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
@@ -50,7 +51,8 @@ export function Preview() {
         {/* The frame. The page inside is a normal desktop page, shown at 65% scale. Light only. */}
         <div role="tabpanel" className="h-full overflow-hidden rounded-[var(--t-radius-md)] border border-border" style={previewVars(tokens)}>
           {tab === "Pricing" ? (
-            <div className="h-full" style={{ zoom: 0.65 }}>
+            // 65% scale with a transform (not zoom), so a 2px border stays 2px before scaling and cards line up.
+            <div style={{ width: `${100 / SCALE}%`, height: `${100 / SCALE}%`, transform: `scale(${SCALE})`, transformOrigin: "top left" }}>
               <PricingPreview />
             </div>
           ) : (
@@ -61,7 +63,7 @@ export function Preview() {
 
       <footer className="flex flex-wrap items-center gap-1.5 border-t border-[var(--card-border)] px-3 py-2.5" aria-label="Design tokens in use">
         {chips.map((chip) => (
-          <span key={chip.label} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+          <span key={chip.label} className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs leading-4 text-muted-foreground">
             {chip.swatch ? <span aria-hidden className="size-3 rounded-full" style={{ background: chip.swatch }} /> : null}
             {chip.label}
           </span>

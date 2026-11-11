@@ -10,12 +10,26 @@
   box-shadow: none;
 }
 
-/* Tinted bento tile: card color, hairline card border. */
+/* Every control is 10px (buttons, inputs, tabs). Tiles and panels are 16px. */
+.tool .group\/button {
+  border-radius: var(--t-radius-md);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* Tinted bento tile: card color, hairline card border, 16px radius. */
 .tool-tile {
   background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--t-radius-lg);
   transition: transform 150ms, box-shadow 150ms, border-color 150ms, background-color 150ms;
+}
+
+/* A plain white panel (the editor): 1px border, 16px radius. */
+.tool-panel {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--t-radius-lg);
 }
 
 /* Hover: lift 2px and the same shadow on every tile. */
@@ -24,21 +38,55 @@
   box-shadow: var(--t-shadow-md);
 }
 
-/* Active item: a crisp 2px brand border (items always carry a 2px border, so nothing shifts). */
+/* System list item: a tinted 44px tile with a 1px brand-100 border. The active one has a crisp 2px brand border. */
 .tool-item {
-  border: 2px solid transparent;
+  height: 44px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
   border-radius: var(--t-radius-md);
+  padding: 0 12px;
+  transition: transform 150ms, box-shadow 150ms;
+}
+.tool-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--t-shadow-md);
 }
 .tool-item[aria-current="true"] {
-  border-color: var(--t-brand-600);
-  background: var(--card);
+  border: 2px solid var(--t-brand-600);
+  padding: 0 11px;
+}
+
+/* A small number chip for tiles and list items. */
+.tool-num {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--card-border);
+  color: var(--t-brand-700);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+/* Tab strips scroll only when they must, and never show a scrollbar. */
+.tool-tabs {
+  scrollbar-width: none;
+}
+.tool-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tool-tile {
+  .tool-tile,
+  .tool-item {
     transition: none;
   }
-  .tool-hover:hover {
+  .tool-hover:hover,
+  .tool-item:hover {
     transform: none;
   }
 }

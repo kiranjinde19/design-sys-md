@@ -127,3 +127,15 @@
 .pv-plan__cta {
   margin-top: auto;
 }
+
+.pv-plan__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--pv-gap-inline);
+  min-height: var(--pv-leading-xl);
+}
+.pv-rec {
+  color: var(--pv-brand-700);
+  font: 500 var(--pv-text-sm) / var(--pv-leading-sm) var(--pv-font-body);
+}

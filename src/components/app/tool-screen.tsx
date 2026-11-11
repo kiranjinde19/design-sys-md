@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { SYSTEMS, useDesignSystem, type SystemId } from "@/lib/design-system";
+import { Button } from "@/components/ui/button";
+import { PRESETS, SYSTEMS, useDesignSystem, type SystemId } from "@/lib/design-system";
 import { useSelectedFonts } from "@/components/typography/google-fonts";
 import { cn } from "@/lib/utils";
 import { Board } from "./board";
@@ -14,7 +15,7 @@ import "./tool.css";
 
 /** The tool's own screen. It wears the fixed SaaS Clean theme; the user's choices only appear inside the samples and the preview. */
 export function ToolScreen() {
-  const { ready, reviewed } = useDesignSystem();
+  const { ready, reviewed, presetId, isModified, reset } = useDesignSystem();
   const { dark, toggle } = useToolTheme();
   const [openId, setOpenId] = useState<SystemId | null>(null);
   // Load only the fonts currently selected, so the samples and the preview show the real fonts.
@@ -30,9 +31,19 @@ export function ToolScreen() {
             <h1 className="text-2xl font-semibold tracking-tight">Your design system</h1>
             <p className="mt-1 text-sm text-muted-foreground">Open a tile to edit it. The preview updates as you go.</p>
           </div>
-          <div className="text-right" role="status">
-            <div className="text-sm font-medium">
-              {reviewed.length} of {SYSTEMS.length} reviewed
+          <div className="flex flex-col items-end" role="status">
+            <div className="flex items-center gap-3 text-sm">
+              {isModified ? (
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  {PRESETS[presetId].name}, edited.
+                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={reset}>
+                    Reset
+                  </Button>
+                </span>
+              ) : null}
+              <span className="font-medium">
+                {reviewed.length} of {SYSTEMS.length} reviewed
+              </span>
             </div>
             <div className="mt-2 flex gap-1" aria-hidden>
               {SYSTEMS.map((system) => (

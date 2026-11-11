@@ -12,10 +12,12 @@ const { roles, brand, neutral, semantic } = own.colors;
 const shadow = (level: number) => own.elevation.shadows[level].css;
 
 const shared = {
-  "--radius": "16px",
+  // shadcn derives its "md" radius as 0.8 of this, which makes every small control 10px.
+  "--radius": "12.5px",
   "--t-radius-sm": `${own.radius.sm}px`,
   "--t-radius-md": `${own.radius.md}px`,
   "--t-radius-lg": `${own.radius.lg}px`,
+  "--t-shadow-xs": shadow(1),
   "--t-shadow-md": shadow(3),
 } as const;
 
@@ -41,6 +43,11 @@ const LIGHT: Record<string, string> = {
   "--input": roles.input,
   "--ring": roles.ring,
   "--t-brand-600": brand[600],
+  "--t-brand-700": brand[700],
+  "--t-success-50": semantic.success[50],
+  "--t-success-700": semantic.success[700],
+  "--t-warning-50": semantic.warning[50],
+  "--t-warning-700": semantic.warning[700],
 };
 
 /** Dark: the same SaaS Clean scales, read from the dark end. */
@@ -66,6 +73,11 @@ const DARK: Record<string, string> = {
   "--input": neutral[500],
   "--ring": brand[400],
   "--t-brand-600": brand[400],
+  "--t-brand-700": brand[300],
+  "--t-success-50": neutral[800],
+  "--t-success-700": semantic.success[600],
+  "--t-warning-50": neutral[800],
+  "--t-warning-700": semantic.warning[600],
 };
 
 export const toolVars = (dark: boolean): CSSProperties => (dark ? DARK : LIGHT) as CSSProperties;

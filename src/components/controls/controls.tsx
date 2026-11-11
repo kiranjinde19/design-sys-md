@@ -22,7 +22,7 @@ export function Group({ title, children }: { title: string; children: ReactNode 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+      <div className="text-sm font-medium text-muted-foreground">{label}</div>
       {children}
     </div>
   );
@@ -63,12 +63,53 @@ export function ChoiceButton({ selected, className, ...props }: { selected: bool
   return <Button size="sm" variant="outline" aria-pressed={selected} className={cn(selected && "border-2 border-primary font-medium", className)} {...props} />;
 }
 
+/**
+ * One segmented control style everywhere: a muted container with 10px radius and 4px padding, 32px
+ * buttons with 5px radius, and the selected one lifted onto the page color with the extra small shadow.
+ */
+export function Segmented<T extends string | number>({
+  options,
+  value,
+  onChange,
+  labelFor = String,
+  label,
+}: {
+  options: readonly T[];
+  value: T;
+  onChange: (value: T) => void;
+  labelFor?: (option: T) => string;
+  label: string;
+}) {
+  return (
+    <div role="group" aria-label={label} className="inline-flex max-w-full flex-wrap gap-0.5 rounded-[10px] bg-muted p-1">
+      {options.map((option) => {
+        const selected = option === value;
+        return (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onChange(option)}
+            className={cn(
+              "h-8 rounded-[5px] px-3 text-sm font-medium whitespace-nowrap transition-colors",
+              selected ? "bg-background text-foreground shadow-[var(--t-shadow-xs,0_1px_2px_rgb(0_0_0/0.08))]" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {labelFor(option)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function Choice<T extends string | number>({
   label,
   value,
   options,
   onChange,
   labelFor = String,
+  segmented = true,
 }: {
   label: string;
   value: T;
@@ -76,7 +117,16 @@ export function Choice<T extends string | number>({
   onChange: (value: T) => void;
   /** Turns an option into the words on its button. */
   labelFor?: (option: T) => string;
+  /** A short row of exclusive choices is a segmented control. Long or wrapping lists use separate buttons. */
+  segmented?: boolean;
 }) {
+  if (segmented) {
+    return (
+      <Field label={label}>
+        <Segmented label={label} options={options} value={value} onChange={onChange} labelFor={labelFor} />
+      </Field>
+    );
+  }
   return (
     <Field label={label}>
       <div className="flex flex-wrap gap-1.5">

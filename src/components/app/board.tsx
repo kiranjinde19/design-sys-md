@@ -24,7 +24,7 @@ export function Board({ onOpen }: { onOpen: (id: SystemId) => void }) {
 
   return (
     <div className="grid w-[560px] max-w-full grid-cols-3 gap-3" style={{ gridAutoRows: 120 }}>
-      {SYSTEMS.map((system) => {
+      {SYSTEMS.map((system, index) => {
         const done = reviewed.includes(system.id);
         return (
           <button
@@ -32,17 +32,16 @@ export function Board({ onOpen }: { onOpen: (id: SystemId) => void }) {
             type="button"
             onClick={() => onOpen(system.id)}
             aria-label={`${system.label}${done ? ", reviewed" : ""}. Open the editor.`}
-            className={cn("tool-tile tool-hover flex min-h-0 flex-col gap-2 overflow-hidden p-4 text-left", SPAN[system.id])}
+            className={cn("tool-tile tool-hover flex min-h-0 flex-col items-stretch justify-start gap-2 p-4 text-left", SPAN[system.id])}
           >
-            <span className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium">{system.label}</span>
-              {done ? (
-                <span aria-hidden className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <Check className="size-3" strokeWidth={3} />
-                </span>
-              ) : null}
+            <span className="flex items-center gap-2">
+              <span className="tool-num" aria-hidden>
+                {index + 1}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">{system.label}</span>
+              {done ? <Check aria-hidden className="size-4 shrink-0 text-[var(--t-success-700)]" strokeWidth={2.5} /> : null}
             </span>
-            <span className="min-h-0 flex-1 overflow-hidden">
+            <span className="block min-h-0 flex-1">
               <TileSample id={system.id} />
             </span>
           </button>

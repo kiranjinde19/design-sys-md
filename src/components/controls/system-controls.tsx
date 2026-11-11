@@ -149,6 +149,7 @@ export function SignatureControls() {
             value={settings.signature[key] as string}
             options={ids}
             labelFor={(id) => category.options.find((option) => option.id === id)?.label ?? id}
+            segmented={false}
             onChange={(id) => update({ signature: { [key]: id } as Partial<SignatureSettings> })}
           />
         );

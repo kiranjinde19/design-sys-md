@@ -59,13 +59,20 @@ export function PricingPreview() {
         <div className="pv-plans">
           {PLANS.map((plan) => {
             const featured = "featured" in plan;
+            // A thicker featured border must not move the content: take the extra width out of the padding.
+            const borderWidth = (recipe: Record<string, string | number>) => parseFloat(String(recipe.border ?? "0")) || 0;
+            const extra = Math.max(0, borderWidth(signature.featuredHighlight.css) - borderWidth(signature.cardStyle.css));
+            const featuredStyle: CSSProperties = { ...asStyle(signature.featuredHighlight.css), margin: 0, padding: `calc(var(--pv-pad-card) - ${extra}px)` };
             return (
               <div
                 key={plan.name}
                 className={`pv-plan pv-hover${featured ? " pv-featured" : ""}`}
-                style={{ ...asStyle(signature.cardStyle.css), ...(featured ? asStyle(signature.featuredHighlight.css) : {}), padding: "var(--pv-pad-card)" }}
+                style={{ ...asStyle(signature.cardStyle.css), padding: "var(--pv-pad-card)", ...(featured ? featuredStyle : {}) }}
               >
-                <h3 style={{ fontSize: "var(--pv-text-xl)", lineHeight: "var(--pv-leading-xl)" }}>{plan.name}</h3>
+                <div className="pv-plan__title">
+                  <h3 style={{ fontSize: "var(--pv-text-xl)", lineHeight: "var(--pv-leading-xl)" }}>{plan.name}</h3>
+                  {featured ? <span className="pv-rec">Recommended</span> : null}
+                </div>
                 <p className="pv-plan__desc">{plan.description}</p>
                 <p className="pv-plan__price">
                   {plan.price}

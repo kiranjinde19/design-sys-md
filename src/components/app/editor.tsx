@@ -1,8 +1,8 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SYSTEMS, useDesignSystem, type SystemId } from "@/lib/design-system";
+import { PRESETS, SYSTEMS, useDesignSystem, type SystemId } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
 import {
   BordersControls,
@@ -46,9 +46,9 @@ function EditorBody({ id }: { id: SystemId }) {
   }
 }
 
-/** Left area in the open state: the system list (224px) and the editor panel (400px). */
+/** Left area in the open state: a Back to board link and the system list (224px), then the editor panel (400px). */
 export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: (id: SystemId) => void; onClose: () => void }) {
-  const { reviewed, markReviewed } = useDesignSystem();
+  const { reviewed, markReviewed, presetId, isModified, reset } = useDesignSystem();
   const index = SYSTEMS.findIndex((system) => system.id === openId);
   const system = SYSTEMS[index];
   const next = SYSTEMS[index + 1];
@@ -62,8 +62,12 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
 
   return (
     <div className="flex gap-3" style={{ height: 648 }}>
-      <nav aria-label="Design systems" className="flex w-56 shrink-0 flex-col gap-1">
-        {SYSTEMS.map((item) => {
+      <nav aria-label="Design systems" className="flex w-56 shrink-0 flex-col gap-2">
+        <Button variant="ghost" size="lg" className="h-10 justify-start gap-2 px-2" onClick={onClose}>
+          <ArrowLeft aria-hidden className="size-4" />
+          Back to board
+        </Button>
+        {SYSTEMS.map((item, itemIndex) => {
           const done = reviewed.includes(item.id);
           return (
             <button
@@ -71,39 +75,54 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
               type="button"
               aria-current={item.id === openId}
               onClick={() => onOpen(item.id)}
-              className={cn("tool-item flex h-10 items-center justify-between gap-2 px-3 text-left text-sm", item.id === openId ? "font-medium" : "text-muted-foreground hover:bg-muted hover:text-foreground")}
+              className="tool-item flex items-center gap-2 text-left text-sm"
             >
-              <span className="truncate">{item.label}</span>
-              {done ? (
-                <span aria-label="Reviewed" className="flex size-4 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <Check aria-hidden className="size-2.5" strokeWidth={3} />
-                </span>
-              ) : null}
+              <span className="tool-num" aria-hidden>
+                {itemIndex + 1}
+              </span>
+              <span className={cn("min-w-0 flex-1 truncate font-medium", item.id !== openId && "text-muted-foreground")}>{item.label}</span>
+              {done ? <Check aria-label="Reviewed" className="size-4 shrink-0 text-[var(--t-success-700)]" strokeWidth={2.5} /> : null}
             </button>
           );
         })}
+        {isModified ? (
+          <div className="mt-auto flex flex-wrap items-center gap-x-1 text-sm text-muted-foreground">
+            {PRESETS[presetId].name}, edited.
+            <Button variant="ghost" size="sm" className="h-7 px-2" onClick={reset}>
+              Reset
+            </Button>
+          </div>
+        ) : null}
       </nav>
 
-      <section aria-labelledby="editor-title" className="tool-tile flex w-[400px] shrink-0 flex-col" style={{ transition: "none" }}>
-        <header className="space-y-1 border-b border-[var(--card-border)] p-4">
-          <h2 id="editor-title" className="text-base font-semibold">
-            {system.label}
-          </h2>
-          <p className="text-sm text-muted-foreground">{system.description}</p>
+      <section aria-labelledby="editor-title" className="tool-panel flex w-[400px] shrink-0 flex-col p-6">
+        <header className="flex items-start justify-between gap-3 pb-4">
+          <div className="min-w-0">
+            <h2 id="editor-title" className="text-2xl font-semibold leading-8">
+              {system.label}
+            </h2>
+            <p className="text-sm leading-5 text-muted-foreground">{system.description}</p>
+          </div>
+          <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs leading-4 text-muted-foreground">
+            {index + 1} of {SYSTEMS.length}
+          </span>
         </header>
-        <div className="@container min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="@container min-h-0 flex-1 overflow-y-auto">
           <EditorBody id={openId} />
         </div>
-        <footer className="flex items-center justify-between gap-2 border-t border-[var(--card-border)] p-3">
-          <Button variant="ghost" size="lg" className="h-9 px-3" onClick={onClose}>
+        <footer className="flex items-center justify-between gap-2 pt-4">
+          <Button variant="ghost" size="lg" className="h-10 px-3" onClick={onClose}>
             Back to board
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" size="lg" className="h-9 px-3" disabled={!previous} onClick={() => previous && onOpen(previous.id)}>
-              Back
-            </Button>
-            <Button variant="secondary" size="lg" className="h-9 px-3" onClick={goNext}>
+            {previous ? (
+              <Button variant="ghost" size="lg" className="h-10 px-3" onClick={() => onOpen(previous.id)}>
+                Previous
+              </Button>
+            ) : null}
+            <Button variant="secondary" size="lg" className="h-10 gap-1 px-3" onClick={goNext}>
               {next ? `Next: ${next.label}` : "Finish"}
+              <ChevronRight aria-hidden className="size-4" />
             </Button>
           </div>
         </footer>
