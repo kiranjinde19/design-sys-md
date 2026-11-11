@@ -12,7 +12,7 @@ export function FormsTab() {
   const copy = useVoiceCopy();
   const { tokens } = useDesignSystem();
   // Solid red belongs to the confirmation dialog when the brand is close to the error red.
-  const solidDelete = tokens.controls.buttons.destructiveStyle === "tinted" ? "btn--destructive-solid" : "btn--destructive";
+  const solidDelete = tokens.controls.buttons.destructiveStyle === "tinted" ? "btn--confirm" : "btn--destructive";
   return (
     <div className="pvx-page">
       <div className="pvx-head">

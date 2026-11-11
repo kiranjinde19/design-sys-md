@@ -229,7 +229,7 @@ test("a brand close to the error red uses the foreground color for focus, and sa
   assert.match(red.tokens.signature.focusRing.css.outline, new RegExp(red.tokens.colors.roles.foreground.replace("#", "#"), "i"));
   for (const stack of STACKS) {
     const file = generateSkillFile(red, { stack, presetId: "saas-clean" }).skill;
-    assert.match(file, /focus ring is the `foreground` color, never brand red/);
+    assert.match(file, /the focus ring is `foreground`, never brand red/);
   }
   const teal = createDesignSystem(applyPatch(saas, { colors: { brand: "#0F766E" } }));
   assert.notEqual(teal.tokens.colors.brandReport.focus, teal.tokens.colors.roles.foreground);
@@ -255,5 +255,14 @@ test("chart and metric card recipes carry the accessibility and badge details, i
     assert.match(file, /dash style and marker/);
     assert.match(file, /change badge/);
     assert.doesNotMatch(file, /stat__change/);
+  }
+});
+
+test("a tinted destructive brand keeps solid red hover and pressed tokens for the confirm button", () => {
+  const red = createDesignSystem(applyPatch(saas, { colors: { brand: "#E54848" } }));
+  const solid = red.tokens.controls.buttons.destructiveSolid;
+  for (const stack of STACKS) {
+    const file = generateSkillFile(red, { stack, presetId: "saas-clean" }).skill;
+    assert.ok(file.toUpperCase().includes(`DESTRUCTIVE-HOVER:${solid.hover.background.toUpperCase()}`.replace(/\s/g, "")) || file.toUpperCase().includes(`DESTRUCTIVE-HOVER: ${solid.hover.background.toUpperCase()}`));
   }
 });

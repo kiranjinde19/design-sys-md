@@ -24,7 +24,7 @@ export function dosAndDontsSection(ctx: SkillContext): string[] {
   ];
 
   if (ctx.t.controls.buttons.destructiveStyle === "tinted") {
-    rows.push(["A solid red destructive button outside a confirmation dialog (it looks like the primary button).", `Tinted destructive with a trash icon; solid red only inside the confirmation dialog.`]);
+    rows.push(["A solid red destructive button outside a confirmation dialog.", "Tinted destructive and a trash icon; solid red only in the dialog."]);
   }
   return lines("## Do and don't", "", ...table(["Don't", "Do"], rows), "");
 }

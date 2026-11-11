@@ -45,7 +45,7 @@ export function ButtonsTab() {
         {tinted ? (
           <div className="pvx-row">
             <span className="pvx-label">Confirmation dialog only</span>
-            <button type="button" className="btn btn--destructive-solid">
+            <button type="button" className="btn btn--confirm">
               <Trash />
               Delete project
             </button>

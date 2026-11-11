@@ -92,7 +92,7 @@ function buttonsSection(ctx: SkillContext): string[] {
       ];
     })(),
     b.destructiveStyle === "tinted"
-      ? `.btn--destructive-solid { background: ${ctx.cssVar(b.destructiveSolid.default.background, "fill", HINTS.destructive.bg)}; color: ${ctx.cssVar(b.destructiveSolid.default.color, "text", HINTS.destructive.text)}; } .btn--destructive-solid:hover { background: ${ctx.cssVar(b.destructiveSolid.hover.background, "fill")}; } .btn--destructive-solid:active { background: ${ctx.cssVar(b.destructiveSolid.pressed.background, "fill")}; }`
+      ? `.btn--confirm { background: ${ctx.cssVar(b.destructiveSolid.default.background, "fill", HINTS.destructive.bg)}; color: ${ctx.cssVar(b.destructiveSolid.default.color, "text", HINTS.destructive.text)}; } .btn--confirm:hover { background: ${ctx.cssVar(b.destructiveSolid.hover.background, "fill")}; } .btn--confirm:active { background: ${ctx.cssVar(b.destructiveSolid.pressed.background, "fill")}; }`
       : null,
     '.btn:disabled { cursor: not-allowed; } .btn[aria-busy="true"] { pointer-events: none; }',
   );
@@ -103,7 +103,7 @@ function buttonsSection(ctx: SkillContext): string[] {
   return lines(
     "### Buttons",
     "",
-    `**primary** the one main action; **secondary** supporting actions; **tertiary** low emphasis such as cancel; **destructive** only for deleting or irreversible actions, with a confirmation.${tinted ? ` The brand is close to the error red, so destructive is tinted (light error tint, dark error text) and delete actions get a trash icon (\`Trash2\`). Solid red is only for the confirm button inside a confirmation dialog: ${ctx.tailwind ? `\`${solidClasses}\`` : "`btn--destructive-solid`"}.` : ""}`,
+    `**primary** the one main action; **secondary** supporting actions; **tertiary** low emphasis such as cancel; **destructive** only for deleting or irreversible actions, with a confirmation.${tinted ? ` Brand near the error red: destructive is tinted (error tint, dark text) with a trash icon (\`Trash2\`) on delete actions; solid red (${ctx.tailwind ? `\`${solidClasses}\`` : "`btn--confirm`"}) only for a confirmation dialog's confirm button.` : ""}`,
     "",
     fence(ctx.tailwind ? "tsx" : "css", ctx.tailwind ? tw : tight(ctx, css)),
     "",

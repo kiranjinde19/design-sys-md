@@ -121,12 +121,13 @@ const CUSTOM_ROLES = ["card-border", "placeholder", "primary-hover", "primary-pr
 function roleVars(ctx: SkillContext, withRadius: boolean, prefix = "--"): string[] {
   const { colors, controls, radius } = ctx.t;
   const v = controls.buttons.variants;
+  const solid = controls.buttons.destructiveSolid;
   const role = (name: string) => `${prefix}${name}: ${colors.roles[name as keyof typeof colors.roles]};`;
   return lines(
     ctx.shadcn ? "  /* Roles (shadcn names) and derived button states. Replace the values init wrote */" : "  /* Roles (shadcn names) and derived button states */",
     ROLE_GROUPS.map((group) => `  ${group.map(role).join(" ")}`),
     `  ${prefix}placeholder: ${colors.placeholder};${withRadius ? ` --radius: ${radius.md}px;` : ""} ${prefix}primary-hover: ${v.primary.hover.background}; ${prefix}primary-pressed: ${v.primary.pressed.background};`,
-    `  ${prefix}destructive-hover: ${v.destructive.hover.background}; ${prefix}destructive-pressed: ${v.destructive.pressed.background};`,
+    `  ${prefix}destructive-hover: ${solid.hover.background}; ${prefix}destructive-pressed: ${solid.pressed.background};`,
   );
 }
 
