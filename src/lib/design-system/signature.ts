@@ -35,7 +35,7 @@ export const SIGNATURE_CATALOG: Catalog = {
   featuredHighlight: {
     label: "Featured highlight",
     options: [
-      { id: "glow-border", label: "Glow border", description: "A soft brand-colored glow around the featured item." },
+      { id: "crisp-border", label: "Crisp border", description: "A crisp 2px brand border around the featured item." },
       { id: "offset-shadow", label: "Offset shadow", description: "A hard, solid shadow offset to one corner." },
       { id: "solid-accent-fill", label: "Solid accent fill", description: "The featured item is filled with the brand color." },
       { id: "corner-ribbon", label: "Corner ribbon", description: "A small ribbon in the top corner marks the featured item." },
@@ -64,7 +64,6 @@ export const SIGNATURE_CATALOG: Catalog = {
     options: [
       { id: "solid", label: "Solid", description: "A plain solid brand button." },
       { id: "border-beam", label: "Border beam", description: "A thin brand border with one streak of light travelling around it." },
-      { id: "animated-glow-border", label: "Animated glow border", description: "A slow, soft glow pulses around the button." },
       { id: "gradient-fill", label: "Gradient fill", description: "A subtle brand gradient fill." },
       { id: "underline-sweep", label: "Underline sweep", description: "A text button with an underline that sweeps in on hover." },
     ],
@@ -82,7 +81,7 @@ export const SIGNATURE_CATALOG: Catalog = {
     label: "Focus ring",
     options: [
       { id: "offset-ring", label: "Offset ring", description: "A ring with a small gap around the element." },
-      { id: "glow-ring", label: "Glow ring", description: "A soft glow around the element." },
+      { id: "soft-ring", label: "Soft ring", description: "A wide, translucent ring around the element." },
       { id: "thick-outline", label: "Thick outline", description: "A bold outline hugging the element." },
     ],
   },
@@ -99,7 +98,7 @@ export const SIGNATURE_CATALOG: Catalog = {
 
 /** Defaults for the "SaaS Clean" preset. */
 export const SAAS_CLEAN_SIGNATURE: SignatureSettings = {
-  featuredHighlight: "glow-border",
+  featuredHighlight: "crisp-border",
   cardStyle: "tinted-bento-tile",
   hover: "lift-2px",
   primaryCta: "border-beam",
@@ -120,7 +119,6 @@ export const BLANK_SLATE_SIGNATURE: SignatureSettings = {
 };
 
 const ICON_CONTAINER_SIZE = 40;
-const CTA_GLOW_CLASS = "ds-cta-glow";
 const CTA_BEAM_CLASS = "ds-cta-beam";
 const HOVER_TRANSITION = "transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease";
 
@@ -158,13 +156,15 @@ export function generateSignature(
 
   // Featured highlight
   const featuredCss: Record<SignatureSettings["featuredHighlight"], CssRecipe> = {
-    "glow-border": {
-      border: `${border} ${brand[500]}`,
-      boxShadow: `0 0 0 1px ${withAlpha(brand[500], 0.35)}, 0 0 24px ${withAlpha(brand[500], 0.28)}`,
+    // 2px brand border. A card with a thinner border grows outward by the difference, so its content does not move.
+    "crisp-border": {
+      border: `2px solid ${brand[600]}`,
+      ...(borders.width < 2 ? { margin: -(2 - borders.width) } : {}),
     },
     "offset-shadow": {
       border: `${border} ${colors.roles.foreground}`,
-      boxShadow: `6px 6px 0 0 ${brand[600]}`,
+      // A hard offset drop shadow with no blur. It is a filter, so the hover shadow can not replace it.
+      filter: `drop-shadow(6px 6px 0 ${brand[600]})`,
     },
     "solid-accent-fill": {
       background: colors.roles.primary,
@@ -213,17 +213,12 @@ export function generateSignature(
   };
 
   // Primary call to action
-  const glowStatic = `0 0 0 2px ${withAlpha(brand[400], 0.65)}, 0 0 14px ${withAlpha(brand[400], 0.45)}`;
-  const glowFrom = `0 0 0 1px ${withAlpha(brand[400], 0.5)}, 0 0 8px ${withAlpha(brand[400], 0.35)}`;
-  const glowTo = `0 0 0 2px ${withAlpha(brand[400], 0.8)}, 0 0 20px ${withAlpha(brand[400], 0.55)}`;
   const ctaBase: CssRecipe = {
     background: colors.roles.primary,
     color: colors.roles["primary-foreground"],
   };
   const ctaCss: Record<SignatureSettings["primaryCta"], CssRecipe> = {
     solid: ctaBase,
-    // The glow itself lives in the stylesheet below, so reduced motion can override it.
-    "animated-glow-border": ctaBase,
     // The ring is a pseudo-element in the stylesheet below, so the button keeps its own fill, hover and disabled colors.
     "border-beam": ctaBase,
     "gradient-fill": {
@@ -233,8 +228,7 @@ export function generateSignature(
     "underline-sweep": { background: "transparent", color: colors.roles.primary },
   };
   const beam = settings.primaryCta === "border-beam";
-  const glow = settings.primaryCta === "animated-glow-border";
-  const animated = beam || glow;
+  const animated = beam;
 
   // Icon container
   const iconCss: Record<SignatureSettings["iconContainer"], CssRecipe> = {
@@ -266,7 +260,7 @@ export function generateSignature(
   // Focus ring
   const focusCss: Record<SignatureSettings["focusRing"], CssRecipe> = {
     "offset-ring": { outline: `2px solid ${brand[500]}`, outlineOffset: 2 },
-    "glow-ring": { outline: "none", boxShadow: `0 0 0 4px ${withAlpha(brand[500], 0.3)}` },
+    "soft-ring": { outline: "none", boxShadow: `0 0 0 4px ${withAlpha(brand[500], 0.3)}` },
     "thick-outline": { outline: `3px solid ${brand[600]}`, outlineOffset: 0 },
   };
 
@@ -305,7 +299,7 @@ export function generateSignature(
             : undefined,
       ),
       animated,
-      className: beam ? CTA_BEAM_CLASS : glow ? CTA_GLOW_CLASS : null,
+      className: beam ? CTA_BEAM_CLASS : null,
       stylesheet: beam
         ? [
             `@property --beam-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }`,
@@ -323,28 +317,8 @@ export function generateSignature(
             `/* Reduced motion: steady brand-400 ring */`,
             `@media (prefers-reduced-motion: reduce) { .${CTA_BEAM_CLASS}::before { animation: none; background: ${brand[400]}; } }`,
           ].join("\n")
-        : glow
-        ? [
-            `.${CTA_GLOW_CLASS} {`,
-            `  box-shadow: ${glowFrom};`,
-            `  animation: ds-glow-border 3.6s ease-in-out infinite;`,
-            `}`,
-            ``,
-            `@keyframes ds-glow-border {`,
-            `  0%, 100% { box-shadow: ${glowFrom}; }`,
-            `  50% { box-shadow: ${glowTo}; }`,
-            `}`,
-            ``,
-            `/* Reduced motion: no animation, a steady glow border instead. */`,
-            `@media (prefers-reduced-motion: reduce) {`,
-            `  .${CTA_GLOW_CLASS} {`,
-            `    animation: none;`,
-            `    box-shadow: ${glowStatic};`,
-            `  }`,
-            `}`,
-          ].join("\n")
         : null,
-      reducedMotionCss: glow ? { animation: "none", boxShadow: glowStatic } : beam ? { animation: "none" } : {},
+      reducedMotionCss: beam ? { animation: "none" } : {},
     },
     iconContainer: recipe("iconContainer", settings.iconContainer, iconCss[settings.iconContainer]),
     focusRing: recipe("focusRing", settings.focusRing, focusCss[settings.focusRing]),

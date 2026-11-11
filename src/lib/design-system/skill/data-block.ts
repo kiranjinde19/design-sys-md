@@ -1,4 +1,4 @@
-import { normalizeSettings } from "../normalize";
+import { legacyChoiceNotices, normalizeSettings } from "../normalize";
 import { presetBase } from "../preset-history";
 import { DEFAULT_PRESET_ID, PRESETS, isPresetId, type PresetId } from "../presets";
 import { SETTINGS_SCHEMA_VERSION, type DesignSystemSettings } from "../types";
@@ -47,6 +47,8 @@ export type ParseResult =
       settings: DesignSystemSettings;
       /** How many individual values differ from the starting preset, for the success message. */
       changes: number;
+      /** Things changed silently on import, for the success message (for example the old glow replaced). */
+      notices: string[];
     }
   | { ok: false; error: string };
 
@@ -90,7 +92,7 @@ export function parseSkillFile(text: string): ParseResult {
     if (!preset) {
       return { ok: false, error: `Unsupported version: this file was made from ${PRESETS[presetId].name} version ${version}, which this tool does not know. Update the tool, then import it again.` };
     }
-    return { ok: true, presetId, settings: normalizeSettings(parsed.settings, preset), changes: countChanges(parsed.settings) };
+    return { ok: true, presetId, settings: normalizeSettings(parsed.settings, preset), changes: countChanges(parsed.settings), notices: legacyChoiceNotices(parsed.settings, preset) };
   }
   return {
     ok: false,

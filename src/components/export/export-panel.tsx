@@ -95,7 +95,7 @@ export function ExportPanel() {
     setImportStatus({
       ok: true,
       fileName: selected.name,
-      text: `Restored ${PRESETS[result.presetId].name} with ${changes}${name ? `, product name ${name}` : ""}, stack ${STACK_LABELS[stack]}.`,
+      text: `Restored ${PRESETS[result.presetId].name} with ${changes}${name ? `, product name ${name}` : ""}, stack ${STACK_LABELS[stack]}.${result.notices.length ? ` ${result.notices.join(" ")}` : ""}`,
     });
   };
 

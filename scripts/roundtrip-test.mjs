@@ -44,9 +44,9 @@ const CASES = [
   ["borders and shadows", "saas-clean", saas, { borders: { width: 2, colorStep: 300 }, elevation: { levels: 3, intensity: 80, style: "hard" } }],
   ["buttons and inputs", "saas-clean", saas, { controls: { secondaryStyle: "outline", height: 48 } }],
   ["icons", "saas-clean", saas, { icons: { style: "solid", strokeWidth: 2, ends: "sharp" } }],
-  ["signature details", "saas-clean", saas, { signature: { featuredHighlight: "offset-shadow", cardStyle: "glass-blur", hover: "scale", primaryCta: "gradient-fill", iconContainer: "tinted-circle", focusRing: "thick-outline", divider: "dotted" } }],
+  ["signature details", "saas-clean", saas, { signature: { featuredHighlight: "corner-ribbon", cardStyle: "glass-blur", hover: "scale-1-02", primaryCta: "gradient-fill", iconContainer: "tinted-circle", focusRing: "thick-outline", divider: "dotted" } }],
   ["tone of voice", "saas-clean", saas, { voice: { formality: 1, energy: 5, detail: 5 } }],
-  ["old animated glow border chosen again", "saas-clean", saas, { signature: { primaryCta: "animated-glow-border" } }],
+  ["offset shadow and soft ring", "saas-clean", saas, { signature: { featuredHighlight: "offset-shadow", focusRing: "soft-ring" } }],
   ["solid call to action", "saas-clean", saas, { signature: { primaryCta: "solid" } }],
   ["everything at once", "blank-slate", blank, { colors: { brand: "#2563EB", secondary: "#F59E0B" }, radius: { base: 16 }, voice: { formality: 2, energy: 3, detail: 4 }, project: { name: "Northwind 2025", description: "Inventory tools." } }],
 ];
@@ -111,27 +111,62 @@ test("failures say why", () => {
   assert.match(parseSkillFile('```json\n{"format":"design-sys-md"}\n```').error, /no settings/);
 });
 
-test("SaaS Clean version 2 defaults to the border beam", () => {
-  assert.equal(PRESETS["saas-clean"].version, 2);
+test("SaaS Clean version 3 defaults to the border beam and the crisp border", () => {
+  assert.equal(PRESETS["saas-clean"].version, 3);
   assert.equal(saas.signature.primaryCta, "border-beam");
-  const file = generateSkillFile(createDesignSystem(saas), { presetId: "saas-clean" });
-  assert.match(file.skill, /@property --beam-angle/);
-  assert.doesNotMatch(file.skill, /--glow-rest/);
+  assert.equal(saas.signature.featuredHighlight, "crisp-border");
+  for (const stack of STACKS) {
+    const file = generateSkillFile(createDesignSystem(applyPatch(saas, { project: { stack } })), { presetId: "saas-clean" });
+    assert.match(file.skill, /@property --beam-angle/, stack);
+    assert.match(file.skill, /\.card-featured\{border:2px solid/, stack);
+    assert.match(file.skill, /\.card-hover:hover\{[^}]*translateY\(-2px\)[^}]*box-shadow/, stack);
+    assert.doesNotMatch(file.skill, /not\(\.card-featured\)/, `${stack}: hover must not exclude the featured card`);
+  }
 });
 
-test("a preset version 1 file keeps its animated glow border", () => {
-  const v1 = '# Old file\n\n```json\n{"format":"design-sys-md","version":1,"preset":"saas-clean","presetVersion":1,"settings":{"colors":{"brand":"#0D9488"}}}\n```\n';
-  const result = parseSkillFile(v1);
-  assert.ok(result.ok);
-  assert.equal(result.settings.signature.primaryCta, "animated-glow-border");
-  assert.equal(result.settings.colors.brand, "#0D9488");
-  // Importing, then exporting again, keeps the glow and does not turn into the beam.
-  const again = generateSkillFile(createDesignSystem(result.settings), { presetId: result.presetId });
-  assert.match(again.skill, /ds-glow-border/);
-  assert.doesNotMatch(again.skill, /@property --beam-angle/);
-  // Its own data block now records the choice, so the next import is exact too.
+test("no generated file contains a glow, for any call to action or featured highlight choice", () => {
+  const ctas = ["solid", "border-beam", "gradient-fill", "underline-sweep"];
+  const featured = ["crisp-border", "offset-shadow", "solid-accent-fill", "corner-ribbon"];
+  for (const stack of STACKS) {
+    for (const cta of ctas) {
+      for (const f of featured) {
+        const settings = applyPatch(saas, { project: { stack }, signature: { primaryCta: cta, featuredHighlight: f } });
+        const file = generateSkillFile(createDesignSystem(settings), { presetId: "saas-clean" });
+        assert.doesNotMatch(file.skill, /glow/i, `${stack} ${cta} ${f}`);
+        assert.doesNotMatch(file.skill, /ds-glow|--glow/, `${stack} ${cta} ${f}`);
+        // No box shadow with a blur radius made from a brand color: a halo.
+        assert.doesNotMatch(file.skill, /box-shadow:0 0 \d+px/, `${stack} ${cta} ${f}`);
+      }
+    }
+  }
+});
+
+test("old glow choices silently become the new ones, from any preset version", () => {
+  const block = (preset, presetVersion, signature) => `# Old file\n\n\`\`\`json\n${JSON.stringify({ format: "design-sys-md", version: 1, preset, presetVersion, settings: signature ? { signature } : {} })}\n\`\`\`\n`;
+  // Version 1 and 2 of SaaS Clean had the glow as the default, with nothing stored in the file.
+  for (const version of [1, 2]) {
+    const result = parseSkillFile(block("saas-clean", version));
+    assert.ok(result.ok, `version ${version}`);
+    assert.equal(result.settings.signature.primaryCta, "border-beam");
+    assert.equal(result.settings.signature.featuredHighlight, "crisp-border");
+    // Version 1 had the pulsing glow button. Version 2 already had the beam, but both had the glow border.
+    assert.equal(result.notices.includes("Replaced the old glow with the border beam."), version === 1);
+    assert.ok(result.notices.includes("Replaced the old glow border with the crisp border."));
+  }
+  // A glow stored on purpose, on another preset and an old version.
+  const stored = parseSkillFile(block("blank-slate", 1, { primaryCta: "animated-glow-border", focusRing: "glow-ring" }));
+  assert.ok(stored.ok);
+  assert.equal(stored.settings.signature.primaryCta, "border-beam");
+  assert.equal(stored.settings.signature.focusRing, "soft-ring");
+  assert.ok(stored.notices.includes("Replaced the old glow with the border beam."));
+  // Exporting again writes the new choices, so the next import has nothing to replace.
+  const again = generateSkillFile(createDesignSystem(stored.settings), { presetId: stored.presetId });
+  assert.doesNotMatch(again.skill, /glow/i);
   const second = parseSkillFile(again.skill);
   assert.ok(second.ok);
-  assert.equal(second.settings.signature.primaryCta, "animated-glow-border");
-  assert.deepEqual(second.settings, result.settings);
+  assert.deepEqual(second.notices, []);
+  assert.deepEqual(second.settings, stored.settings);
+  // A current file has nothing to replace.
+  const current = generateSkillFile(createDesignSystem(saas), { presetId: "saas-clean" });
+  assert.deepEqual(parseSkillFile(current.skill).notices, []);
 });

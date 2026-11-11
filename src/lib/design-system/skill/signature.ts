@@ -1,18 +1,6 @@
 import type { CssRecipe } from "../types";
 import { compactCss, fence, lines, recipeLines, tightCss, unit, type SkillContext } from "./context";
 
-/**
- * The glow shadows repeat three times in the animation. Each distinct value is written once as a
- * variable and then referenced, which keeps the CSS short and easy to adjust.
- */
-function glowVariables(css: string): string {
-  const values = [...new Set([...css.matchAll(/box-shadow: ([^;]+);/g)].map((m) => m[1]))];
-  const names = values.map((_, i) => `--glow-${["rest", "peak", "still"][i] ?? i + 1}`);
-  let out = css;
-  values.forEach((value, i) => (out = out.split(`box-shadow: ${value};`).join(`box-shadow: var(${names[i]});`)));
-  return [":root {", ...values.map((v, i) => `  ${names[i]}: ${v};`), "}", out].join("\n");
-}
-
 /** The head of the beam is brand 100. Name it as the brand step, not as the card border that happens to share the color. */
 function brandNames(ctx: SkillContext, css: string): string {
   const brand100 = ctx.t.colors.brand[100];
@@ -23,16 +11,15 @@ function brandNames(ctx: SkillContext, css: string): string {
 const canon = (key: string) => (/^border/.test(key) ? "border" : key === "backgroundColor" ? "background" : key);
 
 /**
- * Hover effects must never replace the featured highlight. Properties the featured style also sets
- * (its glow, its border) apply on hover only to cards that are not featured. Everything else, such
- * as the lift, applies to every card. So a hovered featured card lifts and keeps its glow.
+ * Every card with card-hover gets every hover effect, the featured card included. Only when a hover
+ * effect would overwrite a property the featured style sets (a hover border color on a featured border),
+ * the featured value is written again for its hover state, so the featured look never changes.
  */
-function splitHover(hover: CssRecipe, featured: CssRecipe): { all: CssRecipe; notFeatured: CssRecipe } {
-  const taken = new Set(Object.keys(featured).map(canon));
-  const all: CssRecipe = {};
-  const notFeatured: CssRecipe = {};
-  for (const [key, value] of Object.entries(hover)) (taken.has(canon(key)) ? notFeatured : all)[key] = value;
-  return { all, notFeatured };
+function featuredHoverFix(hover: CssRecipe, featured: CssRecipe): CssRecipe {
+  const taken = new Set(Object.keys(hover).map(canon));
+  const fix: CssRecipe = {};
+  for (const [key, value] of Object.entries(featured)) if (taken.has(canon(key))) fix[key] = value;
+  return fix;
 }
 
 /** CSS for the seven chosen signature details, written exactly as it should be used. */
@@ -42,7 +29,7 @@ export function signatureSection(ctx: SkillContext): string[] {
   const hoverCss = { ...sig.hover.css };
   const transition = hoverCss.transition;
   delete hoverCss.transition;
-  const { all, notFeatured } = splitHover(hoverCss, sig.featuredHighlight.css);
+  const featuredFix = featuredHoverFix(hoverCss, sig.featuredHighlight.css);
 
   const css = lines(
     `/* Card: ${sig.cardStyle.label} */`,
@@ -51,20 +38,20 @@ export function signatureSection(ctx: SkillContext): string[] {
     `  padding: ${ctx.tailwind ? `calc(var(--spacing) * ${unit(spacing.semantic.cardPadding)})` : `var(--space-${String(spacing.semantic.cardPadding / spacing.base).replace(".", "_")})`};`,
     "}",
     "",
-    `/* Hover: ${sig.hover.label}. Pricing and clickable cards; never replaces the featured highlight */`,
+    `/* Hover: ${sig.hover.label}. Pricing and clickable cards, the featured one too */`,
     ".card-hover {",
     transition ? `  transition: ${transition};` : null,
     "}",
-    Object.keys(all).length ? [".card-hover:hover {", ...recipeLines(ctx, all), "}"] : null,
-    Object.keys(notFeatured).length ? [".card-hover:not(.card-featured):hover {", ...recipeLines(ctx, notFeatured), "}"] : null,
+    Object.keys(hoverCss).length ? [".card-hover:hover {", ...recipeLines(ctx, hoverCss), "}"] : null,
     "",
     `/* Featured highlight: ${sig.featuredHighlight.label}. One per group, with card-hover */`,
     ".card-featured {",
     recipeLines(ctx, sig.featuredHighlight.css),
     "}",
+    Object.keys(featuredFix).length ? [".card-featured:hover {", ...recipeLines(ctx, featuredFix), "}"] : null,
     "",
     `/* Primary call to action: ${cta.label}. One per screen */`,
-    cta.stylesheet ? (cta.id === "animated-glow-border" ? glowVariables : (css: string) => css)(brandNames(ctx, ctx.varize(cta.stylesheet)).replace(/\.ds-cta-(glow|beam)/g, ".cta")) : [".cta {", ...recipeLines(ctx, cta.css), "}"].join("\n"),
+    cta.stylesheet ? brandNames(ctx, ctx.varize(cta.stylesheet)).replace(/\.ds-cta-beam/g, ".cta") : [".cta {", ...recipeLines(ctx, cta.css), "}"].join("\n"),
     "",
     `/* Icon container: ${sig.iconContainer.label} */`,
     ".icon-tile {",

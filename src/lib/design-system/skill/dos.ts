@@ -20,7 +20,7 @@ export function dosAndDontsSection(ctx: SkillContext): string[] {
     [`Placeholder as the label, or ${code(tw ? "border-border" : "var(--border)")} on an input.`, `A visible label, and ${code(tw ? "border-input" : "var(--input)")} on the outline.`],
     [`Off-ladder spacing: ${code(tw ? `p-[${spacing.semantic.cardPadding + 1}px]` : `padding: ${spacing.semantic.cardPadding + 1}px`)}`, `The ladder: ${code(tw ? `p-${unit(spacing.semantic.cardPadding)} gap-${unit(spacing.semantic.stackGap)}` : "var(--space-6)")}.`],
     ["Centered text in pricing cards.", "Section title and intro centered; everything inside the cards left aligned."],
-    ["A hover that replaces the featured pricing card's glow, or no hover on it.", `Every pricing card is ${code("card card-hover")}; the featured one adds ${code("card-featured")}.`],
+    ["A hover class that replaces the featured pricing card's border, or no hover on it.", `Every pricing card is ${code("card card-hover")}; the featured one adds ${code("card-featured")} (2px brand border).`],
   ];
 
   return lines("## Do and don't", "", ...table(["Don't", "Do"], rows), "");

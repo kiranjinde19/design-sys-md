@@ -112,12 +112,12 @@ export type IconEnds = "round" | "sharp";
 export type SecondaryButtonStyle = "fill" | "outline";
 
 // Signature detail options (one pick per category)
-export type FeaturedHighlight = "glow-border" | "offset-shadow" | "solid-accent-fill" | "corner-ribbon";
+export type FeaturedHighlight = "crisp-border" | "offset-shadow" | "solid-accent-fill" | "corner-ribbon";
 export type CardStyle = "hairline-border" | "soft-shadow" | "tinted-bento-tile" | "glass-blur";
 export type HoverEffect = "lift-2px" | "border-color-shift" | "scale-1-02" | "background-tint";
-export type PrimaryCta = "solid" | "border-beam" | "animated-glow-border" | "gradient-fill" | "underline-sweep";
+export type PrimaryCta = "solid" | "border-beam" | "gradient-fill" | "underline-sweep";
 export type IconContainer = "bare" | "tinted-circle" | "rounded-square-tile" | "outlined-badge";
-export type FocusRingStyle = "offset-ring" | "glow-ring" | "thick-outline";
+export type FocusRingStyle = "offset-ring" | "soft-ring" | "thick-outline";
 export type DividerStyle = "hairline" | "dotted" | "spacing-only" | "gradient-fade";
 
 // ─────────────────────────────────────────────────────────────
@@ -565,14 +565,14 @@ export interface SignatureTokens {
   hover: SignatureRecipe<HoverEffect>;
   primaryCta: SignatureRecipe<PrimaryCta> & {
     animated: boolean;
-    /** Class name the stylesheet targets (the beam or the glow), or null when the CTA is not animated. */
+    /** Class name the stylesheet targets (the beam), or null when the CTA is not animated. */
     className: string | null;
     /**
-     * Complete CSS for animated CTAs: the glow, the @keyframes, and the
+     * Complete CSS for animated CTAs: the beam, the @keyframes, and the
      * prefers-reduced-motion fallback. Null when the CTA is not animated.
      */
     stylesheet: string | null;
-    /** What the button shows when the user prefers reduced motion: no animation, a steady glow. */
+    /** What the button shows when the user prefers reduced motion: no animation, a steady ring. */
     reducedMotionCss: CssRecipe;
   };
   iconContainer: SignatureRecipe<IconContainer>;

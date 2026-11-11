@@ -98,6 +98,30 @@ function normalizeColorRef(value: unknown, fallback: ColorRef): ColorRef {
   return fallback;
 }
 
+/**
+ * Choices that were removed because they used a glow effect, and what replaces them. Saved work and
+ * imported files that still say the old id silently get the new one.
+ */
+const LEGACY_SIGNATURE: Partial<Record<keyof SignatureSettings, Record<string, { to: string; notice: string }>>> = {
+  primaryCta: { "animated-glow-border": { to: "border-beam", notice: "Replaced the old glow with the border beam." } },
+  featuredHighlight: { "glow-border": { to: "crisp-border", notice: "Replaced the old glow border with the crisp border." } },
+  focusRing: { "glow-ring": { to: "soft-ring", notice: "Renamed the old glow ring to the soft ring." } },
+};
+
+const modernId = (key: keyof SignatureSettings, id: unknown) => (typeof id === "string" ? LEGACY_SIGNATURE[key]?.[id]?.to ?? id : id);
+
+/** What a file or saved state would have changed: the messages for every old glow id it still holds. */
+export function legacyChoiceNotices(input: unknown, base: DesignSystemSettings): string[] {
+  const signature = asRecord(asRecord(input).signature);
+  const notices: string[] = [];
+  for (const key of Object.keys(LEGACY_SIGNATURE) as (keyof SignatureSettings)[]) {
+    const id = key in signature ? signature[key] : base.signature[key];
+    const hit = typeof id === "string" ? LEGACY_SIGNATURE[key]?.[id] : undefined;
+    if (hit) notices.push(hit.notice);
+  }
+  return notices;
+}
+
 export function normalizeSettings(input: unknown, base: DesignSystemSettings): DesignSystemSettings {
   const root = asRecord(input);
   const colors = asRecord(root.colors);
@@ -121,7 +145,7 @@ export function normalizeSettings(input: unknown, base: DesignSystemSettings): D
   const signatureOut = {} as Record<keyof SignatureSettings, string>;
   for (const key of Object.keys(SIGNATURE_CATALOG) as (keyof SignatureSettings)[]) {
     const ids = SIGNATURE_CATALOG[key].options.map((option) => option.id as string);
-    signatureOut[key] = oneOf(signature[key], ids, base.signature[key]);
+    signatureOut[key] = oneOf(modernId(key, signature[key]), ids, modernId(key, base.signature[key]) as string);
   }
 
   return {
