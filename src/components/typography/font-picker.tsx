@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Button } from "@/components/ui/button";
 import {
   FONT_CATALOG,
   FONT_CATEGORY_LABELS,
@@ -17,6 +16,7 @@ import {
   type FontWeight,
 } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
+import { ChoiceButton } from "@/components/controls/controls";
 import { nameFamily, useFontNames } from "./google-fonts";
 
 type CategoryFilter = FontCategory | "all";
@@ -135,9 +135,9 @@ export function FontPicker({
           />
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Category">
             {FILTERS.map((option) => (
-              <Button key={option} size="sm" variant={option === filter ? "default" : "outline"} onClick={() => setFilter(option)}>
+              <ChoiceButton key={option} selected={option === filter} onClick={() => setFilter(option)}>
                 {filterLabel(option)}
-              </Button>
+              </ChoiceButton>
             ))}
           </div>
           <p className="text-xs text-muted-foreground" aria-live="polite">
@@ -200,9 +200,9 @@ export function FontPicker({
           </div>
           <div className="flex flex-wrap gap-1.5" role="group" aria-label={`${title} weight`}>
             {weights.map((option) => (
-              <Button key={option} size="sm" variant={option === weight ? "default" : "outline"} title={WEIGHT_LABELS[option]} onClick={() => onWeightChange(option)}>
+              <ChoiceButton key={option} selected={option === weight} title={WEIGHT_LABELS[option]} onClick={() => onWeightChange(option)}>
                 {option}
-              </Button>
+              </ChoiceButton>
             ))}
           </div>
         </div>

@@ -1,0 +1,129 @@
+/*
+ * The preview. Everything here reads the user's design system through --pv-* variables set on the
+ * preview container (see preview-vars.ts). Nothing in this file is a design value.
+ */
+
+.pv {
+  font-family: var(--pv-font-body);
+  font-weight: var(--pv-body-weight);
+  font-size: var(--pv-text-base);
+  line-height: var(--pv-leading-base);
+  color: var(--pv-foreground);
+  background: var(--pv-background);
+}
+.pv h1,
+.pv h2,
+.pv h3,
+.pv p,
+.pv ul {
+  margin: 0;
+}
+.pv h1,
+.pv h2,
+.pv h3 {
+  font-family: var(--pv-font-heading);
+  font-weight: var(--pv-heading-weight);
+  letter-spacing: var(--pv-tracking);
+}
+
+.pv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--pv-control-h);
+  padding: 0 var(--pv-btn-px);
+  border: var(--pv-btn-bw) solid transparent;
+  border-radius: var(--pv-btn-radius);
+  font: var(--pv-btn-weight) var(--pv-text-base) / 1 var(--pv-font-body);
+  cursor: default;
+  transition: background-color 150ms;
+}
+.pv-btn--primary {
+  background: var(--pv-primary-bg);
+  color: var(--pv-primary-fg);
+  border-color: var(--pv-primary-bd);
+}
+.pv-btn--primary:hover {
+  background: var(--pv-primary-hover);
+}
+.pv-btn--secondary {
+  background: var(--pv-secondary-bg);
+  color: var(--pv-secondary-fg);
+  border-color: var(--pv-secondary-bd);
+}
+.pv-btn--secondary:hover {
+  background: var(--pv-secondary-hover);
+}
+.pv-btn--tertiary {
+  background: var(--pv-tertiary-bg);
+  color: var(--pv-tertiary-fg);
+  border-color: var(--pv-tertiary-bd);
+}
+.pv-btn--tertiary:hover {
+  background: var(--pv-tertiary-hover);
+}
+
+/* Pricing */
+.pv-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--pv-header-h);
+  padding: 0 var(--pv-gap-section);
+  border-bottom: var(--pv-border-w) solid var(--pv-border);
+}
+.pv-page {
+  max-width: var(--pv-content-max);
+  margin: 0 auto;
+  padding: var(--pv-gap-section);
+  display: grid;
+  gap: var(--pv-gap-section);
+}
+.pv-head {
+  text-align: center;
+  display: grid;
+  gap: var(--pv-gap-inline);
+  justify-items: center;
+}
+.pv-plans {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--pv-gap-stack);
+}
+.pv-plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pv-gap-stack);
+  padding: var(--pv-pad-card);
+  text-align: left;
+}
+.pv-plan__desc {
+  font-size: var(--pv-text-sm);
+  line-height: var(--pv-leading-sm);
+  min-height: calc(var(--pv-leading-sm) * 2);
+  color: var(--pv-muted-foreground);
+}
+.pv-plan__price {
+  font-family: var(--pv-font-heading);
+  font-weight: var(--pv-heading-weight);
+  font-size: var(--pv-text-4xl);
+  line-height: var(--pv-leading-4xl);
+  font-variant-numeric: tabular-nums;
+}
+.pv-plan__price small {
+  font-family: var(--pv-font-body);
+  font-weight: var(--pv-body-weight);
+  font-size: var(--pv-text-sm);
+  color: var(--pv-muted-foreground);
+}
+.pv-plan__features {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: var(--pv-gap-inline);
+  font-size: var(--pv-text-sm);
+  line-height: var(--pv-leading-sm);
+}
+.pv-plan__cta {
+  margin-top: auto;
+}

@@ -7,6 +7,7 @@
 import { dropLegacyAutoSecondary } from "./migrations";
 import { applyPatch, normalizeSettings, type SettingsPatch } from "./normalize";
 import { DEFAULT_PRESET_ID, PRESETS, isPresetId, type PresetId } from "./presets";
+import { isSystemId, systemsInPatch, type SystemId } from "./systems";
 import { SETTINGS_SCHEMA_VERSION, type DesignSystemSettings } from "./types";
 
 const STORAGE_KEY = "design-sys-md:design-system";
@@ -15,11 +16,14 @@ export interface StoredState {
   /** The preset this work started from. */
   presetId: PresetId;
   settings: DesignSystemSettings;
+  /** Tiles the user has reviewed: opened and clicked Next, or changed a value. Saved with the autosave. */
+  reviewed: SystemId[];
 }
 
 const INITIAL_STATE: StoredState = {
   presetId: DEFAULT_PRESET_ID,
   settings: PRESETS[DEFAULT_PRESET_ID].settings,
+  reviewed: [],
 };
 
 let state: StoredState | null = null;
@@ -35,6 +39,7 @@ function readFromStorage(): StoredState {
     return {
       presetId,
       settings: dropLegacyAutoSecondary(normalizeSettings(record.settings, PRESETS[presetId].settings)),
+      reviewed: Array.isArray(record.reviewed) ? [...new Set(record.reviewed.filter(isSystemId))] : [],
     };
   } catch {
     // Storage blocked or the saved data is broken: start fresh instead of crashing.
@@ -84,21 +89,35 @@ export function getServerSnapshot(): StoredState {
 
 export function updateSettings(patch: SettingsPatch) {
   const current = getSnapshot();
-  commit({ ...current, settings: applyPatch(current.settings, patch) });
+  const touched = systemsInPatch(patch as Record<string, unknown>);
+  commit({
+    ...current,
+    settings: applyPatch(current.settings, patch),
+    // Changing a value counts as reviewing that tile.
+    reviewed: [...new Set([...current.reviewed, ...touched])],
+  });
+}
+
+/** Marks a tile as reviewed (the user opened it and clicked Next). */
+export function markReviewed(id: SystemId) {
+  const current = getSnapshot();
+  if (current.reviewed.includes(id)) return;
+  commit({ ...current, reviewed: [...current.reviewed, id] });
 }
 
 /** Switching preset changes the look, but keeps the product name, description and stack. */
 export function applyPreset(presetId: PresetId) {
   const { settings } = getSnapshot();
-  commit({ presetId, settings: { ...PRESETS[presetId].settings, project: settings.project } });
+  // A fresh preset is a fresh start, so nothing counts as reviewed yet.
+  commit({ presetId, settings: { ...PRESETS[presetId].settings, project: settings.project }, reviewed: [] });
 }
 
 export function resetToPreset() {
-  const { presetId, settings } = getSnapshot();
-  commit({ presetId, settings: { ...PRESETS[presetId].settings, project: settings.project } });
+  const { presetId, settings, reviewed } = getSnapshot();
+  commit({ presetId, settings: { ...PRESETS[presetId].settings, project: settings.project }, reviewed });
 }
 
 /** Replaces everything with a parsed export file: its starting preset and its validated settings. */
 export function importSettings(result: { presetId: PresetId; settings: DesignSystemSettings }) {
-  commit({ presetId: result.presetId, settings: result.settings });
+  commit({ presetId: result.presetId, settings: result.settings, reviewed: getSnapshot().reviewed });
 }

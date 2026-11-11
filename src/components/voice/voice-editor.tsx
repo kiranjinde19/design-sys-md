@@ -10,7 +10,7 @@ import {
   type VoiceSample,
 } from "@/lib/design-system";
 import { Section } from "@/components/debug/section";
-import { usePreviewStage } from "@/components/debug/preview-stage";
+import { usePreviewStage } from "@/components/preview/preview-stage";
 
 function Slider({ axis }: { axis: (typeof VOICE_AXES)[number] }) {
   const { settings, update } = useDesignSystem();
@@ -126,7 +126,7 @@ export function VoiceEditor() {
         title="Tone of voice"
         description="How the product speaks. Three sliders set the tone, and the five lines below change with them. The skill file records the voice, principles, word choices and do and don't pairs."
       >
-        <div className="grid gap-6 rounded-xl border border-border p-5 sm:grid-cols-3">
+        <div className="grid gap-6 rounded-xl border border-border p-5 @lg:grid-cols-3">
           {VOICE_AXES.map((axis) => (
             <Slider key={axis.key} axis={axis} />
           ))}
@@ -140,7 +140,7 @@ export function VoiceEditor() {
         title="Live preview"
         description="Five lines, shown the way they appear in the interface. They show a tone, not facts about your product."
       >
-        <div className="grid gap-3 sm:grid-cols-2" style={stage}>
+        <div className="grid gap-3 @lg:grid-cols-2" style={stage}>
           {samples.map((sample) => (
             <Preview key={sample.id} sample={sample} />
           ))}

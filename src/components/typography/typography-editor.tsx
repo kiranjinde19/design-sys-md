@@ -41,7 +41,7 @@ export function TypographyEditor() {
         title="Customize"
         description="Pick each font yourself. Weights are limited to what each font really offers."
       >
-        <div className="grid gap-4 xl:grid-cols-3">
+        <div className="grid gap-4 @4xl:grid-cols-3">
           <FontPicker
             title="Heading font"
             choice={typography.headingFont}
@@ -143,7 +143,7 @@ export function TypographyEditor() {
                 Picked by simple rules: a serif heading gets a neutral sans, an expressive heading gets a workhorse sans, and the same family is the safe option.
               </p>
             </div>
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 @lg:grid-cols-3">
               {recommendations.map(({ font, reason }) => (
                 <button
                   key={font.name}

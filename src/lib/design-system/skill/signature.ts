@@ -15,7 +15,7 @@ const canon = (key: string) => (/^border/.test(key) ? "border" : key === "backgr
  * effect would overwrite a property the featured style sets (a hover border color on a featured border),
  * the featured value is written again for its hover state, so the featured look never changes.
  */
-function featuredHoverFix(hover: CssRecipe, featured: CssRecipe): CssRecipe {
+export function featuredHoverFix(hover: CssRecipe, featured: CssRecipe): CssRecipe {
   const taken = new Set(Object.keys(hover).map(canon));
   const fix: CssRecipe = {};
   for (const [key, value] of Object.entries(featured)) if (taken.has(canon(key))) fix[key] = value;

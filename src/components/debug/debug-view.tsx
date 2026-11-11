@@ -76,7 +76,7 @@ export function DebugView() {
           </aside>
 
           {/* Right: output, one system per tab. Step through with Back and Next, or jump anywhere. */}
-          <div className="min-w-0 space-y-6">
+          <div className="@container min-w-0 space-y-6">
             <div role="tablist" aria-label="Design systems" className="flex gap-1 overflow-x-auto border-b border-border">
               {tabs.map((tab, index) => (
                 <button

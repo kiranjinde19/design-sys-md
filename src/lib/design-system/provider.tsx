@@ -15,10 +15,12 @@ import {
   getServerSnapshot,
   getSnapshot,
   importSettings,
+  markReviewed,
   resetToPreset,
   subscribe,
   updateSettings,
 } from "./storage";
+import type { SystemId } from "./systems";
 import type { DesignSystemSettings, DesignSystemTokens } from "./types";
 
 export interface DesignSystemContextValue {
@@ -36,6 +38,10 @@ export interface DesignSystemContextValue {
   applyPreset: (presetId: PresetId) => void;
   /** Throw away edits and return to the current preset. */
   reset: () => void;
+  /** Tiles the user has reviewed (saved with the autosave). */
+  reviewed: SystemId[];
+  /** Mark a tile as reviewed. */
+  markReviewed: (id: SystemId) => void;
   /** Replace everything with a parsed export file (see parseSkillFile). */
   importSettings: (result: { presetId: PresetId; settings: DesignSystemSettings }) => void;
 }
@@ -51,7 +57,7 @@ export function DesignSystemProvider({ children }: { children: ReactNode }) {
   const ready = useSyncExternalStore(subscribeNever, readyOnClient, readyOnServer);
 
   const value = useMemo<DesignSystemContextValue>(() => {
-    const { presetId, settings } = stored;
+    const { presetId, settings, reviewed } = stored;
     return {
       presetId,
       ready,
@@ -62,6 +68,8 @@ export function DesignSystemProvider({ children }: { children: ReactNode }) {
       applyPreset,
       reset: resetToPreset,
       importSettings,
+      reviewed,
+      markReviewed,
     };
   }, [stored, ready]);
 

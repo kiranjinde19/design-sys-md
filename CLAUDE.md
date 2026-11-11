@@ -135,6 +135,21 @@ The file must go beyond a list of values. It should carry rules for decisions, n
 - **SaaS Clean is at version 3** (v2: Primary CTA became the border beam; v3: Featured highlight became the crisp border). **No glow anywhere:** no blurred halo, no pulsing box shadow, no soft glow around a border, and no option or text called glow. The options "Animated glow border", "Glow border" and "Glow ring" were removed (the last became "Soft ring", a flat translucent ring). Saved work and imported files that still hold an old id silently get the new one (`LEGACY_SIGNATURE` in `normalize.ts`), and the import summary says so ("Replaced the old glow with the border beam."). The frozen v1 and v2 snapshots keep their old ids on purpose; they are converted on import.
 - **Review page:** `/debug/skill` prints the full SaaS Clean SKILL.md as plain text, rebuilt on every deploy.
 
+## The tool's own screen
+
+Stage 5 builds the tool's own interface. Decisions (locked):
+
+- **Route:** the tool lives at `/app`. `/` stays the placeholder until Stage 6 (landing page). `/debug` stays until the end of Stage 5.
+- **Reference mockups:** `design/reference/Main.dc.html` (board overview) and `Editor.dc.html` (Colors editor open). Inline styled markup with exact sizes, colors and spacing. Read as text only; never shipped, imported, linted or built (`design/` is excluded from ESLint and TypeScript). If they are missing, follow the written layout below.
+- **Layout:** top bar 56px (logo and name, preset switch, Import file, light and dark toggle, one primary "Export file" button); a title row with a progress indicator ("N of 9 reviewed"); below it two columns. Left: a bento board of 9 tiles, 560px wide, 3 columns, 120px rows, 12px gaps (Colors 2x2, Typography 1x2, Radius, Spacing, Borders, Shadows, Buttons and inputs 2x1, Signature details 2x1, Tone of voice 1x1). Right: the live preview tile with tabs (Pricing, Buttons and states, Forms, Tables, Dashboard, Charts) and a footer of small token chips.
+- **Open state:** clicking a tile replaces the left area with a system list (224px) plus an editor panel (400px). The preview stays on the right and updates live. The editor has "Back to board" and Next buttons. There is exactly one primary button on the screen (Export file); Next and Back are secondary and tertiary.
+- **Dogfooding:** the tool's own interface follows its own SaaS Clean skill, fixed and independent of what the user chooses. The user's choices appear only inside the tiles' samples and the preview.
+- **Preview isolation:** the preview renders inside its own container that receives the user's design system as CSS variables, so the tool's own look never changes when the user edits.
+- **Preview scope:** light only. Desktop first (1280 and up); below that the columns stack, polish later.
+- **Reviewed:** a tile counts as reviewed when the user opened it and clicked Next, or changed a value. Reviewed status is saved with the autosave (not in the exported file).
+- **Content and effects:** preview sample content is generic and labeled sample content. No glow effects anywhere. The border beam appears only on the preview's recommended button, never on the tool's own buttons.
+- **Shared code:** controls live in `src/components/controls/` (used by `/debug` and `/app`); do not duplicate logic.
+
 ## Pricing page reference scenario (the success test)
 
 Prompt "build me a pricing page" with the generated file loaded should produce:

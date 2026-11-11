@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Reference mockups are read as text only, never linted or built.
+    "design/**",
   ]),
 ]);
 

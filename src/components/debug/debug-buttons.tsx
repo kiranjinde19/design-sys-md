@@ -11,7 +11,7 @@ import {
 } from "@/lib/design-system";
 import { Button } from "@/components/ui/button";
 import { PassBadge, Section } from "./section";
-import { asStyle, usePreviewStage } from "./preview-stage";
+import { asStyle, usePreviewStage } from "@/components/preview/preview-stage";
 
 const BUTTON_VARIANTS: ButtonVariant[] = ["primary", "secondary", "tertiary", "destructive"];
 const BUTTON_STATES: ButtonState[] = ["default", "hover", "pressed", "focus", "disabled", "loading"];

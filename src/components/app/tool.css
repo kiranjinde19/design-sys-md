@@ -1,0 +1,44 @@
+/*
+ * Styles for the tool's own screen (/app). Only references to the tool's fixed theme variables
+ * (see tool-theme.ts); the user's design system never reaches this file.
+ */
+
+/* Offset focus ring on every focusable thing, as in the SaaS Clean skill. */
+.tool :focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* Tinted bento tile: card color, hairline card border. */
+.tool-tile {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--t-radius-lg);
+  transition: transform 150ms, box-shadow 150ms, border-color 150ms, background-color 150ms;
+}
+
+/* Hover: lift 2px and the same shadow on every tile. */
+.tool-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--t-shadow-md);
+}
+
+/* Active item: a crisp 2px brand border (items always carry a 2px border, so nothing shifts). */
+.tool-item {
+  border: 2px solid transparent;
+  border-radius: var(--t-radius-md);
+}
+.tool-item[aria-current="true"] {
+  border-color: var(--t-brand-600);
+  background: var(--card);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-tile {
+    transition: none;
+  }
+  .tool-hover:hover {
+    transform: none;
+  }
+}

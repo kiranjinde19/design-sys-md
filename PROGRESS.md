@@ -3,6 +3,7 @@
 Plain-language log of what is built. Newest first.
 
 ## Latest
+- **Stage 5, Step A: the tool's own screen at `/app`.** Top bar (56px: logo, preset switch with "Reset to SaaS Clean", Import file, light and dark switch, the one primary Export file button), a title row with "N of 9 reviewed" and a 9 segment progress bar, and the bento board of 9 live tiles (560px wide, 3 columns, 120px rows, 12px gaps). Clicking a tile opens the editor: system list (224px) plus editor panel (400px) with Back to board, Back and Next; reviewed tiles show a check. The preview tile on the right has six tabs; only Pricing is built (65% scale, sample content, crisp 2px featured border, one border beam button, equal height cards with aligned price, divider and features). The other five say "Coming next". The tool wears fixed SaaS Clean colors (light, plus a dark mode for the tool only) and never changes when the user edits; the preview gets the user's system through `--pv-*` CSS variables. Reviewed status is saved with the autosave (not in exported files). Controls are now shared (`src/components/controls/`) between `/debug` and `/app`, the signature options have pickers for the first time, selected buttons use a crisp 2px border instead of a primary fill so the screen keeps exactly one primary button, and the typography and voice editors use container queries so they fit the 400px panel. The two mockup files (`Main.dc.html`, `Editor.dc.html`) were not found in Downloads, so this step follows the written spec; `design/reference/` is ready for them (excluded from lint, type checks and the build). Export file and Import file link to `/debug` for now.
 - **No halo effects anywhere.** Removed the pulsing halo button option, the blurred halo featured highlight and the halo-style names. Primary call to action options are now Solid, Border beam (default), Gradient fill, Underline sweep. Featured highlight options are now Crisp border (default: 2px solid brand-600, no shadow), Offset shadow (now a hard `drop-shadow` with no blur), Solid accent fill, Corner ribbon. The focus ring option "Glow ring" became "Soft ring" (a flat translucent ring, no blur). Hover: every card with `card-hover`, the featured one too, lifts 2px and gets the same shadow-md; the featured-card exclusion is gone (the featured values are only repeated for hover if a hover effect would overwrite them, which does not happen with the defaults). SaaS Clean is now version 3. Saved settings and imported files that still hold an old id silently become the new one, and the import summary says so ("Replaced the old glow with the border beam."). The unused CSS variables and keyframes for the old halo are gone from all three stacks. Tests: 53 of 53 pass (new: defaults, no halo text in any generated file for every option mix, old files from preset versions 1 and 2). Checked in headless Chrome: saved old settings load as the new options, "Reset to SaaS Clean" gives the beam and crisp border, the beam runs 3.6s linear and stops under reduced motion with a steady ring, pricing cards line up and every card lifts and gets the same shadow on hover.
 - **Primary call to action is a border beam.** A thin static brand border plus one streak of light (bright head, fading tail, about a quarter of the ring) travelling around a 2px ring in 3.6s, linear, forever. CSS only: a registered `@property` angle on a `conic-gradient`, shown through a masked ring on `::before`, inside `@supports`. Reduced motion shows a steady brand-400 ring; browsers without support show the plain border.
 - **32 KiB is the real cap; two new rules; size notes.** Codex's 32 KiB is now the cap for React and plain HTML, and nothing was cut (no palette steps, no examples). New rules in all three stacks: rule 13 (placeholder data never uses real personal details, use invented names and example.com addresses) and rule 14 plus a token based `:-webkit-autofill` CSS rule (autofill keeps the input background and text color). The Export step now shows a gentle note above 30 KiB ("close to the Codex limit") and keeps the strong warning above 32 KiB.
@@ -22,13 +23,23 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 | React | 29.25 KiB | 30.04 KiB | under 31.5 (met) |
 | Plain HTML | 30.65 KiB | 31.44 KiB | under 31.5 (met, almost no room left) |
 
+## Totals (recounted after Step A)
+- **Screens:** 4 routes in the app: `/` (placeholder), `/app` (the tool), `/debug` (with `/debug/data` and `/debug/skill` pages).
+- **Board:** 9 tiles; 6 preview tabs (1 built, 5 "Coming next").
+- **Round trip test:** 53 of 53 tests pass (`npm run test:roundtrip`).
+- **Source files:** 80 TypeScript files under `src/`.
+- **Stages:** Stage 1 to 4 done (setup, token engine, skill file generator, wizard and debug views). Stage 5 Step A done. Stage 5 Step B to do. Stage 6 (landing page) to do.
+
 ## Built so far
 1. Project setup, GitHub, Vercel deploy.
-2. Token engine (colors, typography, radius, spacing, borders, shadows, controls, signature details) with presets SaaS Clean and Blank slate, versioned and guarded.
-3. Skill file generator for three stacks, SKILL.md and AGENTS.md export, import with byte-identical round trip.
-4. Bento board shell, wizard steps, live preview, tone of voice, export step with size meter and install help.
+2. Token engine (colors, typography, radius, spacing, borders, shadows, controls, signature details) with presets SaaS Clean (version 3) and Blank slate (version 1), versioned and guarded.
+3. Skill file generator for three stacks, SKILL.md and AGENTS.md export, import with feedback and byte-identical round trip.
+4. Wizard and live preview on `/debug`, tone of voice, export step with size meter and install help.
 5. `/debug` pages (data and skill review) rebuilt on every deploy.
+6. The tool's own screen at `/app`: top bar, title row with progress, board of 9 live tiles, editor, pricing preview.
 
-## Next
-- Decide the React and HTML size question above.
-- Autosave polish, final deploy checks.
+## Next (Stage 5, Step B)
+- Build the other five preview tabs (Buttons and states, Forms, Tables, Dashboard, Charts).
+- Add the mockup files to `design/reference/` and compare the screen against them.
+- Real Export and Import screens (they link to `/debug` for now).
+- Below 1280px the columns stack; polish later. Remove `/debug` at the end of Stage 5.
