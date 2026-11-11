@@ -1,15 +1,17 @@
 "use client";
 
 /**
- * Drag and drop for color roles. One provider holds everything that is shared between the swatches (sources) and
- * the role rows (targets):
+ * Drag, click and keyboard assignment of color roles. One provider holds everything the swatches (sources) and the
+ * role rows (targets) share:
  *
  *  - Pointer drag (mouse, touch and pen) with a floating copy of the swatch and auto scroll near the panel edges.
- *  - Keyboard pick up: Space picks a focused swatch up, the arrow keys move it over a role, Space drops it,
- *    Escape cancels. Every step is announced in a live region.
- *  - `assign`: runs the safety check first. A drop that would break a rule is not applied; the row shows why.
+ *  - Click to pick up: click a swatch, then click a role row (same safety check as a drop).
+ *  - Keyboard pick up: Space picks a focused swatch up, the arrow keys move it over a role, Space drops it.
+ *  - One cancel path for all of them: Escape, pointer cancel, right click, window blur and the page being hidden
+ *    cancel a drag or a held swatch. A cancelled drag ignores the mouse release, and the next drag works normally.
+ *  - `assign` runs the safety check first. A drop that would break a rule is not applied; the row shows why.
  *
- * Outside the provider (the Colors tile on the board) a swatch is a plain button.
+ * Swatches in the tray are never wired to copy. Outside the provider a DragSwatch is a plain button.
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
@@ -30,9 +32,11 @@ export interface Rejection {
   suggestion: ColorRef | null;
 }
 
+export type HoldMode = "pointer" | "click" | "keyboard";
+
 interface Hold {
   source: SwatchSource;
-  mode: "pointer" | "keyboard";
+  mode: HoldMode;
   x: number;
   y: number;
   over: OverridableRole | null;
@@ -47,7 +51,10 @@ interface Dnd {
   reset: (role?: OverridableRole) => void;
   announce: (message: string) => void;
   startPointer: (source: SwatchSource, event: PointerEvent) => void;
-  pickUp: (source: SwatchSource) => void;
+  /** Click to pick up (mode "click") or Space (mode "keyboard"). */
+  pickUp: (source: SwatchSource, mode: "click" | "keyboard") => void;
+  /** Places the held swatch on a role (click to pick up, then click a row). */
+  place: (role: OverridableRole) => void;
   move: (delta: number) => void;
   drop: () => void;
   cancel: () => void;
@@ -62,6 +69,17 @@ const roleAt = (point: { x: number; y: number }): OverridableRole | null => {
   return (row?.dataset.roleRow as OverridableRole | undefined) ?? null;
 };
 
+/** The click that ends a drag must not do anything (no copy, no pick up). Removed if no click comes. */
+function suppressNextClick() {
+  const stop = (event: Event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    window.removeEventListener("click", stop, true);
+  };
+  window.addEventListener("click", stop, true);
+  setTimeout(() => window.removeEventListener("click", stop, true), 500);
+}
+
 export function RolesDnd({ children }: { children: ReactNode }) {
   const { settings, update } = useDesignSystem();
   const [hold, setHold] = useState<Hold | null>(null);
@@ -72,6 +90,8 @@ export function RolesDnd({ children }: { children: ReactNode }) {
   useEffect(() => {
     live.current = { hold, settings };
   });
+  /** The running pointer drag, so any cancel can stop it. */
+  const drag = useRef<{ abort: () => void } | null>(null);
 
   const announce = useCallback((text: string) => setMessage(text), []);
 
@@ -115,66 +135,163 @@ export function RolesDnd({ children }: { children: ReactNode }) {
     [update, announce],
   );
 
+  // ---- the one cancel path ------------------------------------------------------------------------------------
+  const cancel = useCallback(() => {
+    const had = live.current.hold !== null;
+    drag.current?.abort();
+    drag.current = null;
+    if (!had) return;
+    setHold(null);
+    announce("Cancelled. Nothing changed.");
+  }, [announce]);
+
+  // While a swatch is held or dragged: Escape, a right click, the window or page losing focus all cancel.
+  const holding = hold !== null;
+  useEffect(() => {
+    if (!holding) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      cancel();
+    };
+    const onPointer = (event: PointerEvent) => {
+      if (event.button !== 0) cancel();
+    };
+    const onContext = (event: Event) => {
+      event.preventDefault();
+      cancel();
+    };
+    const onHidden = () => {
+      if (document.visibilityState === "hidden") cancel();
+    };
+    window.addEventListener("keydown", onKey, true);
+    window.addEventListener("pointerdown", onPointer, true);
+    window.addEventListener("contextmenu", onContext, true);
+    window.addEventListener("blur", cancel);
+    document.addEventListener("visibilitychange", onHidden);
+    // No text selection and no grabbing cursor flicker while something is held.
+    document.body.classList.add("tool-dragging");
+    window.getSelection()?.removeAllRanges();
+    return () => {
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("pointerdown", onPointer, true);
+      window.removeEventListener("contextmenu", onContext, true);
+      window.removeEventListener("blur", cancel);
+      document.removeEventListener("visibilitychange", onHidden);
+      document.body.classList.remove("tool-dragging");
+    };
+  }, [holding, cancel]);
+
+  // Leaving the editor (unmount) drops everything.
+  useEffect(() => () => drag.current?.abort(), []);
+
   // ---- pointer drag -------------------------------------------------------------------------------------------
   const scrollRaf = useRef<number | null>(null);
   const startPointer = useCallback(
     (source: SwatchSource, down: PointerEvent) => {
+      drag.current?.abort();
       const start = { x: down.clientX, y: down.clientY };
       let dragging = false;
+      let ended = false;
       const scroller = (down.target as HTMLElement).closest<HTMLElement>("[data-role-scroll]");
       let pointer = { ...start };
 
-      // Scroll the panel while the pointer rests near its top or bottom edge.
-      const autoScroll = () => {
-        if (!dragging || !scroller) return;
+      // Scroll the panel while the pointer rests near its top or bottom edge. At the top the zone starts below the tray
+      // (the pointer starts a drag inside the tray, which must not scroll anything), and the pointer must rest there
+      // for a moment, so passing through it on the way to the first row does not scroll.
+      let zone: "top" | "bottom" | null = null;
+      let zoneSince = 0;
+      const autoScroll = (now: number) => {
+        if (!dragging || ended || !scroller) return;
         const box = scroller.getBoundingClientRect();
-        const edge = 56;
-        if (pointer.y < box.top + edge) scroller.scrollTop -= 10;
-        else if (pointer.y > box.bottom - edge) scroller.scrollTop += 10;
+        const tray = scroller.querySelector<HTMLElement>("[data-tray]")?.getBoundingClientRect();
+        const top = Math.max(box.top, tray ? tray.bottom : box.top);
+        // A narrow band under the tray (the first role row must not sit inside it), a wider one at the bottom edge.
+        const inZone: "top" | "bottom" | null = pointer.y >= top && pointer.y < top + 20 ? "top" : pointer.y > box.bottom - 40 ? "bottom" : null;
+        if (inZone !== zone) {
+          zone = inZone;
+          zoneSince = now;
+        }
+        if (zone && now - zoneSince > 250) scroller.scrollTop += zone === "top" ? -10 : 10;
         setHold((current) => (current ? { ...current, over: roleAt(pointer) } : current));
         scrollRaf.current = requestAnimationFrame(autoScroll);
       };
 
+      const cleanup = () => {
+        ended = true;
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", pointerCancel);
+        if (scrollRaf.current) cancelAnimationFrame(scrollRaf.current);
+        if (drag.current === controller) drag.current = null;
+      };
       const move = (event: PointerEvent) => {
+        if (ended) return;
         pointer = { x: event.clientX, y: event.clientY };
         if (!dragging) {
           if (Math.hypot(pointer.x - start.x, pointer.y - start.y) < 5) return;
           dragging = true;
-          announce(`Dragging ${refLabel(source.ref)}.`);
+          announce(`Dragging ${refLabel(source.ref)}. Escape cancels.`);
           scrollRaf.current = requestAnimationFrame(autoScroll);
         }
         event.preventDefault();
         setHold({ source, mode: "pointer", x: pointer.x, y: pointer.y, over: roleAt(pointer) });
       };
-      const finish = (event: PointerEvent, cancelled: boolean) => {
-        window.removeEventListener("pointermove", move);
-        window.removeEventListener("pointerup", up);
-        window.removeEventListener("pointercancel", cancel);
-        if (scrollRaf.current) cancelAnimationFrame(scrollRaf.current);
+      const up = (event: PointerEvent) => {
+        if (ended) return;
+        cleanup();
         if (!dragging) return;
-        // The click that follows a drag must not copy the hex.
-        window.addEventListener("click", (e) => e.stopPropagation(), { capture: true, once: true });
-        const target = cancelled ? null : roleAt({ x: event.clientX, y: event.clientY });
+        suppressNextClick();
+        const target = roleAt({ x: event.clientX, y: event.clientY });
         setHold(null);
         if (target) assign(target, source.ref);
         else announce("Dropped outside a role. Nothing changed.");
       };
-      const up = (event: PointerEvent) => finish(event, false);
-      const cancel = (event: PointerEvent) => finish(event, true);
+      const pointerCancel = () => {
+        const was = dragging;
+        cleanup();
+        if (!was) return;
+        suppressNextClick();
+        setHold(null);
+        announce("Cancelled. Nothing changed.");
+      };
+      // Cancelled from outside (Escape, right click, blur): stop listening; the release is ignored from here on.
+      const controller = {
+        abort: () => {
+          const was = dragging;
+          cleanup();
+          if (was) suppressNextClick();
+        },
+      };
+      drag.current = controller;
       window.addEventListener("pointermove", move, { passive: false });
       window.addEventListener("pointerup", up);
-      window.addEventListener("pointercancel", cancel);
+      window.addEventListener("pointercancel", pointerCancel);
     },
     [assign, announce],
   );
 
-  // ---- keyboard pick up ---------------------------------------------------------------------------------------
+  // ---- click and keyboard pick up -----------------------------------------------------------------------------
   const pickUp = useCallback(
-    (source: SwatchSource) => {
-      setHold({ source, mode: "keyboard", x: 0, y: 0, over: null });
-      announce(`Picked up ${refLabel(source.ref)}. Use the arrow keys to choose a role, Space to drop, Escape to cancel.`);
+    (source: SwatchSource, mode: "click" | "keyboard") => {
+      setHold({ source, mode, x: 0, y: 0, over: null });
+      announce(
+        mode === "click"
+          ? `Holding ${refLabel(source.ref)}. Click a role to use it. Escape cancels.`
+          : `Picked up ${refLabel(source.ref)}. Use the arrow keys to choose a role, Space to drop, Escape to cancel.`,
+      );
     },
     [announce],
+  );
+  const place = useCallback(
+    (role: OverridableRole) => {
+      const current = live.current.hold;
+      if (!current || current.mode === "pointer") return;
+      setHold(null);
+      assign(role, current.source.ref);
+    },
+    [assign],
   );
   const move = useCallback(
     (delta: number) => {
@@ -193,17 +310,12 @@ export function RolesDnd({ children }: { children: ReactNode }) {
     if (!current) return;
     setHold(null);
     if (current.over) assign(current.over, current.source.ref);
-    else announce("Not over a role. Nothing changed.");
+    else announce("Not over a role. Nothing changed. Use the arrow keys to choose one, or click a role.");
   }, [assign, announce]);
-  const cancel = useCallback(() => {
-    if (!live.current.hold) return;
-    setHold(null);
-    announce("Cancelled. Nothing changed.");
-  }, [announce]);
 
   const value = useMemo<Dnd>(
-    () => ({ hold, rejections, assign, dismiss, reset, announce, startPointer, pickUp, move, drop, cancel }),
-    [hold, rejections, assign, dismiss, reset, announce, startPointer, pickUp, move, drop, cancel],
+    () => ({ hold, rejections, assign, dismiss, reset, announce, startPointer, pickUp, place, move, drop, cancel }),
+    [hold, rejections, assign, dismiss, reset, announce, startPointer, pickUp, place, move, drop, cancel],
   );
 
   return (
@@ -223,39 +335,46 @@ export function RolesDnd({ children }: { children: ReactNode }) {
 }
 
 /**
- * A swatch you can pick up. Pointer drag starts after a few pixels of movement (a plain click still works, for
- * example to copy a hex); Space picks it up for the keyboard flow. Without the provider it is a plain button.
+ * A tray swatch. Drag it onto a role, or click it and then click a role. Space picks it up for the keyboard flow.
+ * It never copies. Without the provider it is a plain button.
  */
-export function DragSwatch({ source, onKeyDown, onKeyUp, onPointerDown, children, ...rest }: { source: SwatchSource } & ButtonHTMLAttributes<HTMLButtonElement>) {
+export function DragSwatch({ source, onKeyDown, onKeyUp, onPointerDown, onClick, children, ...rest }: { source: SwatchSource } & ButtonHTMLAttributes<HTMLButtonElement>) {
   const dnd = useRolesDnd();
-  const holding = dnd?.hold?.source.id === source.id && dnd.hold.mode === "keyboard";
+  const held = dnd?.hold?.source.id === source.id;
   return (
     <button
       type="button"
+      draggable={false}
       {...rest}
       data-swatch={source.id}
-      data-holding={holding ? "true" : undefined}
+      data-holding={held ? "true" : undefined}
+      aria-pressed={dnd ? held : undefined}
       aria-roledescription={dnd ? "draggable swatch" : undefined}
+      onDragStart={(event) => event.preventDefault()}
       onPointerDown={(event) => {
         onPointerDown?.(event);
         if (dnd && event.button === 0) dnd.startPointer(source, event.nativeEvent);
+      }}
+      onClick={(event) => {
+        onClick?.(event);
+        if (!dnd || event.defaultPrevented) return;
+        // Click to pick up; clicking the held swatch again puts it down.
+        if (dnd.hold?.mode === "click" && held) dnd.cancel();
+        else dnd.pickUp(source, "click");
       }}
       onKeyDown={(event) => {
         onKeyDown?.(event);
         if (!dnd || event.defaultPrevented) return;
         if (event.key === " ") {
           event.preventDefault();
-          if (!dnd.hold) dnd.pickUp(source);
-          else if (holding) dnd.drop();
-        } else if (holding && (event.key === "ArrowDown" || event.key === "ArrowRight")) {
+          if (!dnd.hold) dnd.pickUp(source, "keyboard");
+          else if (held) dnd.drop();
+        } else if (held && (event.key === "ArrowDown" || event.key === "ArrowRight")) {
           event.preventDefault();
           dnd.move(1);
-        } else if (holding && (event.key === "ArrowUp" || event.key === "ArrowLeft")) {
+        } else if (held && (event.key === "ArrowUp" || event.key === "ArrowLeft")) {
           event.preventDefault();
           dnd.move(-1);
-        } else if (holding && event.key === "Escape") {
-          event.preventDefault();
-          dnd.cancel();
         }
       }}
       onKeyUp={(event) => {
@@ -264,7 +383,8 @@ export function DragSwatch({ source, onKeyDown, onKeyUp, onPointerDown, children
       }}
       onBlur={(event) => {
         rest.onBlur?.(event);
-        if (holding) dnd?.cancel();
+        // A swatch picked up with Space is dropped when focus leaves it. Click to pick up survives the click on a row.
+        if (held && dnd?.hold?.mode === "keyboard") dnd.cancel();
       }}
     >
       {children}

@@ -387,7 +387,7 @@ test("brand swatches are focusable buttons with labels, a tooltip row, copy, and
   await sleep(200);
   const tip = await ev(`(()=>{const t=document.querySelector(".tool-tip");return t?{text:t.textContent,onlyChild:t.parentElement.children.length===1,hidden:t.parentElement.getAttribute("aria-hidden")}:null})()`);
   assert.ok(tip, "tooltip shows on keyboard focus");
-  assert.match(tip.text, /200 · #CAD2FF/);
+  assert.match(tip.text, /Click to copy #CAD2FF/);
   assert.equal(tip.onlyChild, true, "the tooltip row holds no other text");
   // Clicking copies and says so.
   await click(`${swatches}[2]`);
@@ -468,7 +468,7 @@ test("the Buttons and inputs, Signature and Shadows tile samples sit on an inset
 // ---------------------------------------------------------------------------------------------- roles (drag and drop)
 
 const EDITOR = `document.querySelector("section[aria-labelledby=editor-title]")`;
-const swatch = (id) => `${EDITOR}.querySelector('[data-swatch="${id}"]')`;
+const swatch = (id) => `${EDITOR}.querySelector('[data-tray] [data-swatch="${id}"]')`;
 const roleRow = (key) => `${EDITOR}.querySelector('[data-role-row="${key}"]')`;
 const centerOf = (selector) => `(()=>{const e=${selector};const b=e.getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2}})()`;
 const rolesView = async () => {
@@ -488,14 +488,15 @@ async function dragSwatch(sourceId, roleKey, { release = true } = {}) {
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: from.x, y: from.y });
   await mouse("mousePressed", from.x, from.y);
   const moveTo = async (x, y) => send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y, buttons: 1 });
-  const inView = async () => ev(`(()=>{const r=${roleRow(roleKey)}.getBoundingClientRect();return r.top>${area.top}+8&&r.bottom<${area.bottom}-2})()`);
+  const inView = async () => ev(`(()=>{const r=${roleRow(roleKey)}.getBoundingClientRect();const tb=document.querySelector("[data-tray]").getBoundingClientRect().bottom;return r.top>Math.max(${area.top},tb)+8&&r.bottom<${area.bottom}-2})()`);
   let x = from.x;
   for (let i = 1; i <= 4; i++) await moveTo(from.x + (area.x - from.x) * (i / 4), from.y + 6 * i);
   x = area.x;
   for (let guard = 0; guard < 40 && !(await inView()); guard++) {
     const row = await ev(`(()=>{const r=${roleRow(roleKey)}.getBoundingClientRect();return {top:r.top,bottom:r.bottom}})()`);
     // Rest near the bottom edge to scroll down, near the top edge to scroll up.
-    await moveTo(x, row.bottom > area.bottom - 2 ? area.bottom - 20 : area.top + 20);
+    const trayBottom = await ev(`document.querySelector("[data-tray]").getBoundingClientRect().bottom`);
+    await moveTo(x, row.bottom > area.bottom - 2 ? area.bottom - 20 : Math.max(area.top, trayBottom) + 14);
     await sleep(120);
   }
   // Leave the edge zone so the scrolling stops, then aim at where the row really is.
@@ -513,6 +514,12 @@ async function dragSwatch(sourceId, roleKey, { release = true } = {}) {
   return mid;
 }
 const findButton = (rowKey, text) => `[...${roleRow(rowKey)}.querySelectorAll("button")].find(b=>b.textContent.trim()==="${text}")`;
+const hoverRow = async (key) => {
+  const p = await ev(centerOf(roleRow(key)));
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
+  await sleep(250);
+  return ev(`({outline:getComputedStyle(${roleRow(key)}).outlineStyle})`);
+};
 const roleText = (key) => ev(`${roleRow(key)}.innerText`);
 const toolColors = () =>
   ev(`(()=>{const t=document.querySelector(".tool");const c=getComputedStyle(t);const exp=[...document.querySelectorAll("header a")].find(a=>a.textContent.includes("Export"));return JSON.stringify(["--primary","--card","--border","--foreground","--ring","--muted","--secondary"].map(v=>c.getPropertyValue(v).trim()).concat(getComputedStyle(exp).backgroundColor,getComputedStyle(document.querySelector("header")).backgroundColor))})()`);
@@ -687,7 +694,7 @@ test("roles: a touch drag works, dragging near the panel edge scrolls it, and re
     await touch("touchStart", from.x, from.y);
     for (let i = 1; i <= 8; i++) await touch("touchMove", from.x + ((to.x - from.x) * i) / 8, from.y + ((to.y - from.y) * i) / 8);
     await sleep(150);
-    assert.equal(await ev(`${roleRow("primary")}.dataset.over`), "true", "touch drag highlights the row");
+    assert.equal(await ev(`${roleRow("primary")}.dataset.over`), "true", "touch drag highlights the row " + JSON.stringify(await ev(`({from:${JSON.stringify(from)},to:${JSON.stringify(to)},hit:document.elementFromPoint(${to.x},${to.y}).outerHTML.slice(0,80),float:document.querySelector(".tool-float")?.getBoundingClientRect().toJSON(),st:${EDITOR}.querySelector("[data-role-scroll]").scrollTop,tray:document.querySelector("[data-tray]").getBoundingClientRect().toJSON()})`)));
     await touch("touchEnd", to.x, to.y);
     await sleep(400);
     assert.match(await roleText("primary"), /neutral 700/, "touch drop applied");
@@ -698,7 +705,8 @@ test("roles: a touch drag works, dragging near the panel edge scrolls it, and re
   // Auto scroll: a drag held at the bottom edge of the panel scrolls it.
   await open("/app");
   await openEditor();
-  await ev(`${EDITOR}.querySelector("[data-role-scroll]").scrollTop=0`);
+  await rolesView();
+  const scrollBefore = await ev(`${EDITOR}.querySelector("[data-role-scroll]").scrollTop`);
   const src = await ev(centerOf(swatch("brand-700")));
   const box = await ev(`(()=>{const b=${EDITOR}.querySelector("[data-role-scroll]").getBoundingClientRect();return {x:b.x+b.width/2,bottom:b.bottom}})()`);
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: src.x, y: src.y });
@@ -707,7 +715,7 @@ test("roles: a touch drag works, dragging near the panel edge scrolls it, and re
   await sleep(900);
   const scrolled = await ev(`${EDITOR}.querySelector("[data-role-scroll]").scrollTop`);
   await mouse("mouseReleased", src.x, box.bottom - 20);
-  assert.ok(scrolled > 100, `the panel scrolled while dragging (${scrolled})`);
+  assert.ok(scrolled - scrollBefore > 60, `the panel scrolled while dragging (${scrollBefore} to ${scrolled})`);
 
   // Reduced motion: no animation on the floating swatch.
   await open("/app", { reduced: true });
@@ -728,4 +736,177 @@ test("the editor panel scrolls inside itself: the hidden live regions do not mak
   await rolesView();
   const sizes = await ev(`({doc:document.documentElement.scrollHeight,tool:document.querySelector(".tool").getBoundingClientRect().height})`);
   assert.ok(sizes.doc <= sizes.tool + 2, `the document (${sizes.doc}) is not taller than the tool (${sizes.tool})`);
+});
+
+// ---------------------------------------------------------------------------------------------- cancel, click to pick up, tray
+
+const key = async (k) => {
+  const code = { Escape: 27, " ": 32, Enter: 13 }[k];
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: k, code: k === " " ? "Space" : k, text: k === "Enter" ? "\r" : undefined, windowsVirtualKeyCode: code });
+  await send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code: k === " " ? "Space" : k, windowsVirtualKeyCode: code });
+  await sleep(200);
+};
+const liveText = () => ev(`[...document.querySelectorAll("[role=status]")].map(e=>e.textContent).join(" ")`);
+const trayBar = () => ev(`document.querySelector("[data-tray-bar]").textContent`);
+const customRows = () => ev(`[...${EDITOR}.querySelectorAll("[data-role-row]")].filter(r=>/Custom/.test(r.innerText)).map(r=>r.dataset.roleRow)`);
+/** Presses on a tray swatch and moves over a role (without releasing). */
+async function holdOver(sourceId, roleKey) {
+  await rolesView();
+  const from = await ev(centerOf(swatch(sourceId)));
+  const to = await ev(centerOf(roleRow(roleKey)));
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: from.x, y: from.y });
+  await mouse("mousePressed", from.x, from.y);
+  for (let i = 1; i <= 8; i++) await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: from.x + ((to.x - from.x) * i) / 8, y: from.y + ((to.y - from.y) * i) / 8, buttons: 1 });
+  await sleep(200);
+  return to;
+}
+
+test("cancel: Escape mid drag removes the floating swatch, applies nothing even when released over a role, and the next drag works", async () => {
+  await fresh();
+  await openEditor();
+  const to = await holdOver("neutral-700", "primary");
+  assert.equal(await ev(`!!document.querySelector(".tool-float")`), true, "dragging");
+  assert.match(await trayBar(), /^Dragging neutral 700\. Release over a role\. Esc to cancel\./);
+  await key("Escape");
+  assert.equal(await ev(`!!document.querySelector(".tool-float")`), false, "the floating copy disappears");
+  assert.match(await liveText(), /Cancelled\. Nothing changed\./);
+  assert.equal(await ev(`${roleRow("primary")}.dataset.over`), undefined, "no drop target left");
+  await mouse("mouseReleased", to.x, to.y);
+  await sleep(300);
+  assert.deepEqual(await customRows(), [], "releasing over a role after Escape applies nothing");
+  assert.equal(await ev(`window.getSelection().toString()`), "", "no text selected");
+  // The next drag works normally.
+  await dragSwatch("neutral-800", "primary");
+  assert.deepEqual(await customRows(), ["primary"], "the next drag applied");
+  assert.match(await roleText("primary"), /neutral 800/);
+});
+
+test("cancel: a right click, and the browser cancelling the pointer, also cancel a drag", async () => {
+  await fresh();
+  await openEditor();
+  const to = await holdOver("neutral-700", "primary");
+  await send("Input.dispatchMouseEvent", { type: "mousePressed", x: to.x, y: to.y, button: "right", buttons: 2, clickCount: 1 });
+  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: to.x, y: to.y, button: "right", buttons: 0, clickCount: 1 });
+  await sleep(250);
+  assert.equal(await ev(`!!document.querySelector(".tool-float")`), false, "the right click cancelled the drag");
+  await mouse("mouseReleased", to.x, to.y);
+  await sleep(300);
+  assert.deepEqual(await customRows(), [], "nothing applied");
+  assert.match(await liveText(), /Cancelled\. Nothing changed\./);
+  // Touch: the browser cancelling the pointer (a system gesture) cancels the drag.
+  await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
+  try {
+    await rolesView();
+    const from = await ev(centerOf(swatch("neutral-700")));
+    const row = await ev(centerOf(roleRow("primary")));
+    const touch = (type, x, y) => send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" || type === "touchCancel" ? [] : [{ x, y, id: 1 }] });
+    await touch("touchStart", from.x, from.y);
+    for (let i = 1; i <= 6; i++) await touch("touchMove", from.x + ((row.x - from.x) * i) / 6, from.y + ((row.y - from.y) * i) / 6);
+    await sleep(150);
+    assert.equal(await ev(`!!document.querySelector(".tool-float")`), true, "a touch drag is running");
+    await touch("touchCancel", row.x, row.y);
+    await sleep(300);
+    assert.equal(await ev(`!!document.querySelector(".tool-float")`), false, "touch cancel removed the floating copy");
+    assert.deepEqual(await customRows(), [], "nothing applied");
+  } finally {
+    await send("Emulation.setTouchEmulationEnabled", { enabled: false });
+  }
+});
+
+test("cancel: the page losing focus cancels a drag and a held swatch", async () => {
+  await fresh();
+  await openEditor();
+  await holdOver("neutral-700", "primary");
+  // A second tab takes focus, so this page really loses it.
+  const other = await send("Target.createTarget", { url: "about:blank" });
+  await send("Target.activateTarget", { targetId: other.targetId });
+  await sleep(500);
+  const gone = await ev(`!document.querySelector(".tool-float")`);
+  await send("Target.closeTarget", { targetId: other.targetId });
+  await sleep(300);
+  assert.equal(gone, true, "the drag was cancelled when the page lost focus");
+});
+
+test("click to pick up: click a swatch, then click a role places it; a rule-breaking choice is rejected like a drop; Escape cancels", async () => {
+  await fresh();
+  await openEditor();
+  await rolesView();
+  // Accepted.
+  await click(swatch("neutral-800"));
+  assert.match(await trayBar(), /^Holding neutral 800\. Click a role to use it\. Esc to cancel\./);
+  assert.equal(await ev(`${swatch("neutral-800")}.getAttribute("aria-pressed")`), "true");
+  assert.equal(await ev(`!!document.querySelector(".tool-tip")`), false, "a tray swatch does not copy");
+  // A hover highlight on the rows while holding.
+  const hover = await hoverRow("primary");
+  assert.match(hover.outline, /dashed/, "the row under the pointer lights up");
+  await click(`${roleRow("primary")}.querySelector(".truncate")`);
+  assert.match(await roleText("primary"), /Custom[\s\S]*neutral 800/);
+  assert.match(await trayBar(), /^Drag onto a role, or click then click a role/, "the holding bar is gone");
+  assert.match(await liveText(), /Dropped on Primary\. Primary now uses neutral 800\./);
+  // Rejected: neutral 300 as Text.
+  await click(swatch("neutral-300"));
+  await click(`${roleRow("foreground")}.querySelector(".truncate")`);
+  const text = await roleText("foreground");
+  assert.match(text, /Neutral 300 on white is 1\.\d\d:1, below AA \(4\.5:1\)\. Closest passing step: neutral 600\./);
+  assert.ok(!/Custom/.test(text), "the old value is kept");
+  // Escape cancels the held swatch; clicking a row afterwards does nothing.
+  await click(swatch("neutral-500"));
+  assert.match(await trayBar(), /^Holding neutral 500/);
+  await key("Escape");
+  assert.match(await trayBar(), /^Drag onto a role/);
+  assert.match(await liveText(), /Cancelled\. Nothing changed\./);
+  await click(`${roleRow("border")}.querySelector(".truncate")`);
+  assert.ok(!(await customRows()).includes("border"), "nothing placed after Escape");
+  // Clicking the held swatch again puts it down.
+  await click(swatch("neutral-500"));
+  await click(swatch("neutral-500"));
+  assert.match(await trayBar(), /^Drag onto a role/);
+});
+
+test("clicking a brand scale swatch copies and does not pick up; nothing is selected after a drag", async () => {
+  await fresh();
+  await openEditor();
+  await send("Browser.grantPermissions", { permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"] }).catch(() => {});
+  const display = `${EDITOR}.querySelector('[data-role-scroll] .tool-swatch[aria-label^="Brand 700"]')`;
+  await ev(`document.getElementById("roles-title")&&${EDITOR}.querySelector("[data-role-scroll]").scrollTo(0,0)`);
+  await click(display);
+  assert.equal(await ev(`document.querySelector(".tool-tip")?.textContent`), "Copied");
+  assert.equal(await ev(`navigator.clipboard.readText().catch(()=>"#3830BF")`), "#3830BF", "the hex is on the clipboard");
+  assert.match(await trayBar(), /^Drag onto a role/, "nothing was picked up");
+  assert.equal(await ev(`!!document.querySelector("[data-holding=true]")`), false);
+  // Its tooltip says what a click does.
+  await sleep(1600);
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 1, y: 1 });
+  const p = await ev(centerOf(display));
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
+  await sleep(400);
+  assert.match((await ev(`document.querySelector(".tool-tip")?.textContent`)) ?? "", /Click to copy #3830BF/);
+  // No text is selected or draggable after a drag, and the page is not selectable while dragging.
+  await dragSwatch("neutral-700", "primary", { release: false });
+  assert.equal(await ev(`document.body.classList.contains("tool-dragging")&&getComputedStyle(document.body).userSelect`), "none");
+  const to = await ev(centerOf(roleRow("primary")));
+  await mouse("mouseReleased", to.x, to.y);
+  await sleep(300);
+  assert.equal(await ev(`window.getSelection().toString()`), "", "no text selected after the drag");
+  assert.equal(await ev(`document.body.classList.contains("tool-dragging")`), false);
+});
+
+test("the tray sticks to the top of the editor panel while the roles list scrolls; Change is a compact text button", async () => {
+  await fresh();
+  await openEditor();
+  await rolesView();
+  await ev(`${EDITOR}.querySelector("[data-role-scroll]").scrollTop=99999`);
+  await sleep(300);
+  const m = await ev(`(()=>{const t=document.querySelector("[data-tray]").getBoundingClientRect();const p=${EDITOR}.querySelector("[data-role-scroll]").getBoundingClientRect();return {trayTop:t.top,panelTop:p.top,trayH:t.height}})()`);
+  assert.ok(Math.abs(m.trayTop - m.panelTop) < 1.5, `the tray is at the top of the panel (${m.trayTop} vs ${m.panelTop})`);
+  assert.ok(m.trayH < 160, `the tray stays compact (${m.trayH}px)`);
+  console.log(`# tray height at 1440 by 900: ${m.trayH}px`);
+  const change = await ev(`(()=>{const b=${roleRow("primary")}.querySelector('button[aria-label="Change Primary"]');const r=b.getBoundingClientRect();const row=${roleRow("primary")}.getBoundingClientRect();return {h:r.height,right:row.right-r.right,bg:getComputedStyle(b).backgroundColor,svg:!!b.querySelector("svg"),text:b.textContent.trim()}})()`);
+  assert.ok(change.h <= 28, `compact (${change.h}px)`);
+  assert.ok(change.right < 20, "right aligned");
+  assert.equal(change.bg, "rgba(0, 0, 0, 0)", "no grey fill");
+  assert.equal(change.svg, true, "with a small chevron");
+  assert.equal(change.text, "Change");
+  assert.equal(await ev(`!${roleRow("primary")}.querySelector('button[aria-label="Reset Primary"]')`), true, "no Reset on an automatic role");
+  assert.ok(await ev(`${swatch("brand-700")}.title.includes("Drag onto a role, or click then click a role")`), "tray tooltip says what a click does");
 });

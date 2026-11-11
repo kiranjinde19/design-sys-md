@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { GripVertical } from "lucide-react";
+import { ChevronDown, GripVertical } from "lucide-react";
 import {
   PILL_MEANING,
   ROLE_ROWS,
@@ -20,24 +20,63 @@ import {
 import { cn } from "@/lib/utils";
 import { DragSwatch, useRolesDnd } from "./roles-dnd";
 
-/** Extra swatch sources next to the brand scale: the neutral scale, the secondary scale (if added), white and black. */
-export function SwatchBank() {
+const TRAY_HINT = "Drag onto a role, or click then click a role";
+
+/**
+ * The tray: every swatch a role can take, in a bar that sticks to the top of the editor panel while the roles list scrolls.
+ * Brand, neutral and (if added) secondary scales each get one row of ten; the status colors, white and black share the
+ * last row. A tray swatch is dragged or picked up with a click; it never copies. While one is held a bar says so.
+ */
+export function SwatchTray() {
   const { tokens } = useDesignSystem();
-  const groups = swatchGroups(tokens).filter((group) => group.id === "neutral" || group.id === "secondary" || group.id === "fixed");
+  const dnd = useRolesDnd()!;
+  const groups = swatchGroups(tokens);
+  const rows: { id: string; title: string; items: SwatchSource[] }[] = [
+    { id: "brand", title: "Brand", items: groups.find((g) => g.id === "brand")!.items },
+    { id: "neutral", title: "Neutral", items: groups.find((g) => g.id === "neutral")!.items },
+    ...(groups.find((g) => g.id === "secondary") ? [{ id: "secondary", title: "Second.", items: groups.find((g) => g.id === "secondary")!.items }] : []),
+    { id: "other", title: "Other", items: [...groups.find((g) => g.id === "status")!.items, ...groups.find((g) => g.id === "fixed")!.items] },
+  ];
+  const tray = useRef<HTMLDivElement>(null);
+  // The panel needs the tray height, so a row scrolled into view is not hidden under it.
+  useEffect(() => {
+    const element = tray.current;
+    const scroller = element?.closest<HTMLElement>("[data-role-scroll]");
+    if (!element || !scroller) return;
+    const set = () => scroller.style.setProperty("--tray-h", `${element.offsetHeight + 8}px`);
+    set();
+    const observer = new ResizeObserver(set);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const hold = dnd.hold;
+  const bar = !hold
+    ? TRAY_HINT
+    : hold.mode === "pointer"
+      ? `Dragging ${refLabel(hold.source.ref)}. Release over a role. Esc to cancel.`
+      : hold.mode === "keyboard"
+        ? `Holding ${refLabel(hold.source.ref)}. Arrow keys choose a role, Space drops. Esc to cancel.`
+        : `Holding ${refLabel(hold.source.ref)}. Click a role to use it. Esc to cancel.`;
+
   return (
-    <div className="space-y-2">
-      {groups.map((group) => (
-        <div key={group.id} className="space-y-1">
-          <div className="text-xs leading-4 text-muted-foreground">{group.title}</div>
-          <div className={group.id === "fixed" ? "flex gap-1" : "grid grid-cols-10 gap-1"}>
-            {group.items.map((source) => (
+    <div ref={tray} data-tray className="sticky top-0 z-20 -mx-1 space-y-1 border-b border-border bg-background px-1 pb-2 pt-1">
+      <p data-tray-bar className={cn("flex h-9 items-center rounded-[10px] px-2 text-xs font-medium leading-4", hold ? "bg-foreground text-background" : "text-muted-foreground")}>
+        {bar}
+      </p>
+      {rows.map((row) => (
+        <div key={row.id} role="group" aria-label={`${row.title === "Second." ? "Secondary" : row.title} swatches`} className="flex items-center gap-1">
+          <span aria-hidden className="w-14 shrink-0 text-xs leading-4 text-muted-foreground">
+            {row.title}
+          </span>
+          <div className="grid flex-1 grid-cols-10 gap-0.5">
+            {row.items.map((source) => (
               <DragSwatch
                 key={source.id}
                 source={source}
-                className={cn("tool-swatch", group.id === "fixed" && "!w-16")}
-                style={{ background: source.hex, height: 24 }}
+                className="tool-swatch"
+                style={{ background: source.hex, height: 22 }}
                 aria-label={`${sentenceCase(source.label)}, ${source.hex}`}
-                title={`${sentenceCase(source.label)}, ${source.hex}`}
+                title={`${sentenceCase(source.label)}, ${source.hex}. ${TRAY_HINT}`}
               />
             ))}
           </div>
@@ -140,7 +179,12 @@ function RoleRow({ role, open, onToggle, onClose }: { role: OverridableRole; ope
     <li
       data-role-row={role}
       data-over={over ? "true" : undefined}
+      onClick={(event) => {
+        // Click to pick up, then click a role: place the held swatch (same safety check as a drop).
+        if (dnd.hold && dnd.hold.mode !== "pointer" && !(event.target as HTMLElement).closest("button, [role=dialog]")) dnd.place(role);
+      }}
       className={cn("rounded-[10px] border bg-background p-2", over ? "tool-row-over border-transparent" : "border-border")}
+      style={{ scrollMarginTop: "var(--tray-h, 150px)" }}
     >
       <div className="flex items-center gap-3">
         <GripVertical aria-hidden className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
@@ -163,7 +207,12 @@ function RoleRow({ role, open, onToggle, onClose }: { role: OverridableRole; ope
         </span>
       </div>
 
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-1 flex items-center justify-end gap-3">
+        {custom ? (
+          <button type="button" aria-label={`Reset ${row.label}`} onClick={() => dnd.reset(role)} className="tool-link h-6 rounded-[5px] px-1 text-sm leading-5">
+            Reset
+          </button>
+        ) : null}
         <button
           ref={button}
           type="button"
@@ -171,15 +220,11 @@ function RoleRow({ role, open, onToggle, onClose }: { role: OverridableRole; ope
           aria-expanded={open}
           aria-label={`Change ${row.label}`}
           onClick={onToggle}
-          className="tool-btn tool-btn--secondary h-8 px-3 text-sm font-medium leading-5"
+          className="tool-link inline-flex h-6 items-center gap-0.5 rounded-[5px] px-1 text-sm leading-5"
         >
           Change
+          <ChevronDown aria-hidden className={cn("size-3.5", open && "rotate-180")} strokeWidth={1.5} />
         </button>
-        {custom ? (
-          <button type="button" aria-label={`Reset ${row.label}`} onClick={() => dnd.reset(role)} className="tool-link h-8 rounded-[10px] px-3 text-sm leading-5">
-            Reset
-          </button>
-        ) : null}
       </div>
 
       {open ? (
@@ -235,9 +280,9 @@ export function RolesSection() {
           <span className="text-xs leading-4 text-muted-foreground">Drag a swatch onto a role</span>
         )}
       </div>
-      <p className="text-xs leading-4 text-muted-foreground">Roles you do not change stay automatic and follow your brand color. Space picks up a swatch for the keyboard; Change opens a picker.</p>
-      <SwatchBank />
-      <ul className="space-y-2">
+      <p className="text-xs leading-4 text-muted-foreground">Roles you do not change stay automatic and follow your brand color. Change opens a picker; Space picks up a swatch for the keyboard.</p>
+      <SwatchTray />
+      <ul data-holding={dnd.hold && dnd.hold.mode !== "pointer" ? "true" : undefined} className="space-y-2">
         {ROLE_ROWS.map((row) => (
           <RoleRow key={row.key} role={row.key} open={open === row.key} onToggle={() => setOpen(open === row.key ? null : row.key)} onClose={() => setOpen(null)} />
         ))}

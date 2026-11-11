@@ -251,3 +251,23 @@
     animation: none;
   }
 }
+
+/* While a swatch is held or dragged: no text selection, a grabbing cursor, and rows light up under the pointer. */
+body.tool-dragging {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grabbing;
+}
+[data-swatch] {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+}
+[data-holding="true"] > [data-role-row] {
+  cursor: pointer;
+}
+[data-holding="true"] > [data-role-row]:hover {
+  outline: 2px dashed var(--foreground);
+  outline-offset: -2px;
+  background: var(--card);
+}

@@ -14,7 +14,7 @@ import {
 } from "@/components/controls/system-controls";
 import { BrandNotice } from "./brand-notice";
 import { BrandScale } from "./brand-scale";
-import { DragSwatch, RolesDnd } from "./roles-dnd";
+import { RolesDnd, useRolesDnd } from "./roles-dnd";
 import { RolesSection } from "./roles-section";
 import { TypographyEditor } from "@/components/typography/typography-editor";
 import { VoiceEditor } from "@/components/voice/voice-editor";
@@ -24,6 +24,7 @@ function ColorScales() {
   const { tokens } = useDesignSystem();
   const { brandReport: report } = tokens.colors;
   const status = swatchGroups(tokens).find((group) => group.id === "status")!.items;
+  const dnd = useRolesDnd();
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
@@ -38,7 +39,18 @@ function ColorScales() {
         <div className="grid grid-cols-4 gap-2">
           {status.map((source) => (
             <div key={source.id} className="flex flex-col gap-1">
-              <DragSwatch source={source} className="tool-swatch tool-swatch--plain" style={{ background: source.hex }} aria-label={`${sentenceCase(source.label)}, ${source.hex}`} />
+              <button
+                type="button"
+                data-display-swatch={source.id}
+                className="tool-swatch tool-swatch--plain"
+                style={{ background: source.hex }}
+                aria-label={`${sentenceCase(source.label)}, ${source.hex}`}
+                title={`Click to copy ${source.hex}`}
+                onClick={() => {
+                  navigator.clipboard?.writeText(source.hex).catch(() => {});
+                  dnd?.announce(`Copied ${source.hex}`);
+                }}
+              />
               <span className="text-xs leading-4 text-muted-foreground">{sentenceCase(source.label.split(" ")[0])}</span>
             </div>
           ))}
