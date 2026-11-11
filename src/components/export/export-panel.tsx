@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Section } from "@/components/debug/section";
 import {
   STACK_IDS,
+  PRESETS,
   STACK_LABELS,
   generateSkillFile,
   parseSkillFile,
@@ -50,6 +51,8 @@ export function ExportPanel() {
   const [view, setView] = useState<"rendered" | "raw">("rendered");
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
+  // Shown next to the import button and kept after the file picker resets, so the result is always visible.
+  const [importStatus, setImportStatus] = useState<{ ok: boolean; fileName: string; text: string } | null>(null);
 
   const generated = useMemo(() => generateSkillFile({ settings, tokens }, { presetId }), [settings, tokens, presetId]);
   const text = file === "skill" ? generated.skill : generated.agents;
@@ -69,14 +72,28 @@ export function ExportPanel() {
 
   const onImport = async (selected: File | undefined) => {
     if (!selected) return;
-    const result = parseSkillFile(await selected.text());
-    if (result.ok) {
-      importSettings({ presetId: result.presetId, settings: result.settings });
-      setMessage({ ok: true, text: `Restored the design system from ${selected.name}.` });
-    } else {
-      setMessage({ ok: false, text: result.error });
-    }
+    // Clear the picker straight away, so choosing the same file again still counts as a new choice.
     if (importRef.current) importRef.current.value = "";
+    setImportStatus({ ok: true, fileName: selected.name, text: "Reading the file…" });
+    let result: ReturnType<typeof parseSkillFile>;
+    try {
+      result = parseSkillFile(await selected.text());
+    } catch {
+      setImportStatus({ ok: false, fileName: selected.name, text: "The file could not be read. Try choosing it again." });
+      return;
+    }
+    if (!result.ok) {
+      setImportStatus({ ok: false, fileName: selected.name, text: result.error });
+      return;
+    }
+    importSettings({ presetId: result.presetId, settings: result.settings });
+    const { name, stack } = result.settings.project;
+    const changes = `${result.changes} ${result.changes === 1 ? "change" : "changes"}`;
+    setImportStatus({
+      ok: true,
+      fileName: selected.name,
+      text: `Restored ${PRESETS[result.presetId].name} with ${changes}${name ? `, product name ${name}` : ""}, stack ${STACK_LABELS[stack]}.`,
+    });
   };
 
   return (
@@ -235,13 +252,24 @@ export function ExportPanel() {
         <div className="flex flex-wrap items-center gap-3">
           <input
             ref={importRef}
+            id="import-file"
             type="file"
             accept=".md,.markdown,.txt,text/markdown,text/plain"
-            aria-label="Choose a SKILL.md or AGENTS.md file to import"
-            className="text-sm file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-sm"
+            className="sr-only"
+            tabIndex={-1}
             onChange={(event) => void onImport(event.target.files?.[0])}
           />
+          <Button type="button" variant="outline" onClick={() => importRef.current?.click()}>
+            Choose a .md file
+          </Button>
+          <span className="text-sm text-muted-foreground">SKILL.md, AGENTS.md or a renamed copy</span>
         </div>
+        {importStatus ? (
+          <div role="status" className={cn("mt-3 rounded-lg border p-3 text-sm", importStatus.ok ? "border-border" : "border-destructive text-destructive")}>
+            <p className="font-medium text-foreground">{importStatus.fileName}</p>
+            <p className={importStatus.ok ? "text-foreground" : ""}>{importStatus.text}</p>
+          </div>
+        ) : null}
       </Section>
 
       <details className="rounded-xl border border-border p-4">

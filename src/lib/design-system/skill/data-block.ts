@@ -40,28 +40,62 @@ export function dataBlock(settings: DesignSystemSettings, presetId: PresetId): s
   );
 }
 
-export type ParseResult = { ok: true; presetId: PresetId; settings: DesignSystemSettings } | { ok: false; error: string };
+export type ParseResult =
+  | {
+      ok: true;
+      presetId: PresetId;
+      settings: DesignSystemSettings;
+      /** How many individual values differ from the starting preset, for the success message. */
+      changes: number;
+    }
+  | { ok: false; error: string };
+
+/** Counts the individual values in a "differences only" object. */
+function countChanges(value: unknown): number {
+  if (isObject(value as Json)) return Object.values(value as Record<string, unknown>).reduce<number>((sum, inner) => sum + countChanges(inner), 0);
+  return 1;
+}
 
 /**
- * Reads the data block from an exported file and rebuilds the full settings. Uses the last matching
- * JSON block. Older files that hold complete settings and no preset still load.
+ * Reads the data block from an exported file and rebuilds the full settings. Uses the last block that
+ * belongs to Design Sys.md. Older files that hold complete settings and no preset still load. Every
+ * failure says why, so the screen can show it.
  */
 export function parseSkillFile(text: string): ParseResult {
   const blocks = [...text.matchAll(/```json\s*\n([\s\S]*?)\n```/g)].map((m) => m[1]);
-  for (const body of blocks.reverse()) {
-    try {
-      const parsed = JSON.parse(body) as { format?: unknown; preset?: unknown; presetVersion?: unknown; settings?: unknown };
-      if (parsed && parsed.format === DATA_FORMAT && typeof parsed.settings === "object" && parsed.settings !== null) {
-        const presetId = isPresetId(parsed.preset) ? parsed.preset : DEFAULT_PRESET_ID;
-        // Files made before the version was stored are version 1.
-        const version = typeof parsed.presetVersion === "number" ? parsed.presetVersion : 1;
-        const preset = presetBase(presetId, version);
-        if (!preset) return { ok: false, error: "This file was made with a newer version of Design Sys.md. Update the tool, then import it again." };
-        return { ok: true, presetId, settings: normalizeSettings(parsed.settings, preset) };
-      }
-    } catch {
-      // Not our block. Keep looking.
-    }
+  if (blocks.length === 0) {
+    return { ok: false, error: "No data block found. This file has no JSON block at the end, so it was not exported from Design Sys.md (or the block was deleted)." };
   }
-  return { ok: false, error: "This file has no Design Sys.md data block. Use a file that was exported from this tool." };
+  let invalid = false;
+  for (const body of blocks.reverse()) {
+    let parsed: { format?: unknown; version?: unknown; preset?: unknown; presetVersion?: unknown; settings?: unknown };
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      // A broken block that looks like ours is worth a clear message. Others are just not ours.
+      if (body.includes(DATA_FORMAT)) invalid = true;
+      continue;
+    }
+    if (!parsed || parsed.format !== DATA_FORMAT) continue;
+    if (typeof parsed.settings !== "object" || parsed.settings === null) {
+      return { ok: false, error: "The data block has no settings. It looks damaged, so export the file again." };
+    }
+    if (typeof parsed.version === "number" && parsed.version > SETTINGS_SCHEMA_VERSION) {
+      return { ok: false, error: `Unsupported version: this file uses data format ${parsed.version}, and this tool reads up to ${SETTINGS_SCHEMA_VERSION}. Update the tool, then import it again.` };
+    }
+    const presetId = isPresetId(parsed.preset) ? parsed.preset : DEFAULT_PRESET_ID;
+    // Files made before the version was stored are version 1.
+    const version = typeof parsed.presetVersion === "number" ? parsed.presetVersion : 1;
+    const preset = presetBase(presetId, version);
+    if (!preset) {
+      return { ok: false, error: `Unsupported version: this file was made from ${PRESETS[presetId].name} version ${version}, which this tool does not know. Update the tool, then import it again.` };
+    }
+    return { ok: true, presetId, settings: normalizeSettings(parsed.settings, preset), changes: countChanges(parsed.settings) };
+  }
+  return {
+    ok: false,
+    error: invalid
+      ? "Invalid JSON: the Design Sys.md data block at the end of the file is damaged (a comma, quote or bracket is missing). Export the file again, or restore it from the original."
+      : "No data block found. The file has JSON, but none of it is a Design Sys.md data block.",
+  };
 }
