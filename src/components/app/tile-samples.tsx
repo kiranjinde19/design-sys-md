@@ -284,7 +284,7 @@ function VoiceSample() {
         const value = settings.voice[axis.key];
         return (
           <div key={axis.key} className="flex items-center gap-2">
-            <div className="relative h-1.5 flex-1 rounded-full bg-border">
+            <div className="relative h-1 flex-1 rounded-full" style={{ background: "var(--t-track)" }}>
               <div className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full bg-primary" style={{ left: `calc(${((value - 1) / 4) * 100}% - 6px)` }} />
             </div>
             <span className="w-24 truncate text-xs leading-4 text-muted-foreground">{voiceLevelLabel(axis.key, value)}</span>

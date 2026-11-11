@@ -118,7 +118,7 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
                 {itemIndex + 1}
               </span>
               <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              {done ? <Check aria-label="Reviewed" className="size-4 shrink-0 text-[var(--t-success-700)]" strokeWidth={1.5} /> : null}
+              {done ? <Check aria-label="Reviewed" className="size-4 shrink-0 text-foreground" strokeWidth={1.5} /> : null}
             </button>
           );
         })}

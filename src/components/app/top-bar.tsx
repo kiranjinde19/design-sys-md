@@ -14,7 +14,7 @@ export function TopBar({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: 
   return (
     <header className="flex min-h-14 flex-wrap items-center justify-between gap-4 border-b border-border bg-background px-8 py-2">
       <div className="flex items-center gap-3">
-        <span aria-hidden className="flex size-8 items-center justify-center rounded-[10px] border border-[var(--card-border)] bg-card text-[var(--t-brand-700)]">
+        <span aria-hidden className="flex size-8 items-center justify-center rounded-[10px] border border-[var(--card-border)] bg-card text-foreground">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="4" y="4" width="16" height="4" rx="1" />
             <rect x="4" y="10" width="10" height="4" rx="1" />

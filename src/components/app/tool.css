@@ -72,7 +72,7 @@
   border-radius: 9999px;
   background: var(--background);
   border: 1px solid var(--card-border);
-  color: var(--foreground);
+  color: var(--t-chip);
   font-size: 12px;
   line-height: 16px;
   font-weight: 500;

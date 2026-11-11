@@ -1,5 +1,5 @@
 /**
- * The tool's own colors. They come from the SaaS Clean preset and are FIXED: they never read the user's
+ * The tool's own colors. They are monochrome (black, white and pure gray) and FIXED: they never read the user's
  * design system, so editing a brand color changes the tiles and the preview but never the tool itself.
  * The tool wears these as CSS variables (shadcn role names) on its root element.
  */
@@ -7,10 +7,13 @@
 import type { CSSProperties } from "react";
 import { PRESETS, generateTokens } from "@/lib/design-system";
 
-const own = generateTokens(PRESETS["saas-clean"].settings);
-const { roles, brand, neutral, semantic } = own.colors;
+// The tool's own design system: the Blank slate preset (pure gray neutrals) with a near black brand color, so the
+// whole interface is black, white and gray. Indigo only ever appears as a sample of the user's own brand color.
+const TOOL_BRAND = "#171717";
+const blank = PRESETS["blank-slate"].settings;
+const own = generateTokens({ ...blank, colors: { ...blank.colors, brand: TOOL_BRAND } });
+const { roles, neutral, semantic } = own.colors;
 const shadow = (level: number) => own.elevation.shadows[level].css;
-const variants = own.controls.buttons.variants;
 
 const shared = {
   // shadcn derives its "md" radius as 0.8 of this, which makes every small control 10px.
@@ -26,38 +29,41 @@ const shared = {
 const LIGHT: Record<string, string> = {
   ...shared,
   "--background": roles.background,
-  "--foreground": roles.foreground,
-  "--card": roles.card,
-  "--card-foreground": roles["card-foreground"],
-  "--card-border": roles["card-border"],
+  "--foreground": neutral[900],
+  // Tiles and list items sit on a faint gray with a hairline border.
+  "--card": neutral[50],
+  "--card-foreground": neutral[900],
+  "--card-border": neutral[200],
   "--popover": roles.popover,
-  "--popover-foreground": roles["popover-foreground"],
-  "--primary": roles.primary,
-  "--primary-foreground": roles["primary-foreground"],
-  "--secondary": roles.secondary,
-  "--secondary-foreground": roles["secondary-foreground"],
-  "--muted": roles.muted,
-  "--muted-foreground": roles["muted-foreground"],
-  "--accent": roles.accent,
-  "--accent-foreground": roles["accent-foreground"],
-  "--destructive": roles.destructive,
-  "--border": roles.border,
+  "--popover-foreground": neutral[900],
+  "--primary": neutral[900],
+  "--primary-foreground": roles.background,
+  "--secondary": neutral[200],
+  "--secondary-foreground": neutral[900],
+  "--muted": neutral[100],
+  "--muted-foreground": neutral[600],
+  "--accent": neutral[100],
+  "--accent-foreground": neutral[900],
+  "--destructive": semantic.error[600],
+  "--border": neutral[200],
   "--input": roles.input,
-  "--ring": roles.ring,
-  "--t-surface": neutral[50],
-  "--t-primary-hover": variants.primary.hover.background,
-  "--t-primary-pressed": variants.primary.pressed.background,
-  "--t-secondary-hover": variants.secondary.hover.background,
-  "--t-secondary-pressed": variants.secondary.pressed.background,
-  "--t-brand-600": brand[600],
-  "--t-brand-700": brand[700],
+  "--ring": neutral[900],
+  "--t-surface": neutral[100],
+  "--t-track": neutral[300],
+  "--t-chip": neutral[700],
+  "--t-primary-hover": neutral[700],
+  "--t-primary-pressed": neutral[600],
+  "--t-secondary-hover": neutral[300],
+  "--t-secondary-pressed": neutral[400],
+  "--t-brand-600": neutral[900],
+  "--t-brand-700": neutral[700],
   "--t-success-50": semantic.success[50],
   "--t-success-700": semantic.success[700],
   "--t-warning-50": semantic.warning[50],
   "--t-warning-700": semantic.warning[700],
 };
 
-/** Dark: the same SaaS Clean scales, read from the dark end. */
+/** Dark: the same gray scale, read from the dark end. */
 const DARK: Record<string, string> = {
   ...shared,
   "--background": neutral[900],
@@ -67,7 +73,7 @@ const DARK: Record<string, string> = {
   "--card-border": neutral[700],
   "--popover": neutral[800],
   "--popover-foreground": neutral[50],
-  "--primary": brand[400],
+  "--primary": neutral[50],
   "--primary-foreground": neutral[900],
   "--secondary": neutral[700],
   "--secondary-foreground": neutral[50],
@@ -78,14 +84,16 @@ const DARK: Record<string, string> = {
   "--destructive": semantic.error[600],
   "--border": neutral[700],
   "--input": neutral[500],
-  "--ring": brand[400],
+  "--ring": neutral[50],
   "--t-surface": neutral[800],
-  "--t-primary-hover": brand[300],
-  "--t-primary-pressed": brand[200],
+  "--t-track": neutral[600],
+  "--t-chip": neutral[200],
+  "--t-primary-hover": neutral[200],
+  "--t-primary-pressed": neutral[300],
   "--t-secondary-hover": neutral[600],
   "--t-secondary-pressed": neutral[500],
-  "--t-brand-600": brand[400],
-  "--t-brand-700": brand[300],
+  "--t-brand-600": neutral[50],
+  "--t-brand-700": neutral[200],
   "--t-success-50": neutral[800],
   "--t-success-700": semantic.success[600],
   "--t-warning-50": neutral[800],

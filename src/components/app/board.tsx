@@ -39,7 +39,7 @@ export function Board({ onOpen }: { onOpen: (id: SystemId) => void }) {
                 {index + 1}
               </span>
               <span className="min-w-0 truncate text-sm font-medium leading-5">{system.label}</span>
-              {done ? <Check aria-hidden className="ml-auto size-4 shrink-0 text-[var(--t-success-700)]" strokeWidth={1.5} /> : null}
+              {done ? <Check aria-hidden className="ml-auto size-4 shrink-0 text-foreground" strokeWidth={1.5} /> : null}
             </span>
             <span className="block min-h-0 flex-1">
               <TileSample id={system.id} />
