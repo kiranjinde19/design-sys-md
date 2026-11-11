@@ -77,7 +77,7 @@ function fontLoading(ctx: SkillContext): string[] {
     "**Fonts** (`index.html`, in `head`):",
     "",
     fence("html", url ? [`<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`, `<link rel="stylesheet" href="${url}">`] : []),
-    brand.length ? `Licensed brand font: host the files yourself with \`@font-face\` and \`font-display: swap\`. The stack falls back to ${brand.map((b) => b.token.fallbackName).join(", ")}.` : null,
+    brand.length ? `Licensed brand font: host the files yourself (\`@font-face\`, \`font-display: swap\`). Fallbacks: ${brand.map((b) => b.token.fallbackName).join(", ")}.` : null,
     "",
   );
 }
@@ -166,6 +166,7 @@ function tailwindCss(ctx: SkillContext): string[] {
       "@layer base {",
       "  body { background: var(--color-background); color: var(--color-foreground); font-family: var(--font-sans); }",
       "  h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",
+      `  ${autofillRule(ctx)}`,
       "}",
     );
   }
@@ -194,8 +195,17 @@ function tailwindCss(ctx: SkillContext): string[] {
     roleVars(ctx, true),
     "}",
     "",
-    "@layer base { h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); } }",
+    "@layer base {",
+    "  h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",
+    `  ${autofillRule(ctx)}`,
+    "}",
   );
+}
+
+/** Keeps autofilled fields in the token colors: browsers paint their own background and text color otherwise. */
+function autofillRule(ctx: SkillContext): string {
+  const field = ctx.t.controls.inputs.states.default;
+  return `:-webkit-autofill { -webkit-text-fill-color: ${ctx.cssVar(field.color, "text", ["foreground"])}; box-shadow: 0 0 0 1000px ${ctx.cssVar(field.background, "fill", ["background"])} inset; }`;
 }
 
 function plainCss(ctx: SkillContext): string[] {
@@ -229,6 +239,7 @@ function plainCss(ctx: SkillContext): string[] {
     "h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",
     // Automatic focus ring: the offset ring from the signature details, on every control and link.
     compactCss([":focus-visible {", ...recipeLines(ctx, ctx.t.signature.focusRing.css), "}"].join("\n"), 400).split("\n"),
+    autofillRule(ctx),
   );
 }
 
@@ -255,7 +266,7 @@ export function tokensSection(ctx: SkillContext): string[] {
     fontLoading(ctx),
     "### Type, radius, spacing, borders, shadows",
     "",
-    `- **Type** (${ty.sizes[0].px}px to ${ty.sizes[ty.sizes.length - 1].px}px, each with its line height, a multiple of 4px, in the tokens above). Use xs for captions, sm for labels and helper text, base for body, inputs and buttons, lg for card titles, xl for section titles, 2xl to 3xl for page titles, 4xl to 5xl for marketing only.`,
+    `- **Type** (${ty.sizes[0].px}px to ${ty.sizes[ty.sizes.length - 1].px}px, each with its line height, a multiple of 4px, in the tokens above). xs captions, sm labels and helper text, base body, inputs and buttons, lg card titles, xl section titles, 2xl to 3xl page titles, 4xl to 5xl marketing only.`,
     `- **Fonts:** headings ${ty.heading.name} ${ty.headingWeight}${tw ? " (`font-heading`)" : ""}, body ${ty.body.name} ${ty.bodyWeight}, labels and buttons ${ty.weights.medium}${ty.mono ? `, mono ${ty.mono.name}` : ", code in the system monospace stack"}. Heading tracking: ${tw ? "`tracking-heading` from 2xl up, `-sm` at xl, `-xs` at lg" : "`--tracking-heading` from 2xl up, `-sm` at xl, `-xs` at lg"}.`,
     `- **Tabular numbers:** ${tw ? `\`${ty.tabularNumbers.className}\`` : "`font-variant-numeric: tabular-nums`"} on number columns, prices and metrics, right aligned.`,
     tw

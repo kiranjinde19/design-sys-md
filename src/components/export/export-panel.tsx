@@ -17,6 +17,8 @@ import { MarkdownView } from "./markdown-view";
 
 /** Codex stops reading instruction files once they add up to this many bytes (its default). */
 const CODEX_LIMIT_BYTES = 32 * 1024;
+/** Above this size a gentle note appears; above the limit the strong warning replaces it. */
+const CODEX_NEAR_BYTES = 30 * 1024;
 
 function download(filename: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: "text/markdown;charset=utf-8" }));
@@ -58,6 +60,7 @@ export function ExportPanel() {
   const text = file === "skill" ? generated.skill : generated.agents;
   const kib = generated.agentsBytes / 1024;
   const overLimit = generated.agentsBytes > CODEX_LIMIT_BYTES;
+  const nearLimit = !overLimit && generated.agentsBytes > CODEX_NEAR_BYTES;
   // One generated name feeds the frontmatter, the folder and the slash command, so they can never disagree.
   const slug = generated.slug;
 
@@ -165,7 +168,9 @@ export function ExportPanel() {
           AGENTS.md is {kib.toFixed(1)} KiB of the 32 KiB Codex reads by default.
           {overLimit
             ? " It is over the limit, so Codex would cut it off. Raise project_doc_max_bytes in ~/.codex/config.toml, or remove the secondary color and unused options."
-            : " It fits."}
+            : nearLimit
+              ? " It fits, but it is close to the Codex limit. If you add more options or a longer description, check this number again."
+              : " It fits."}
         </div>
 
         {message ? (

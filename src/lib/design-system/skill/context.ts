@@ -341,7 +341,7 @@ export { nearestWeight };
 export function tightCss(css: string[]): string[] {
   return css.map((raw) => {
     const line = raw.trim();
-    return line.startsWith("/*") ? line : line.replace(/:\s+/g, ":").replace(/,\s+/g, ",").replace(/;\s*}/g, "}").replace(/;\s+/g, ";").replace(/\s*{\s*/g, "{").replace(/\s*}\s*/g, "}").replace(/(?<![\w.-])0px\b(?![^()]*\))/g, "0").replace(/(?<![\w.#-])0\.(\d)/g, ".$1").replace(/=\"([\w-]+)\"\]/g, "=$1]");
+    return line.startsWith("/*") ? line : line.replace(/:\s+/g, ":").replace(/,\s+/g, ",").replace(/;\s*}/g, "}").replace(/;\s+/g, ";").replace(/\s*{\s*/g, "{").replace(/\s*}\s*/g, "}").replace(/(?<![\w.-])0px\b(?![^()]*\))/g, "0").replace(/(?<![\w.#-])0\.(\d)/g, ".$1").replace(/=\"([\w-]+)\"\]/g, "=$1]").replace(/#([0-9a-f])\1([0-9a-f])\2([0-9a-f])\3\b/gi, "#$1$2$3").replace(/ ease(?=[,;}])/g, "").replace(/(\d) \/ ([.\d])/g, "$1/$2");
   });
 }
 

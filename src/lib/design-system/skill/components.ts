@@ -149,7 +149,7 @@ function inputsSection(ctx: SkillContext): string[] {
   return lines(
     "### Inputs and selects",
     "",
-    `The outline is the \`input\` border; hover, focus (plus the focus ring) and error (plus error text) change it, and disabled uses the muted fill. Every input has a visible label, never a placeholder as the label. A select (6 or more options, or tight space) uses the same classes on its trigger${ctx.tailwind ? "" : ", and its menu is a popover (`popover` colors, `--radius-md`, `--shadow-3`, `accent` on the hovered item)"}; fewer options and one choice, use radios.`,
+    `The outline is the \`input\` border; hover, focus (plus the focus ring) and error (plus error text) change it, and disabled uses the muted fill. Every input has a visible label, never a placeholder as the label. A select (6 or more options, or tight space) uses the same classes on its trigger${ctx.tailwind ? "" : ", and its menu uses `popover` colors, `--radius-md`, `--shadow-3` and `accent` on hover"}; fewer options and one choice, use radios.`,
     "",
     fence(ctx.tailwind ? "tsx" : "css", ctx.tailwind ? [`<input className="${inputClasses(ctx)}" />`, `menu: "${join(["rounded-md border", ctx.twColor("border", popover.border, ["border"]), ctx.twColor("bg", popover.popover, ["popover"]), ctx.twColor("text", popover["popover-foreground"], ["popover-foreground"]), "shadow-md"])}"; item hover: "${join([ctx.twColor("hover:bg", popover.accent, ["accent"]), ctx.twColor("hover:text", popover["accent-foreground"], ["accent-foreground"])])}"`] : tight(ctx, cssCode)),
     "",
@@ -284,13 +284,13 @@ function linksSection(ctx: SkillContext): string[] {
         `bare (logo, nav): "${join(["no-underline", ctx.twColor("text", r.foreground, ["foreground"]), ctx.twColor("hover:text", r.primary, ["primary"]), "focus-ring"])}"`,
       ]
     : tightCss([
-        `.link { color: ${ctx.cssVar(r.primary, "text", ["primary"])}; text-decoration: underline; text-underline-offset: ${spaceVar(ctx, 2)}; } .link:visited { color: ${ctx.cssVar(visited, "text")}; } .link:hover { color: ${ctx.cssVar(hover, "text", ["primary-hover"])}; } .link:active { color: ${ctx.cssVar(pressed, "text", ["primary-pressed"])}; }`,
+        `.link { color: ${ctx.cssVar(r.primary, "text", ["primary"])}; text-decoration: underline; } .link:visited { color: ${ctx.cssVar(visited, "text")}; } .link:hover { color: ${ctx.cssVar(hover, "text", ["primary-hover"])}; } .link:active { color: ${ctx.cssVar(pressed, "text", ["primary-pressed"])}; }`,
         `.link--bare { color: ${ctx.cssVar(r.foreground, "text", ["foreground"])}; text-decoration: none; } .link--bare:visited { color: ${ctx.cssVar(r.foreground, "text", ["foreground"])}; } .link--bare:hover { color: ${ctx.cssVar(r.primary, "text", ["primary"])}; }`,
       ]);
   return lines(
     "### Links",
     "",
-    `Text links are underlined in the brand color; hover, pressed and visited each get a darker color, and focus shows the ring. The underline stays in every state. Logos and nav links are bare: no underline, foreground color, \`primary\` on hover, visited unchanged${tw ? "" : " (`.link`, or `.link.link--bare`)"}.`,
+    `Text links are underlined in the brand color; hover, pressed and visited are darker, and focus shows the ring. The underline stays in every state. Logos and nav links are bare: no underline, foreground color, \`primary\` on hover, visited unchanged${tw ? "" : " (`.link`, or `.link.link--bare`)"}.`,
     "",
     fence(tw ? "tsx" : "css", code),
     "",

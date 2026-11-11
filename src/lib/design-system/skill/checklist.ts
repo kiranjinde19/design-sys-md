@@ -5,7 +5,7 @@ export function checklistSection(ctx: SkillContext): string[] {
   return lines(
     "## Final checklist",
     "",
-    "Run this before calling a screen done. Fix every miss, or say which item failed and why.",
+    "Run before calling a screen done. Fix every miss, or say which item failed and why.",
     "",
     tw ? "- [ ] No hex, rgb(), `[...]` arbitrary values, default palette colors, or `dark:` classes in the changed files." : "- [ ] No hex, rgb(), raw pixel values or dark-mode styles. Only `var(--token)`.",
     "- [ ] Every Hard rule holds: one accent, one primary button, type, spacing, radius and shadows from their scales, reduced motion, tone of voice.",
