@@ -29,4 +29,8 @@ export const EXTRA_CSS = `
 .pvx-person { display: grid; line-height: var(--leading-sm); }
 .pvx-person small { font-size: var(--text-xs); line-height: var(--leading-xs); color: var(--muted-foreground); }
 .pvx-select { appearance: auto; }
+.pvx-form { max-width: 480px; }
+.btn.pvx-icon { color: var(--muted-foreground); }
+.btn.pvx-icon:hover, .btn.pvx-icon.is-hover { background: var(--accent); color: var(--accent-foreground); }
+.btn.pvx-icon:active, .btn.pvx-icon.is-pressed { background: var(--neutral-200); color: var(--accent-foreground); }
 `;

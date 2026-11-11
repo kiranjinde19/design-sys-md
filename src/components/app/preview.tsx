@@ -71,7 +71,7 @@ export function Preview() {
 
       <div className="relative min-h-0 flex-1 p-3">
         {/* The frame. The page inside is a normal desktop page, shown at 65% scale. Light only. */}
-        <div role="tabpanel" className="h-full overflow-y-auto overflow-x-hidden rounded-[var(--t-radius-md)] border border-border" style={{ ...previewVars(tokens), background: "var(--pv-background)" }}>
+        <div role="tabpanel" className="tool-scroll h-full overflow-y-auto overflow-x-hidden rounded-[var(--t-radius-md)] border border-border" style={{ ...previewVars(tokens), background: "var(--pv-background)" }}>
           {tab === "Pricing" || tab === "Buttons and states" || tab === "Forms" || tab === "Tables" ? (
             <ScaledStage scale={SCALE}>
               {tab === "Pricing" ? (

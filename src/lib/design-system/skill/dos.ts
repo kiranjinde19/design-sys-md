@@ -23,5 +23,8 @@ export function dosAndDontsSection(ctx: SkillContext): string[] {
     ["A hover class that replaces the featured pricing card's border, or no hover on it.", `Every pricing card is ${code("card card-hover")}; the featured one adds ${code("card-featured")} (2px brand border).`],
   ];
 
+  if (ctx.t.controls.buttons.destructiveStyle === "tinted") {
+    rows.push(["A solid red destructive button outside a confirmation dialog (it looks like the primary button).", `Tinted destructive with a trash icon; solid red only inside the confirmation dialog.`]);
+  }
   return lines("## Do and don't", "", ...table(["Don't", "Do"], rows), "");
 }

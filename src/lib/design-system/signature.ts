@@ -3,6 +3,7 @@
  * One pick per category. Each pick is turned into a ready-to-use style recipe.
  */
 
+import { contrastRatio } from "./contrast";
 import { withAlpha } from "./color-math";
 import { shadowAt } from "./elevation";
 import type {
@@ -153,6 +154,9 @@ export function generateSignature(
   const { colors, radius, borders, spacing, elevation } = ctx;
   const brand = colors.brand;
   const border = `${borders.width}px solid`;
+  // The glyph inside an icon container: brand 700, or the first deeper step that reads at 4.5:1 on its tint.
+  const iconInk =
+    ([700, 800, 900] as const).map((step) => brand[step]).find((hex) => [brand[50], brand[100]].every((surface) => contrastRatio(hex, surface) >= 4.5)) ?? colors.roles.foreground;
 
   // Featured highlight
   const featuredCss: Record<SignatureSettings["featuredHighlight"], CssRecipe> = {
@@ -238,7 +242,7 @@ export function generateSignature(
       height: ICON_CONTAINER_SIZE,
       borderRadius: radius.full,
       background: brand[100],
-      color: brand[700],
+      color: iconInk,
     },
     "rounded-square-tile": {
       width: ICON_CONTAINER_SIZE,
@@ -246,14 +250,14 @@ export function generateSignature(
       borderRadius: radius.md,
       background: brand[50],
       border: `${border} ${brand[100]}`,
-      color: brand[700],
+      color: iconInk,
     },
     "outlined-badge": {
       width: ICON_CONTAINER_SIZE,
       height: ICON_CONTAINER_SIZE,
       borderRadius: radius.full,
       border: `${border} ${brand[300]}`,
-      color: brand[700],
+      color: iconInk,
     },
   };
 

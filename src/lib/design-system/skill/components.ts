@@ -91,14 +91,19 @@ function buttonsSection(ctx: SkillContext): string[] {
         [...disabled].map(([d, sel]) => `${sel.join(", ")} { ${d} }`).join(" "),
       ];
     })(),
+    b.destructiveStyle === "tinted"
+      ? `.btn--destructive-solid { background: ${ctx.cssVar(b.destructiveSolid.default.background, "fill", HINTS.destructive.bg)}; color: ${ctx.cssVar(b.destructiveSolid.default.color, "text", HINTS.destructive.text)}; } .btn--destructive-solid:hover { background: ${ctx.cssVar(b.destructiveSolid.hover.background, "fill")}; } .btn--destructive-solid:active { background: ${ctx.cssVar(b.destructiveSolid.pressed.background, "fill")}; }`
+      : null,
     '.btn:disabled { cursor: not-allowed; } .btn[aria-busy="true"] { pointer-events: none; }',
   );
 
   const spinner = b.spinner;
+  const tinted = b.destructiveStyle === "tinted";
+  const solidClasses = join(paintClasses(ctx, b.destructiveSolid.default, "", undefined, HINTS.destructive).concat(...(["hover", "pressed"] as ButtonState[]).map((state) => paintClasses(ctx, b.destructiveSolid[state], PREFIX[state], b.destructiveSolid.default, HINTS.destructive))));
   return lines(
     "### Buttons",
     "",
-    `**primary** the one main action; **secondary** supporting actions; **tertiary** low emphasis such as cancel; **destructive** only for deleting or irreversible actions, with a confirmation.`,
+    `**primary** the one main action; **secondary** supporting actions; **tertiary** low emphasis such as cancel; **destructive** only for deleting or irreversible actions, with a confirmation.${tinted ? ` The brand is close to the error red, so destructive is tinted (light error tint, dark error text) and delete actions get a trash icon (\`Trash2\`). Solid red is only for the confirm button inside a confirmation dialog: ${ctx.tailwind ? `\`${solidClasses}\`` : "`btn--destructive-solid`"}.` : ""}`,
     "",
     fence(ctx.tailwind ? "tsx" : "css", ctx.tailwind ? tw : tight(ctx, css)),
     "",
@@ -275,17 +280,22 @@ function linksSection(ctx: SkillContext): string[] {
   const v = controls.buttons.variants.primary;
   const tw = ctx.tailwind;
   const r = colors.roles;
-  const hover = v.hover.background;
-  const pressed = v.pressed.background;
-  const visited = colors.brand[800];
+  // Brand colored text uses the first brand step that reads at 4.5:1 (600 for most brands, then 700 and deeper).
+  const rep = colors.brandReport;
+  const onScale = rep.textStep !== 600;
+  const base = onScale ? rep.text : r.primary;
+  const hover = onScale ? rep.link.hover : v.hover.background;
+  const pressed = onScale ? rep.link.pressed : v.pressed.background;
+  const visited = onScale ? rep.link.visited : colors.brand[800];
+  const preferBase = onScale ? undefined : ["primary"];
   const code = tw
     ? [
-        `link: "${join([ctx.twColor("text", r.primary, ["primary"]), "underline underline-offset-2", ctx.twColor("hover:text", hover, ["primary-hover"]), ctx.twColor("active:text", pressed, ["primary-pressed"]), ctx.twColor("visited:text", visited), "focus-ring"])}"`,
-        `bare (logo, nav): "${join(["no-underline", ctx.twColor("text", r.foreground, ["foreground"]), ctx.twColor("hover:text", r.primary, ["primary"]), "focus-ring"])}"`,
+        `link: "${join([ctx.twColor("text", base, preferBase), "underline underline-offset-2", ctx.twColor("hover:text", hover, onScale ? undefined : ["primary-hover"]), ctx.twColor("active:text", pressed, onScale ? undefined : ["primary-pressed"]), ctx.twColor("visited:text", visited), "focus-ring"])}"`,
+        `bare (logo, nav): "${join(["no-underline", ctx.twColor("text", r.foreground, ["foreground"]), ctx.twColor("hover:text", base, preferBase), "focus-ring"])}"`,
       ]
     : tightCss([
-        `.link { color: ${ctx.cssVar(r.primary, "text", ["primary"])}; text-decoration: underline; } .link:visited { color: ${ctx.cssVar(visited, "text")}; } .link:hover { color: ${ctx.cssVar(hover, "text", ["primary-hover"])}; } .link:active { color: ${ctx.cssVar(pressed, "text", ["primary-pressed"])}; }`,
-        `.link--bare { color: ${ctx.cssVar(r.foreground, "text", ["foreground"])}; text-decoration: none; } .link--bare:visited { color: ${ctx.cssVar(r.foreground, "text", ["foreground"])}; } .link--bare:hover { color: ${ctx.cssVar(r.primary, "text", ["primary"])}; }`,
+        `.link { color: ${ctx.cssVar(base, "text", preferBase)}; text-decoration: underline; } .link:visited { color: ${ctx.cssVar(visited, "text")}; } .link:hover { color: ${ctx.cssVar(hover, "text", onScale ? undefined : ["primary-hover"])}; } .link:active { color: ${ctx.cssVar(pressed, "text", onScale ? undefined : ["primary-pressed"])}; }`,
+        `.link--bare { color: ${ctx.cssVar(r.foreground, "text", ["foreground"])}; text-decoration: none; } .link--bare:visited { color: ${ctx.cssVar(r.foreground, "text", ["foreground"])}; } .link--bare:hover { color: ${ctx.cssVar(base, "text", preferBase)}; }`,
       ]);
   return lines(
     "### Links",

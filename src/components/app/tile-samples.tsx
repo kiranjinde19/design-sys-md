@@ -241,7 +241,7 @@ function SignatureSample() {
   return (
     <Stack>
       {/* One row, 8px gaps, left aligned, using the chosen options. The border beam itself is only shown in the preview. */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 rounded-[10px] p-2" style={{ background: colors.roles.background, border: "1px solid var(--card-border)", width: "fit-content", maxWidth: "100%" }}>
         <div style={{ ...box, width: 56, ...asStyle(signature.cardStyle.css), ...asStyle(signature.featuredHighlight.css), borderRadius: 10, padding: 0 }} />
         <div style={{ ...box, width: 56, ...asStyle(signature.cardStyle.css), borderRadius: 10, padding: 0 }} />
         <div style={{ ...box, ...asStyle(signature.iconContainer.css), width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>★</div>

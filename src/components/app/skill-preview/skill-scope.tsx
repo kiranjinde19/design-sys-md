@@ -23,7 +23,7 @@ export function SkillScope({ children }: { children: ReactNode }) {
   });
 
   return (
-    <div ref={ref} className="pv-skill" style={{ minHeight: "100%" }} onSubmit={(event) => event.preventDefault()}>
+    <div ref={ref} className="pv-skill" style={{ minHeight: "100%" }} onSubmit={(event) => event.preventDefault()} onMouseDown={(event) => event.preventDefault()}>
       <style>{css}</style>
       {children}
     </div>

@@ -1,6 +1,12 @@
 "use client";
 
-import { SELECTION_RULES } from "@/lib/design-system";
+import { SELECTION_RULES, useDesignSystem } from "@/lib/design-system";
+
+const Trash = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" />
+  </svg>
+);
 
 const VARIANTS = ["primary", "secondary", "tertiary", "destructive"] as const;
 const STATES = [
@@ -15,6 +21,9 @@ const cap = (word: string) => word[0].toUpperCase() + word.slice(1);
 
 /** Buttons, loading, inputs and selection controls, all drawn with the skill file's own classes. */
 export function ButtonsTab() {
+  const { tokens } = useDesignSystem();
+  // When the brand is close to the error red, destructive is tinted and delete actions get a trash icon.
+  const tinted = tokens.controls.buttons.destructiveStyle === "tinted";
   return (
     <div className="pvx-page">
       <div className="pvx-head">
@@ -32,10 +41,19 @@ export function ButtonsTab() {
             </span>
           ))}
           {VARIANTS.map((variant) => (
-            <Row key={variant} variant={variant} />
+            <Row key={variant} variant={variant} tinted={tinted} />
           ))}
         </div>
-        <p className="pvx-note">One primary button per view. Only that one button carries the border beam.</p>
+        {tinted ? (
+          <div className="pvx-row">
+            <span className="pvx-label">Confirmation dialog only</span>
+            <button type="button" className="btn btn--destructive-solid">
+              <Trash />
+              Delete project
+            </button>
+          </div>
+        ) : null}
+        <p className="pvx-note">One primary button per view. Only that one button carries the border beam.{tinted ? " Your brand is close to the error red, so destructive is tinted and solid red is kept for confirmation dialogs." : ""}</p>
       </section>
 
       <section className="pvx-section" aria-label="Loading">
@@ -135,7 +153,7 @@ export function ButtonsTab() {
   );
 }
 
-function Row({ variant }: { variant: (typeof VARIANTS)[number] }) {
+function Row({ variant, tinted }: { variant: (typeof VARIANTS)[number]; tinted: boolean }) {
   return (
     <>
       <span className="pvx-label">{cap(variant)}</span>
@@ -147,7 +165,8 @@ function Row({ variant }: { variant: (typeof VARIANTS)[number] }) {
             className={`btn btn--${variant}${state.className}${variant === "primary" && state.id === "default" ? " cta" : ""}`}
             disabled={state.id === "disabled"}
           >
-            Button
+            {variant === "destructive" && tinted ? <Trash /> : null}
+            {variant === "destructive" && tinted ? "Delete" : "Button"}
           </button>
         </span>
       ))}

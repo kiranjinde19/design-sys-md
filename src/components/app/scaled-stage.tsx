@@ -21,8 +21,8 @@ export function ScaledStage({ scale, children }: { scale: number; children: Reac
   }, [scale]);
 
   return (
-    <div style={{ height: height ?? "100%", minHeight: "100%" }}>
-      <div ref={inner} style={{ width: `${100 / scale}%`, minHeight: `${100 / scale}%`, transform: `scale(${scale})`, transformOrigin: "top left" }}>
+    <div style={{ height: height ?? "100%" }}>
+      <div ref={inner} style={{ width: `${100 / scale}%`, transform: `scale(${scale})`, transformOrigin: "top left" }}>
         {children}
       </div>
     </div>

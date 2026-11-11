@@ -39,7 +39,7 @@ export function PricingPreview() {
   const recommended: CSSProperties = cta.className ? {} : asStyle(cta.css);
 
   return (
-    <div className="pv" style={{ minHeight: "100%" }}>
+    <div className="pv">
       <style>{hoverCss}</style>
       {cta.stylesheet ? <style>{cta.stylesheet}</style> : null}
 

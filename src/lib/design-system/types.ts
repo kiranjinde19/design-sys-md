@@ -130,6 +130,12 @@ export interface ColorSettings {
   /** Optional second brand color. null means the product uses one brand color only. */
   secondary: string | null;
   neutralTone: NeutralTone;
+  /**
+   * What to do when white text on the typed color is below 4.5:1. "exact" keeps the typed color and uses dark
+   * text on primary buttons. "adjusted" darkens it slightly (same hue) so white text passes. Never matters
+   * when white text already passes.
+   */
+  brandMode: "exact" | "adjusted";
   /** Which swatch plays which role. Primary, surface and background are draggable later. */
   roles: Record<ColorRoleName, ColorRef>;
 }
@@ -324,8 +330,36 @@ export interface ChartCheck {
   perVision: Record<VisionKindName, number>;
 }
 
+/** What the engine decided about the typed brand color, so the editor and the skill file can say it plainly. */
+export interface BrandReport {
+  /** The color the user typed. */
+  typed: string;
+  mode: "exact" | "adjusted";
+  /** White text on the typed color, as a ratio. */
+  whiteOnTyped: number;
+  /** True when white text on the typed color is below 4.5:1 (the editor shows its notice). */
+  whiteFails: boolean;
+  /** The nearest color with the same hue where white text passes (equals typed when it already does). */
+  adjusted: string;
+  /** The color actually used at step 600. */
+  effective: string;
+  /** Primary button text and its contrast on the effective brand color. */
+  primaryText: { hex: string; ratio: number; isWhite: boolean };
+  /** Brand colored text uses this step: the first that reaches 4.5:1 on the page, the 50 tint and the 100 tint. Null means none does and the ink color is used. */
+  textStep: 600 | 700 | 800 | 900 | null;
+  /** The color of brand text, and of link hover, pressed and visited. */
+  text: string;
+  link: { hover: string; pressed: string; visited: string };
+  /** The step used for the focus ring and for the focus border of controls (3:1 on the page and the tint). */
+  focus: string;
+  /** True when the brand hue is within about 20 degrees of the error hue. */
+  nearError: boolean;
+}
+
 export interface ColorTokens {
   brand: ColorScale;
+  /** What was decided about the typed color. */
+  brandReport: BrandReport;
   /** Only present when the user chose a secondary color. */
   secondary: ColorScale | null;
   neutral: ColorScale;
@@ -526,6 +560,10 @@ export interface ControlTokens {
     fontWeight: number;
     borderWidth: number;
     variants: Record<ButtonVariant, Record<ButtonState, ControlStateStyle>>;
+    /** "tinted" when the brand is close to the error red: light tint and dark text, with solid red only in a confirmation dialog. */
+    destructiveStyle: "solid" | "tinted";
+    /** The solid destructive button, used inside confirmation dialogs when the destructive variant is tinted. */
+    destructiveSolid: Record<ButtonState, ControlStateStyle>;
   };
   inputs: {
     height: number;

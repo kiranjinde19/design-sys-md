@@ -49,7 +49,8 @@ export function header(ctx: SkillContext): string[] {
     "11. All copy follows Tone of voice.",
     "12. Placeholder content: when real product facts (plan names, prices, features) are missing, use sample content in one clearly marked data file. This covers all copy, including page titles; a meta description uses the product line the user entered, or is omitted. Report every placeholder, including inert buttons and links with no destination. Never claim terms (cancellation, trials, refunds, plan changes, security, uptime) unless the user provided them.",
     "13. Placeholder data never uses real personal details (a name or email from the machine, git config or browser). Use invented names and `example.com` addresses.",
-    "14. Autofill must not change field colors: keep the input background and text color from the tokens.",
+    "14. Autofill must not change field colors: keep the token input background and text color.",
+    `15. Primary button text is ${t.colors.brandReport.primaryText.isWhite ? "white" : "dark"} (\`${tw ? "text-primary-foreground" : "var(--primary-foreground)"}\`, ${t.colors.brandReport.primaryText.ratio}:1). Never change it.`,
     "",
   ).concat(s ? [] : []);
 }

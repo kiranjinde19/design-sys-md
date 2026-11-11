@@ -35,6 +35,7 @@ export function previewVars(tokens: DesignSystemTokens): CSSProperties {
   for (const name of ["background", "foreground", "card", "card-foreground", "muted", "muted-foreground", "primary", "primary-foreground", "border", "input"] as const) {
     vars[`--pv-${name}`] = colors.roles[name];
   }
+  vars["--pv-brand-text"] = colors.brandReport.text;
   for (const [step, hex] of Object.entries(colors.brand)) vars[`--pv-brand-${step}`] = hex;
   for (const size of typography.sizes) {
     vars[`--pv-text-${size.name}`] = `${size.px}px`;

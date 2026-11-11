@@ -43,7 +43,7 @@ const DEFAULT_PROJECT: ProjectSettings = { name: "", description: "", stack: "ne
 
 const SAAS_CLEAN: DesignSystemSettings = {
   schemaVersion: SETTINGS_SCHEMA_VERSION,
-  colors: { brand: "#4F46E5", secondary: null, neutralTone: "cool", roles: DEFAULT_ROLES },
+  colors: { brand: "#4F46E5", brandMode: "exact", secondary: null, neutralTone: "cool", roles: DEFAULT_ROLES },
   typography: {
     headingFont: catalogFont("Inter"),
     bodyFont: catalogFont("Inter"),
@@ -69,7 +69,7 @@ const SAAS_CLEAN: DesignSystemSettings = {
 
 const BLANK_SLATE: DesignSystemSettings = {
   schemaVersion: SETTINGS_SCHEMA_VERSION,
-  colors: { brand: "#404040", secondary: null, neutralTone: "pure", roles: DEFAULT_ROLES },
+  colors: { brand: "#404040", brandMode: "exact", secondary: null, neutralTone: "pure", roles: DEFAULT_ROLES },
   typography: {
     headingFont: catalogFont("Inter"),
     bodyFont: catalogFont("Inter"),
@@ -95,14 +95,14 @@ const BLANK_SLATE: DesignSystemSettings = {
 export const PRESETS: Record<PresetId, Preset> = {
   "saas-clean": {
     id: "saas-clean",
-    version: 3,
+    version: 4,
     name: "SaaS Clean",
     description: "Indigo brand, cool grays, soft shadows and a few signature moves.",
     settings: SAAS_CLEAN,
   },
   "blank-slate": {
     id: "blank-slate",
-    version: 1,
+    version: 2,
     name: "Blank slate",
     description: "Neutral and quiet. A plain starting point with nothing decided for you.",
     settings: BLANK_SLATE,

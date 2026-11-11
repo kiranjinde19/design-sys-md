@@ -17,7 +17,7 @@ export function accessibilitySection(ctx: SkillContext): string[] {
   // Pairs that cards, badges and button states use. Each group shows its lowest ratio.
   const r = colors.roles;
   const ratio = (fg: string, bg: string) => contrastRatio(fg, bg);
-  const low = (label: string, values: number[]) => [label, `${Math.min(...values).toFixed(2)}:1${Math.min(...values) >= 4.5 ? "" : " FAIL"}`];
+  const low = (label: string, values: number[], need = 4.5) => [label, `${Math.min(...values).toFixed(2)}:1${Math.min(...values) >= need ? "" : " FAIL"}`];
   const tints = (["brand", "success", "warning", "error", "info"] as const).map((n) => {
     const scale = n === "brand" ? colors.brand : colors.semantic[n as SemanticName];
     const step = onTint(scale);
@@ -31,7 +31,7 @@ export function accessibilitySection(ctx: SkillContext): string[] {
     low(`badge text on its 50 tint (${tints.every((t) => t.step === 700) ? "700" : "700, or 800 where 700 is lower"}): ${tints.map((t) => t.n).join(", ")} (lowest)`, tints.map((t) => t.v)),
     low("error-700 on background, card (lowest)", [ratio(err, r.background), ratio(err, r.card)]),
     low("button text on hover and pressed, all variants (lowest)", [...states("primary"), ...states("destructive"), ...states("secondary")]),
-    low("link text hover, pressed, visited on background (lowest)", [variants.primary.hover.background, variants.primary.pressed.background, colors.brand[800]].map((c) => ratio(c, r.background))),
+    low(`brand text (step ${colors.brandReport.textStep ?? "ink"}) and links, on background and brand tints (lowest)`, [colors.brandReport.text, colors.brandReport.link.hover, colors.brandReport.link.pressed, colors.brandReport.link.visited].flatMap((hex) => [r.background, colors.brand[50], colors.brand[100]].map((surface) => ratio(hex, surface)))),
   ];
   const rows = [
     ...tight.map((p) => row(p.label, p)),

@@ -48,6 +48,11 @@ const CASES = [
   ["tone of voice", "saas-clean", saas, { voice: { formality: 1, energy: 5, detail: 5 } }],
   ["offset shadow and soft ring", "saas-clean", saas, { signature: { featuredHighlight: "offset-shadow", focusRing: "soft-ring" } }],
   ["solid call to action", "saas-clean", saas, { signature: { primaryCta: "solid" } }],
+  ["red brand, exact color", "saas-clean", saas, { colors: { brand: "#E54848" } }],
+  ["red brand, adjusted for white text", "saas-clean", saas, { colors: { brand: "#E54848", brandMode: "adjusted" } }],
+  ["yellow brand", "saas-clean", saas, { colors: { brand: "#FACC15" } }],
+  ["near black brand", "saas-clean", saas, { colors: { brand: "#111827" } }],
+  ["light indigo brand, adjusted", "saas-clean", saas, { colors: { brand: "#A5B4FC", brandMode: "adjusted" } }],
   ["everything at once", "blank-slate", blank, { colors: { brand: "#2563EB", secondary: "#F59E0B" }, radius: { base: 16 }, voice: { formality: 2, energy: 3, detail: 4 }, project: { name: "Northwind 2025", description: "Inventory tools." } }],
 ];
 
@@ -111,8 +116,8 @@ test("failures say why", () => {
   assert.match(parseSkillFile('```json\n{"format":"design-sys-md"}\n```').error, /no settings/);
 });
 
-test("SaaS Clean version 3 defaults to the border beam and the crisp border", () => {
-  assert.equal(PRESETS["saas-clean"].version, 3);
+test("SaaS Clean version 4 defaults to the border beam and the crisp border", () => {
+  assert.equal(PRESETS["saas-clean"].version, 4);
   assert.equal(saas.signature.primaryCta, "border-beam");
   assert.equal(saas.signature.featuredHighlight, "crisp-border");
   for (const stack of STACKS) {
@@ -169,4 +174,50 @@ test("old glow choices silently become the new ones, from any preset version", (
   // A current file has nothing to replace.
   const current = generateSkillFile(createDesignSystem(saas), { presetId: "saas-clean" });
   assert.deepEqual(parseSkillFile(current.skill).notices, []);
+});
+
+test("brand stress test: every brand and mode keeps the generated file's own contrast checks green", () => {
+  for (const brand of ["#E54848", "#FACC15", "#0F766E", "#111827", "#A5B4FC"]) {
+    for (const brandMode of ["exact", "adjusted"]) {
+      for (const stack of STACKS) {
+        const settings = applyPatch(saas, { colors: { brand, brandMode }, project: { stack } });
+        const ds = createDesignSystem(settings);
+        const file = generateSkillFile(ds, { presetId: "saas-clean" });
+        const failing = file.skill.split("\n").filter((line) => line.startsWith("|") && / FAIL \|$/.test(line));
+        // The chart and placeholder rows may legitimately fall short for extreme brands; text, focus and button rows may not.
+        const serious = failing.filter((line) => !/chart|placeholder/i.test(line));
+        assert.deepEqual(serious, [], `${brand} ${brandMode} ${stack}`);
+        const primary = ds.tokens.colors.brandReport.primaryText;
+        assert.ok(primary.ratio >= 4.5 || ds.tokens.colors.brandReport.mode === "exact", `${brand} ${stack}: primary text`);
+        assert.match(file.skill, /Primary button text is (white|dark)/, `${brand} ${stack}: the primary text rule`);
+        const back = parseSkillFile(file.skill);
+        assert.ok(back.ok);
+        assert.equal(back.settings.colors.brand, brand);
+        assert.equal(back.settings.colors.brandMode, brandMode);
+      }
+    }
+  }
+});
+
+test("adjusted mode only changes anything when white text fails", () => {
+  const teal = createDesignSystem(applyPatch(saas, { colors: { brand: "#0F766E", brandMode: "adjusted" } })).tokens.colors.brandReport;
+  assert.equal(teal.effective, "#0F766E");
+  const red = createDesignSystem(applyPatch(saas, { colors: { brand: "#E54848", brandMode: "adjusted" } })).tokens.colors.brandReport;
+  assert.equal(red.typed, "#E54848");
+  assert.equal(red.adjusted, "#D93C3E");
+  assert.equal(red.effective, "#D93C3E");
+  assert.equal(red.primaryText.isWhite, true);
+  const exact = createDesignSystem(applyPatch(saas, { colors: { brand: "#E54848" } })).tokens.colors.brandReport;
+  assert.equal(exact.effective, "#E54848");
+  assert.equal(exact.primaryText.isWhite, false);
+  assert.equal(exact.whiteFails, true);
+  assert.equal(exact.nearError, true);
+});
+
+test("a data format version 1 file (no brand mode) still imports, as exact", () => {
+  const old = '# Old\n\n```json\n{"format":"design-sys-md","version":1,"preset":"saas-clean","presetVersion":3,"settings":{"colors":{"brand":"#E54848"}}}\n```\n';
+  const result = parseSkillFile(old);
+  assert.ok(result.ok);
+  assert.equal(result.settings.colors.brandMode, "exact");
+  assert.equal(result.settings.colors.brand, "#E54848");
 });

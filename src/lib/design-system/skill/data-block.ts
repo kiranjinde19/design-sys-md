@@ -1,10 +1,16 @@
 import { legacyChoiceNotices, normalizeSettings } from "../normalize";
 import { presetBase } from "../preset-history";
 import { DEFAULT_PRESET_ID, PRESETS, isPresetId, type PresetId } from "../presets";
-import { SETTINGS_SCHEMA_VERSION, type DesignSystemSettings } from "../types";
+import { type DesignSystemSettings } from "../types";
 import { fence, lines } from "./context";
 
 export const DATA_FORMAT = "design-sys-md";
+
+/**
+ * The version of the data block itself. Version 2 added the brand color mode (exact or adjusted) next to the typed
+ * color. Files with version 1 (or none) still import: the mode defaults to exact.
+ */
+export const DATA_FORMAT_VERSION = 2;
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
@@ -36,7 +42,7 @@ export function dataBlock(settings: DesignSystemSettings, presetId: PresetId): s
     "",
     "Written by Design Sys.md. Do not edit by hand. The tool reads it to restore this design system.",
     "",
-    fence("json", JSON.stringify({ format: DATA_FORMAT, version: SETTINGS_SCHEMA_VERSION, preset: presetId, presetVersion, settings: changes })),
+    fence("json", JSON.stringify({ format: DATA_FORMAT, version: DATA_FORMAT_VERSION, preset: presetId, presetVersion, settings: changes })),
   );
 }
 
@@ -82,8 +88,8 @@ export function parseSkillFile(text: string): ParseResult {
     if (typeof parsed.settings !== "object" || parsed.settings === null) {
       return { ok: false, error: "The data block has no settings. It looks damaged, so export the file again." };
     }
-    if (typeof parsed.version === "number" && parsed.version > SETTINGS_SCHEMA_VERSION) {
-      return { ok: false, error: `Unsupported version: this file uses data format ${parsed.version}, and this tool reads up to ${SETTINGS_SCHEMA_VERSION}. Update the tool, then import it again.` };
+    if (typeof parsed.version === "number" && parsed.version > DATA_FORMAT_VERSION) {
+      return { ok: false, error: `Unsupported version: this file uses data format ${parsed.version}, and this tool reads up to ${DATA_FORMAT_VERSION}. Update the tool, then import it again.` };
     }
     const presetId = isPresetId(parsed.preset) ? parsed.preset : DEFAULT_PRESET_ID;
     // Files made before the version was stored are version 1.

@@ -109,7 +109,9 @@ export function createContext(ds: DesignSystem, options: SkillOptions): SkillCon
   const tailwind = stack !== "html-css";
   const { colors } = t;
   const primary = t.controls.buttons.variants.primary;
-  const destructive = t.controls.buttons.variants.destructive;
+  // The destructive role is solid red. Its hover and pressed colors belong to the solid button, which is the
+  // whole destructive variant unless the brand is near red (then it is a tinted variant and solid is kept for dialogs).
+  const destructive = t.controls.buttons.destructiveSolid;
 
   // Priority order matters: when two tokens share a color, the first name wins. Roles come first.
   const named: [string, string][] = [];

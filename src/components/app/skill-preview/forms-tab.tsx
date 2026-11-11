@@ -17,7 +17,7 @@ export function FormsTab() {
           <h2>Profile</h2>
           <p className="pvx-note">This is how you appear to your team.</p>
         </div>
-        <form className="form" onSubmit={(event) => event.preventDefault()}>
+        <form className="form pvx-form" onSubmit={(event) => event.preventDefault()}>
           <div className="field">
             <label htmlFor="pv-name">Full name</label>
             <input id="pv-name" className="input" defaultValue="Alex Morgan" />

@@ -5,6 +5,9 @@ import { compactCss, fence, lines, recipeLines, remOf, shadowClass, spaceVar, ti
 
 /** Semantic scale steps written out. Enough for status text, badges and alerts. */
 const SEMANTIC_STEPS = [50, 600, 700, 800] as const;
+/** A tinted destructive button (brand near the error red) also needs the error 100 and 200 tints for hover and pressed. */
+const semanticSteps = (ctx: SkillContext, name: SemanticName): readonly (50 | 100 | 200 | 600 | 700 | 800)[] =>
+  name === "error" && ctx.t.controls.buttons.destructiveStyle === "tinted" ? [50, 100, 200, 600, 700, 800] : SEMANTIC_STEPS;
 /** Steps of the optional secondary scale: fills 100 to 300, text 900, tints 50. */
 const SECONDARY_STEPS = [50, 100, 200, 300, 900] as const;
 
@@ -143,7 +146,7 @@ function tailwindCss(ctx: SkillContext): string[] {
     scaleLines("--color-", colors.brand, "brand"),
     scaleLines("--color-", colors.neutral, "neutral"),
     colors.secondary ? scaleLines("--color-", colors.secondary, "secondary", SECONDARY_STEPS) : null,
-    (Object.keys(colors.semantic) as SemanticName[]).flatMap((name) => scaleLines("--color-", colors.semantic[name], name, SEMANTIC_STEPS)),
+    (Object.keys(colors.semantic) as SemanticName[]).flatMap((name) => scaleLines("--color-", colors.semantic[name], name, semanticSteps(ctx, name))),
     `  --radius-sm: ${radius.sm}px; --radius-md: ${radius.md}px; --radius-lg: ${radius.lg}px; --radius-full: ${radius.full}px;`,
     pack(ty.sizes.map((size) => `--text-${size.name}: ${remOf(size.px)}; --text-${size.name}--line-height: ${remOf(size.lineHeightPx)};`), 2),
     `  --tracking-heading: ${tracking(3)}; --tracking-heading-sm: ${tracking(2)}; --tracking-heading-xs: ${tracking(1)};`,
@@ -221,7 +224,7 @@ function plainCss(ctx: SkillContext): string[] {
     scaleLines("--", colors.brand, "brand"),
     scaleLines("--", colors.neutral, "neutral"),
     colors.secondary ? scaleLines("--", colors.secondary, "secondary", SECONDARY_STEPS) : null,
-    (Object.keys(colors.semantic) as SemanticName[]).flatMap((name) => scaleLines("--", colors.semantic[name], name, SEMANTIC_STEPS)),
+    (Object.keys(colors.semantic) as SemanticName[]).flatMap((name) => scaleLines("--", colors.semantic[name], name, semanticSteps(ctx, name))),
     `  --font-heading: ${ty.stacks.heading};`,
     `  --font-body: ${ty.stacks.body === ty.stacks.heading ? "var(--font-heading)" : ty.stacks.body};`,
     `  --font-mono: ${ty.stacks.mono};`,

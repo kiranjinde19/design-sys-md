@@ -14,13 +14,14 @@ import {
   SpacingControls,
   TypeScaleControls,
 } from "@/components/controls/system-controls";
+import { BrandNotice } from "./brand-notice";
 import { TypographyEditor } from "@/components/typography/typography-editor";
 import { VoiceEditor } from "@/components/voice/voice-editor";
 
 /** The 10 step brand scale with its step labels (600 is the exact brand color), and the generated status colors. */
 function ColorScales() {
   const { tokens } = useDesignSystem();
-  const { brand, semantic } = tokens.colors;
+  const { brand, semantic, brandReport: report } = tokens.colors;
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
@@ -36,7 +37,9 @@ function ColorScales() {
             </div>
           ))}
         </div>
-        <p className="text-xs leading-4 text-muted-foreground">Step 600 is your exact brand color.</p>
+        <p className="text-xs leading-4 text-muted-foreground">
+          {report.mode === "adjusted" && report.whiteFails ? `Step 600 is ${report.effective}, adjusted from your ${report.typed}.` : "Step 600 is your exact brand color."}
+        </p>
       </div>
       <div className="space-y-1.5">
         <div className="text-sm font-medium text-muted-foreground">Status colors</div>
@@ -57,7 +60,16 @@ function ColorScales() {
 function EditorBody({ id }: { id: SystemId }) {
   switch (id) {
     case "colors":
-      return <ColorsControls afterBrand={<ColorScales />} />;
+      return (
+        <ColorsControls
+          afterBrand={
+            <>
+              <BrandNotice />
+              <ColorScales />
+            </>
+          }
+        />
+      );
     case "typography":
       return (
         <div className="space-y-6">

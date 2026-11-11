@@ -12,7 +12,7 @@
  *  - Form control outlines use the "input" border: the lightest neutral that reaches 3:1.
  */
 
-import { pickReadableText } from "./contrast";
+import { contrastLevels, pickReadableText, relativeLuminance } from "./contrast";
 import { WHITE, lightestShadeReaching, shiftKeepingHue } from "./colors";
 import type {
   BorderTokens,
@@ -94,17 +94,22 @@ const withStates = (
 
 export function generateControls(settings: ControlSettings, ctx: ControlContext): ControlTokens {
   const { colors, radius, spacing, borders, signature, icons } = ctx;
-  const { roles, neutral, brand } = colors;
+  const { roles, neutral, brand, semantic, brandReport } = colors;
   const readable = (bg: string) => pickReadableText(bg, WHITE, neutral[900]);
 
   /** Solid-filled button (primary, destructive): darker on hover and press. */
-  const solid = (base: string): Record<ButtonState, ControlStateStyle> => {
-    const hover = shiftKeepingHue(base, HOVER_SHIFT, 0.97);
-    const pressed = shiftKeepingHue(base, PRESSED_SHIFT, 0.92);
+  const solid = (base: string, fixedText?: string): Record<ButtonState, ControlStateStyle> => {
+    // With one fixed text color (the primary button), every state keeps it. Dark text gets lighter hover and
+    // pressed shades, because darker ones would drop below 4.5:1.
+    const direction = fixedText !== undefined && relativeLuminance(fixedText) < 0.4 ? -1 : 1;
+    const ease = direction === -1 ? 0.6 : 1; // lighter shades move less, so a light brand never washes out
+    const hover = shiftKeepingHue(base, HOVER_SHIFT * direction * ease, 0.97);
+    const pressed = shiftKeepingHue(base, PRESSED_SHIFT * direction * ease, 0.92);
+    const text = (bg: string) => fixedText ?? readable(bg);
     return withStates(
-      style(base, readable(base), TRANSPARENT),
-      style(hover, readable(hover), TRANSPARENT),
-      style(pressed, readable(pressed), TRANSPARENT),
+      style(base, text(base), TRANSPARENT),
+      style(hover, text(hover), TRANSPARENT),
+      style(pressed, text(pressed), TRANSPARENT),
       style(neutral[100], neutral[400], TRANSPARENT),
     );
   };
@@ -132,19 +137,33 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
           style(TRANSPARENT, neutral[400], roles.border),
         );
 
-  // Tertiary: no fill, brand text, a faint brand tint on hover and press.
+  // Tertiary: no fill, brand text (the first step that reads at 4.5:1), a faint brand tint on hover and press.
+  const brandText = brandReport.text;
   const tertiary = withStates(
-    style(TRANSPARENT, brand[600], TRANSPARENT),
-    style(brand[50], brand[600], TRANSPARENT),
-    style(brand[100], brand[600], TRANSPARENT),
+    style(TRANSPARENT, brandText, TRANSPARENT),
+    style(brand[50], brandText, TRANSPARENT),
+    style(brand[100], brandText, TRANSPARENT),
     style(TRANSPARENT, neutral[400], TRANSPARENT),
   );
 
+  // Destructive: solid red, unless the brand is close to the error red. Then it is tinted (light error tint, dark
+  // error text) so it never looks like the primary button, and solid red is kept for confirmation dialogs.
+  const destructiveSolid = solid(roles.destructive);
+  const errorScale = semantic.error;
+  const errorText = contrastLevels(errorScale[700], errorScale[50]).normal && contrastLevels(errorScale[700], errorScale[100]).normal ? errorScale[700] : errorScale[800];
+  const destructiveTinted = withStates(
+    style(errorScale[50], errorText, TRANSPARENT),
+    style(errorScale[100], errorText, TRANSPARENT),
+    style(errorScale[200], errorText, TRANSPARENT),
+    style(neutral[100], neutral[400], TRANSPARENT),
+  );
+  const tintedDestructive = brandReport.nearError;
+
   const variants: Record<ButtonVariant, Record<ButtonState, ControlStateStyle>> = {
-    primary: solid(roles.primary),
+    primary: solid(roles.primary, roles["primary-foreground"]),
     secondary,
     tertiary,
-    destructive: solid(roles.destructive),
+    destructive: tintedDestructive ? destructiveTinted : destructiveSolid,
   };
 
   // Inputs: the input border by default, a brand border on focus (plus the focus ring).
@@ -153,7 +172,7 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
   const inputStates: Record<InputState, ControlStateStyle> = {
     default: field(roles.input),
     hover: field(neutral[500]),
-    focus: field(roles.primary),
+    focus: field(brandReport.focus),
     error: field(roles.destructive),
     disabled: field(roles.border, roles.muted, neutral[500]),
   };
@@ -168,7 +187,7 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
       default: { background: roles.background, borderColor: roles.input, markColor: off },
       hover: { background: roles.background, borderColor: neutral[500], markColor: offHover },
       checked: { background: roles.primary, borderColor: roles.primary, markColor: roles["primary-foreground"] },
-      focus: { background: roles.background, borderColor: roles.primary, markColor: off },
+      focus: { background: roles.background, borderColor: brandReport.focus, markColor: off },
       disabled: { background: roles.muted, borderColor: roles.border, markColor: offDisabled },
       error: { background: roles.background, borderColor: roles.destructive, markColor: offError },
     };
@@ -210,6 +229,8 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
       fontWeight: 500,
       borderWidth: borders.width,
       variants,
+      destructiveStyle: tintedDestructive ? "tinted" : "solid",
+      destructiveSolid,
     },
     inputs: {
       height,

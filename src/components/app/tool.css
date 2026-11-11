@@ -90,3 +90,14 @@
     transform: none;
   }
 }
+
+/* A thin, quiet scrollbar for the preview frame. It appears only when the page is taller than the frame. */
+.tool-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Only keyboard users see a focus ring: a mouse press leaves buttons and tabs without one. */
+.tool :focus:not(:focus-visible) {
+  outline: none;
+}

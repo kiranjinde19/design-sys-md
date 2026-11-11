@@ -17,6 +17,7 @@ import {
   type ColorRef,
   type ColorScale,
   type ColorSettings,
+  type BrandReport,
   type ColorTokens,
   type CardStyle,
   type ChartCheck,
@@ -375,8 +376,31 @@ export function shiftKeepingHue(hex: string, delta: number, chromaScale = 1): st
   return darkStep(clamp(l + delta, 0, 1), c * chromaScale, h, hslHue(hex));
 }
 
+/** Brand hues closer than this to the error hue make a solid destructive button look like the primary one. */
+export const ERROR_CLASH_DEGREES = 20;
+
+/** The nearest color with the same hue and chroma where white text reaches 4.5:1. Only the lightness changes. */
+export function adjustForWhiteText(hex: string): string {
+  const typed = normalizeHex(hex) ?? FALLBACK_BRAND;
+  if (contrastRatio(WHITE, typed) >= 4.5) return typed;
+  const { l, c, h } = hexToOklch(typed);
+  const targetHue = hslHue(typed);
+  let lightness = l;
+  let out = typed;
+  while (contrastRatio(WHITE, out) < 4.5 && lightness > 0.1) {
+    lightness -= 0.002;
+    out = darkStep(lightness, c, h, targetHue);
+  }
+  return out;
+}
+
 export function generateColors(settings: ColorSettings, options: { cardStyle: CardStyle }): ColorTokens {
-  const brand = generateBrandScale(settings.brand);
+  const typed = normalizeHex(settings.brand) ?? FALLBACK_BRAND;
+  const whiteOnTyped = contrastRatio(WHITE, typed);
+  const whiteFails = whiteOnTyped < 4.5;
+  const adjusted = whiteFails ? adjustForWhiteText(typed) : typed;
+  const effective = settings.brandMode === "adjusted" && whiteFails ? adjusted : typed;
+  const brand = generateBrandScale(effective);
   const neutral = generateNeutralScale(settings.neutralTone, settings.brand);
   const semantic = generateSemanticScales();
   const scales: Scales = { brand, neutral, semantic };
@@ -418,6 +442,37 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
 
   const { colors: charts, check: chartCheck } = generateChartColors(brand, background);
 
+  // Brand colored text: the first step that reaches 4.5:1 on the page, the 50 tint and the 100 tint.
+  const textSurfaces = [background, brand[50], brand[100]];
+  const TEXT_STEPS = [600, 700, 800, 900] as const;
+  const textIndex = TEXT_STEPS.findIndex((step) => textSurfaces.every((surface) => contrastRatio(brand[step], surface) >= 4.5));
+  const textStep = textIndex === -1 ? null : TEXT_STEPS[textIndex];
+  const brandText = textStep === null ? ink : brand[textStep];
+  const darker = (by: number) => (textIndex === -1 ? ink : brand[TEXT_STEPS[Math.min(textIndex + by, TEXT_STEPS.length - 1)]]);
+  // The focus ring and the focus border of controls: the first step that reaches 3:1 on the page and the tinted tile.
+  const focusSurfaces = [background, brand[50], card];
+  const FOCUS_STEPS = [500, 600, 700, 800, 900] as const;
+  const focusStep = FOCUS_STEPS.find((step) => focusSurfaces.every((surface) => contrastRatio(brand[step], surface) >= 3));
+  const focus = focusStep === undefined ? ink : brand[focusStep];
+  const primaryText = readable(primary);
+  const errorHue = hexToOklch(SEMANTIC_ANCHORS.error).h;
+  const brandOklch = hexToOklch(effective);
+  const nearError = brandOklch.c > 0.06 && hueDistance(brandOklch.h, errorHue) < ERROR_CLASH_DEGREES;
+  const brandReport: BrandReport = {
+    typed,
+    mode: settings.brandMode === "adjusted" ? "adjusted" : "exact",
+    whiteOnTyped: Math.floor(whiteOnTyped * 100) / 100,
+    whiteFails,
+    adjusted,
+    effective,
+    primaryText: { hex: primaryText, ratio: Math.floor(contrastRatio(primaryText, primary) * 100) / 100, isWhite: primaryText.toUpperCase() === WHITE },
+    textStep,
+    text: brandText,
+    link: { hover: darker(1), pressed: darker(2), visited: darker(3) },
+    focus,
+    nearError,
+  };
+
   const roles: ColorTokens["roles"] = {
     background,
     foreground,
@@ -427,7 +482,7 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     popover: plainCard,
     "popover-foreground": foreground,
     primary,
-    "primary-foreground": readable(primary),
+    "primary-foreground": primaryText,
     secondary: secondaryFill,
     "secondary-foreground": onQuiet(secondaryFill),
     muted,
@@ -438,7 +493,7 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     "destructive-foreground": readable(destructive),
     border: resolve(r.border),
     input,
-    ring: resolve(r.ring),
+    ring: contrastRatio(resolve(r.ring), background) >= 3 && contrastRatio(resolve(r.ring), card) >= 3 ? resolve(r.ring) : focus,
     "chart-1": charts[0],
     "chart-2": charts[1],
     "chart-3": charts[2],
@@ -452,7 +507,7 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     "sidebar-accent": accentFill,
     "sidebar-accent-foreground": onQuiet(accentFill),
     "sidebar-border": resolve(r.border),
-    "sidebar-ring": resolve(r.ring),
+    "sidebar-ring": contrastRatio(resolve(r.ring), background) >= 3 ? resolve(r.ring) : focus,
   };
 
   type Surface = ColorRoleTokenName | { name: "tinted-tile"; hex: string };
@@ -497,7 +552,6 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     pair("sidebar-accent-foreground", "sidebar-accent"),
     // Common real-world combinations
     pair("muted-foreground", "background"),
-    pair("primary", "background", "text", "primary as link text on background"),
     pair("placeholder", "background", "text", "placeholder text on input background"),
     // Interface parts the user must be able to see, held to 3:1. The input border is checked on
     // every surface it can sit on. Decorative borders and dividers have no WCAG requirement.
@@ -527,5 +581,5 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     },
   };
 
-  return { brand, secondary, neutral, semantic, roles, placeholder, chartCheck, contrastPairs, reports };
+  return { brand, brandReport, secondary, neutral, semantic, roles, placeholder, chartCheck, contrastPairs, reports };
 }

@@ -3,6 +3,7 @@
 Plain-language log of what is built. Newest first.
 
 ## Latest
+- **Brand color engine and fixes (Step A4).** Brand mode (exact or adjusted) with a notice and two live sample buttons under the brand color field; the typed color and the mode are saved in autosave and in the data block (data format version 2, older files still import as exact); SaaS Clean is now version 4 and Blank slate version 2. The generated file has a new hard rule 15 (primary button text color, never change it). Brand colored text uses the first brand step that reads at 4.5:1; focus ring and control focus borders use a step that reads at 3:1; a brand within about 20 degrees of the error hue gets a tinted destructive variant (solid red only in confirmation dialogs) with a trash icon, notes in the button recipes and a do and don't row. Primary hover and pressed shades keep the primary text color (lighter shades with dark text). Preview fixes: no scrollbar unless the page is taller than the frame (thin when it shows), focus rings only for the keyboard, Forms fields max 480px, neutral muted More buttons in Tables, a white backdrop for the Signature tile sample. Stress tested with five brands (see the report). The checklist below replaces the old totals.
 - **Stage 5, Step A3: polish and three more preview tabs.** Done from the written spec; `design/reference` still has no mockup files, so the comparison against them is still open. Polish: the logo mark is now three bars of different lengths (long, short, medium, 1.5px stroke); the Signature tile is one left aligned row (crisp border box, card, icon tile, "Get started" button with a static 2px inset ring, focus ring box) using the real chosen options; the Buttons tile field is 32px with 10px radius; the Colors editor shows the 10 step brand scale with step labels (600 marked) and the generated status colors. The "SaaS Clean, edited. Reset" bug: the check compared every setting including product name, description and stack (set on the Export screen), so a changed product fact looked like an edit and Reset could never clear it. It now compares design values only, ignoring key order and product facts: hidden on a fresh load, hidden with product facts set, shown after a real edit, hidden after Reset (tested). The editor panel was confirmed in the browser: #FFFFFF, 1px #E0E6ED, 16px radius, 24px padding. New preview tabs: Buttons and states (4 variants by 5 states, loading, inputs, checkbox, radio and switch with the usage rules), Forms (settings screen with a Profile card) and Tables (Team members). They are drawn with the plain HTML CSS that the skill file itself contains (scoped to the preview, with hover, pressed and focus copied as classes), so the preview shows what an AI would build from the file. The selected tab is remembered. Checked at 1440px in three setups (default, Editorial font with compact density and radius 4, teal with spacious density and radius 20) and a secondary outline, hard shadow, solid call to action setup.
 - **Stage 5, Step A2: visual match to the mockup (polish pass).** Done from the written spec because `design/reference/Main.dc.html` and `Editor.dc.html` are still not in the repo or on the machine; the side-by-side comparison against them is still to do. Changes: every control is 10px (buttons, inputs, tabs, segmented controls, sample input), tiles and panels 16px; new top bar (32px rounded square logo with a three-line mark, tertiary Import file with an upload icon, 40px secondary theme toggle, primary Export file with a download icon, Reset removed from the bar); one segmented control style everywhere (preset switch, neutral tone, other short choices); board tiles with number chips, 14 medium titles, a plain green check for reviewed, top aligned content and captions with real token values; the Colors sample (32px brand swatches with step 600 outlined, neutral swatches, four labeled dots, an AA badge), the Typography sample ("Aa", "Inter + Inter", scale line, Title, Body, Caption), visible border colors, all five shadow levels; system list as tinted 44px tiles with number chips and a Back to board link; white 24px padded editor panel with a "1 of 9" chip and a Previous, Next with chevron footer; "SaaS Clean, edited. Reset" beside the progress indicator and at the bottom of the system list; preview tab strip without a scrollbar, a Recommended label, borderless muted token chips; and the preview is now scaled with a transform instead of zoom, which fixed the cards: title, description, price, features and buttons now line up exactly across the three cards. Checked in Chrome at 1440px, including a red brand (#E54848): the tool's own interface stayed indigo.
 - **Stage 5, Step A: the tool's own screen at `/app`.** Top bar (56px: logo, preset switch with "Reset to SaaS Clean", Import file, light and dark switch, the one primary Export file button), a title row with "N of 9 reviewed" and a 9 segment progress bar, and the bento board of 9 live tiles (560px wide, 3 columns, 120px rows, 12px gaps). Clicking a tile opens the editor: system list (224px) plus editor panel (400px) with Back to board, Back and Next; reviewed tiles show a check. The preview tile on the right has six tabs; only Pricing is built (65% scale, sample content, crisp 2px featured border, one border beam button, equal height cards with aligned price, divider and features). The other five say "Coming next". The tool wears fixed SaaS Clean colors (light, plus a dark mode for the tool only) and never changes when the user edits; the preview gets the user's system through `--pv-*` CSS variables. Reviewed status is saved with the autosave (not in exported files). Controls are now shared (`src/components/controls/`) between `/debug` and `/app`, the signature options have pickers for the first time, selected buttons use a crisp 2px border instead of a primary fill so the screen keeps exactly one primary button, and the typography and voice editors use container queries so they fit the 400px panel. The two mockup files (`Main.dc.html`, `Editor.dc.html`) were not found in Downloads, so this step follows the written spec; `design/reference/` is ready for them (excluded from lint, type checks and the build). Export file and Import file link to `/debug` for now.
@@ -21,30 +22,81 @@ Plain-language log of what is built. Newest first.
 Worst case = 60 character name, 200 character description, own fonts for heading and body.
 | Stack | Normal | Worst case | Cap |
 |---|---|---|---|
-| Next.js | 27.96 KiB | 29.20 KiB | normal under 28.5 (met) |
-| React | 29.25 KiB | 30.04 KiB | under 31.5 (met) |
-| Plain HTML | 30.65 KiB | 31.44 KiB | under 31.5 (met, almost no room left) |
+| Next.js | 27.99 KiB | 29.23 KiB | normal under 28.5 (met) |
+| React | 29.28 KiB | 30.08 KiB | under 31.5 (met) |
+| Plain HTML | 30.70 KiB | 31.49 KiB | under 31.5 (met, almost no room left) |
 
-## Totals (recounted after Step A3)
-- **Screens:** 4 routes in the app: `/` (placeholder), `/app` (the tool), `/debug` (with `/debug/data` and `/debug/skill` pages).
-- **Board:** 9 tiles; 6 preview tabs, 4 built (Pricing, Buttons and states, Forms, Tables) and 2 "Coming next" (Dashboard, Charts).
-- **Round trip test:** 53 of 53 tests pass (`npm run test:roundtrip`).
-- **Source files:** 87 TypeScript files and 3 CSS files under `src/`.
-- **Stage 5 items:** (1) tool screen at `/app`: done. (2) Visual match to the mockup: spec based passes done, comparison against the two mockup files pending. (3) Preview tabs: 4 of 6 done (Dashboard and Charts to do). (4) Real Export and Import screens: to do. (5) Roles drag and drop in the Colors editor: to do. (6) Remove `/debug`: to do at the end.
-- **Open decision:** the brand color engine behavior for hard to read brand colors (see the report on #E54848), waiting for an answer.
-- **Stages:** Stage 1 to 4 done. Stage 5 in progress. Stage 6 (landing page) to do.
+## Checklist counts
+| Stage | Done | Total |
+|---|---|---|
+| Stage 1: Project setup | 5 | 5 |
+| Stage 2: Token engine | 10 | 10 |
+| Stage 3: Skill file generator | 5 | 6 |
+| Stage 4: The tool's own screen (shell) | 6 | 7 |
+| Stage 5: Live preview and editors | 4 | 10 |
+| Stage 6: Landing page and final polish | 0 | 4 |
+| **Overall** | **30** | **42** |
 
-## Built so far
-1. Project setup, GitHub, Vercel deploy.
-2. Token engine (colors, typography, radius, spacing, borders, shadows, controls, signature details) with presets SaaS Clean (version 3) and Blank slate (version 1), versioned and guarded.
-3. Skill file generator for three stacks, SKILL.md and AGENTS.md export, import with feedback and byte-identical round trip.
-4. Wizard and live preview on `/debug`, tone of voice, export step with size meter and install help.
-5. `/debug` pages (data and skill review) rebuilt on every deploy.
-6. The tool's own screen at `/app`: top bar, title row with progress, board of 9 live tiles, editor, pricing preview.
+## Checklist by stage
 
-## Next (Stage 5, Step B)
-- Add the mockup files to `design/reference/` and compare the screen against them (CLAUDE.md "Visual match rule").
-- Build the last two preview tabs (Dashboard, Charts).
-- Roles drag and drop in the Colors editor.
-- Real Export and Import screens (they link to `/debug` for now).
-- Below 1280px the columns stack; polish later. Remove `/debug` at the end of Stage 5.
+### Stage 1: Project setup
+- [x] Next.js app with TypeScript, Tailwind and shadcn/ui
+- [x] GitHub repository and pushes to `main`
+- [x] Vercel deploy from GitHub
+- [x] Placeholder home page with the tagline and subheadline
+- [x] `node_modules` and `.env` kept out of git
+
+### Stage 2: Token engine
+- [x] One design system object: settings (saved) and tokens (generated)
+- [x] Color engine: 10 step brand scale, neutral and status scales, shadcn roles, contrast checks
+- [x] Typography engine: curated fonts, pairings, even pixel type scale, per font tracking
+- [x] Radius, spacing, borders, shadows and icons
+- [x] Buttons and inputs with derived states, and signature details
+- [x] Presets (SaaS Clean, Blank slate) with versions, frozen snapshots and a guard
+- [x] Autosave in the browser
+- [x] Brand color mode (exact or adjusted), brand text steps, focus steps and tinted destructive
+- [x] Stress test with five brand colors (#E54848, #FACC15, #0F766E, #111827, #A5B4FC)
+- [x] `/debug` pages for checking the engine
+
+### Stage 3: Skill file generator
+- [x] Skill file for three stacks (Next.js, React, plain HTML) with SKILL.md and AGENTS.md download
+- [x] Import with feedback, plus the data block (format version 2, older files import)
+- [x] Round trip test (71 tests)
+- [x] Size under the Codex cap for every stack
+- [x] Next.js and React files built in fresh projects
+- [ ] Plain HTML file tried in a real fresh page (only its CSS is syntax checked so far)
+
+### Stage 4: The tool's own screen (shell)
+- [x] `/app` route with the fixed SaaS Clean look (light and dark)
+- [x] Top bar, title row with progress, board of 9 live tiles
+- [x] Editor state with system list, panel, Back and Next
+- [x] Reviewed status saved with the autosave
+- [x] Shared controls used by `/debug` and `/app`
+- [x] Visual polish passes from the written spec
+- [ ] Compare against the two mockup files (they are not in `design/reference/` yet)
+
+### Stage 5: Live preview and editors
+- [x] Preview tab: Pricing
+- [x] Preview tab: Buttons and states
+- [x] Preview tab: Forms
+- [x] Preview tab: Tables
+- [ ] Preview tab: Dashboard
+- [ ] Preview tab: Charts
+- [ ] Colors editor: roles drag and drop
+- [ ] Real Export screen (links to `/debug` for now)
+- [ ] Real Import screen (links to `/debug` for now)
+- [ ] Remove `/debug` at the end of the stage
+
+### Stage 6: Landing page and final polish
+- [ ] Landing page at `/`
+- [ ] Layout below 1280px (columns stack)
+- [ ] Final deploy check on Vercel
+- [ ] Final visual match against the mockups
+
+## Open decisions
+- None at the moment. The brand color engine decision was made (exact or adjusted, tinted destructive near red).
+
+## Next
+- Add the two mockup files to `design/reference/` and compare the screen against them (CLAUDE.md "Visual match rule").
+- Build the Dashboard and Charts preview tabs.
+- Colors editor: roles drag and drop.
