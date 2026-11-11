@@ -3,6 +3,7 @@
 Plain-language log of what is built. Newest first.
 
 ## Latest
+- **Small fixes before Dashboard and Charts (Step A5).** (1) Brand notice default: "Adjust" was a saved choice, not the default. The mode is part of the saved settings, so choosing Adjust for one color stayed on when a new color was typed. A new typed brand color now always starts in "Keep my exact color"; Reset to SaaS Clean and old files were already exact. (2) The adjust option is labeled by the size of the change ("Darken a little" or "Darken a lot", lightness change of 0.12 or more) and shows both hex values; the exact option says "(Recommended)" when dark text reaches 7:1 (yellow does, red does not). (3) A brand within about 20 degrees of the error red uses the foreground color for the focus ring and the focus border of controls (the signature ring now also uses the 3:1 focus step instead of a fixed brand-500, which fixes light brands); error text gets an alert icon; the rule is in the Accessibility section of the file (only when it applies) and in the editor notice. (4) The editor panel reserves a scrollbar gutter plus right padding. (5) Preview: every icon goes through one component that applies the icon style, stroke width and line ends (check marks, plan icon tiles, top bar, row actions, spinner, trash, alert); sample copy now comes from the tone of voice code the file uses (pricing CTA, Save label and helper, success and error toasts, empty state); shadows: cards level 1, hover lift level 2, menus 3, toasts 4, dialogs 5 (this swapped toasts and dialogs in the file, and the hover shadow was level 3 before, now 2 as the file's own table says); the Forms tab has a static menu, confirm dialog and two toasts. (6) Standing size rule added to CLAUDE.md. Found while checking: with a red brand (near the error hue) the plain HTML worst case file is 32.32 KiB, over the 32 KiB Codex cap; it was 32.16 KiB before this step, so it was already over (see sizes). Not cut; waiting for a decision.
 - **Brand color engine and fixes (Step A4).** Brand mode (exact or adjusted) with a notice and two live sample buttons under the brand color field; the typed color and the mode are saved in autosave and in the data block (data format version 2, older files still import as exact); SaaS Clean is now version 4 and Blank slate version 2. The generated file has a new hard rule 15 (primary button text color, never change it). Brand colored text uses the first brand step that reads at 4.5:1; focus ring and control focus borders use a step that reads at 3:1; a brand within about 20 degrees of the error hue gets a tinted destructive variant (solid red only in confirmation dialogs) with a trash icon, notes in the button recipes and a do and don't row. Primary hover and pressed shades keep the primary text color (lighter shades with dark text). Preview fixes: no scrollbar unless the page is taller than the frame (thin when it shows), focus rings only for the keyboard, Forms fields max 480px, neutral muted More buttons in Tables, a white backdrop for the Signature tile sample. Stress tested with five brands (see the report). The checklist below replaces the old totals.
 - **Stage 5, Step A3: polish and three more preview tabs.** Done from the written spec; `design/reference` still has no mockup files, so the comparison against them is still open. Polish: the logo mark is now three bars of different lengths (long, short, medium, 1.5px stroke); the Signature tile is one left aligned row (crisp border box, card, icon tile, "Get started" button with a static 2px inset ring, focus ring box) using the real chosen options; the Buttons tile field is 32px with 10px radius; the Colors editor shows the 10 step brand scale with step labels (600 marked) and the generated status colors. The "SaaS Clean, edited. Reset" bug: the check compared every setting including product name, description and stack (set on the Export screen), so a changed product fact looked like an edit and Reset could never clear it. It now compares design values only, ignoring key order and product facts: hidden on a fresh load, hidden with product facts set, shown after a real edit, hidden after Reset (tested). The editor panel was confirmed in the browser: #FFFFFF, 1px #E0E6ED, 16px radius, 24px padding. New preview tabs: Buttons and states (4 variants by 5 states, loading, inputs, checkbox, radio and switch with the usage rules), Forms (settings screen with a Profile card) and Tables (Team members). They are drawn with the plain HTML CSS that the skill file itself contains (scoped to the preview, with hover, pressed and focus copied as classes), so the preview shows what an AI would build from the file. The selected tab is remembered. Checked at 1440px in three setups (default, Editorial font with compact density and radius 4, teal with spacious density and radius 20) and a secondary outline, hard shadow, solid call to action setup.
 - **Stage 5, Step A2: visual match to the mockup (polish pass).** Done from the written spec because `design/reference/Main.dc.html` and `Editor.dc.html` are still not in the repo or on the machine; the side-by-side comparison against them is still to do. Changes: every control is 10px (buttons, inputs, tabs, segmented controls, sample input), tiles and panels 16px; new top bar (32px rounded square logo with a three-line mark, tertiary Import file with an upload icon, 40px secondary theme toggle, primary Export file with a download icon, Reset removed from the bar); one segmented control style everywhere (preset switch, neutral tone, other short choices); board tiles with number chips, 14 medium titles, a plain green check for reviewed, top aligned content and captions with real token values; the Colors sample (32px brand swatches with step 600 outlined, neutral swatches, four labeled dots, an AA badge), the Typography sample ("Aa", "Inter + Inter", scale line, Title, Body, Caption), visible border colors, all five shadow levels; system list as tinted 44px tiles with number chips and a Back to board link; white 24px padded editor panel with a "1 of 9" chip and a Previous, Next with chevron footer; "SaaS Clean, edited. Reset" beside the progress indicator and at the bottom of the system list; preview tab strip without a scrollbar, a Recommended label, borderless muted token chips; and the preview is now scaled with a transform instead of zoom, which fixed the cards: title, description, price, features and buttons now line up exactly across the three cards. Checked in Chrome at 1440px, including a red brand (#E54848): the tool's own interface stayed indigo.
@@ -25,17 +26,18 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 | Next.js | 27.99 KiB | 29.23 KiB | normal under 28.5 (met) |
 | React | 29.28 KiB | 30.08 KiB | under 31.5 (met) |
 | Plain HTML | 30.70 KiB | 31.49 KiB | under 31.5 (met, almost no room left) |
+| Plain HTML, red brand #E54848 | 31.53 KiB | 32.32 KiB | **over 32 KiB** (was 32.16 before step A5) |
 
 ## Checklist counts
 | Stage | Done | Total |
 |---|---|---|
 | Stage 1: Project setup | 5 | 5 |
 | Stage 2: Token engine | 10 | 10 |
-| Stage 3: Skill file generator | 5 | 6 |
+| Stage 3: Skill file generator | 5 | 7 |
 | Stage 4: The tool's own screen (shell) | 6 | 7 |
-| Stage 5: Live preview and editors | 4 | 10 |
+| Stage 5: Live preview and editors | 5 | 11 |
 | Stage 6: Landing page and final polish | 0 | 4 |
-| **Overall** | **30** | **42** |
+| **Overall** | **31** | **44** |
 
 ## Checklist by stage
 
@@ -61,9 +63,10 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 ### Stage 3: Skill file generator
 - [x] Skill file for three stacks (Next.js, React, plain HTML) with SKILL.md and AGENTS.md download
 - [x] Import with feedback, plus the data block (format version 2, older files import)
-- [x] Round trip test (71 tests)
+- [x] Round trip test (73 tests)
 - [x] Size under the Codex cap for every stack
 - [x] Next.js and React files built in fresh projects
+- [ ] Plain HTML worst case under 31.5 KiB for every brand color (red brand is 32.32 KiB)
 - [ ] Plain HTML file tried in a real fresh page (only its CSS is syntax checked so far)
 
 ### Stage 4: The tool's own screen (shell)
@@ -80,6 +83,7 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 - [x] Preview tab: Buttons and states
 - [x] Preview tab: Forms
 - [x] Preview tab: Tables
+- [x] Icon, tone of voice and shadow settings show in the preview
 - [ ] Preview tab: Dashboard
 - [ ] Preview tab: Charts
 - [ ] Colors editor: roles drag and drop

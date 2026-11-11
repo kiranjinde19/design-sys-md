@@ -155,7 +155,7 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
             {index + 1} of {SYSTEMS.length}
           </span>
         </header>
-        <div className="@container min-h-0 flex-1 overflow-y-auto">
+        <div className="@container min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable]">
           <EditorBody id={openId} />
         </div>
         <footer className="flex items-center justify-between gap-2 pt-4">

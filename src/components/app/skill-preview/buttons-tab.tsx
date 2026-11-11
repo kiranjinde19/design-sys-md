@@ -1,12 +1,10 @@
 "use client";
 
+import { CircleAlert, LoaderCircle, Trash2 } from "lucide-react";
 import { SELECTION_RULES, useDesignSystem } from "@/lib/design-system";
+import { PvIcon } from "../preview-icon";
 
-const Trash = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" />
-  </svg>
-);
+const Trash = () => <PvIcon icon={Trash2} />;
 
 const VARIANTS = ["primary", "secondary", "tertiary", "destructive"] as const;
 const STATES = [
@@ -61,7 +59,7 @@ export function ButtonsTab() {
         <div className="pvx-row">
           {VARIANTS.map((variant) => (
             <button key={variant} type="button" className={`btn btn--${variant}`} aria-busy="true">
-              <span className="ds-spinner pvx-ring" aria-hidden="true" />
+              <PvIcon icon={LoaderCircle} className="pvx-spin" />
               Saving
             </button>
           ))}
@@ -85,7 +83,8 @@ export function ButtonsTab() {
           <div className="field">
             <label htmlFor="pv-in-error">Email</label>
             <input id="pv-in-error" className="input" aria-invalid="true" aria-describedby="pv-in-error-help" defaultValue="alex.morgan@example" />
-            <p id="pv-in-error-help" className="field__help field__help--error">
+            <p id="pv-in-error-help" className="field__help field__help--error pvx-error">
+              <PvIcon icon={CircleAlert} />
               Enter a full email address, like name@example.com.
             </p>
           </div>

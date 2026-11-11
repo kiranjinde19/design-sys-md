@@ -124,6 +124,15 @@
   font-size: var(--pv-text-sm);
   line-height: var(--pv-leading-sm);
 }
+.pv-plan__features li {
+  display: flex;
+  align-items: center;
+  gap: var(--pv-gap-inline);
+}
+.pv-plan__features li svg {
+  flex: none;
+  color: var(--pv-brand-text);
+}
 .pv-plan__cta {
   margin-top: auto;
 }

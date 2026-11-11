@@ -14,7 +14,9 @@ export const EXTRA_CSS = `
 .pvx-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap-stack); align-items: start; }
 .pvx-box { display: grid; gap: var(--gap-stack); padding: var(--pad-card); border: var(--border-w) solid var(--border); border-radius: var(--radius-lg); }
 .pvx-choice { display: flex; align-items: center; gap: var(--gap-inline); font-size: var(--text-base); }
-.pvx-ring { width: 16px; height: 16px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; }
+.pvx-spin { flex: none; animation: pvx-spin 0.9s linear infinite; }
+@keyframes pvx-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .pvx-spin { animation: none; } }
 .pvx-icon { width: var(--control-h); padding: 0; }
 .pvx-split { display: flex; align-items: center; justify-content: space-between; gap: var(--gap-stack); }
 .pvx-actions { display: flex; justify-content: flex-end; gap: var(--gap-inline); }
@@ -30,6 +32,17 @@ export const EXTRA_CSS = `
 .pvx-person small { font-size: var(--text-xs); line-height: var(--leading-xs); color: var(--muted-foreground); }
 .pvx-select { appearance: auto; }
 .pvx-form { max-width: 480px; }
+.pvx-empty { display: grid; justify-items: center; gap: var(--gap-inline); text-align: center; color: var(--muted-foreground); }
+.pvx-empty h2 { margin: 0; font: 600 var(--text-lg) / var(--leading-lg) var(--font-heading); color: var(--foreground); }
+.pvx-error { display: flex; align-items: center; gap: var(--space-1); }
+.pvx-error svg { flex: none; }
+.pvx-layers { display: grid; grid-template-columns: 200px 1fr; gap: var(--gap-section); align-items: start; padding: var(--gap-stack) 0; }
+.pvx-menu { display: grid; padding: var(--space-1); border: var(--border-w) solid var(--border); border-radius: var(--radius-md); background: var(--popover); color: var(--popover-foreground); box-shadow: var(--shadow-3); }
+.pvx-menu__item { display: flex; align-items: center; gap: var(--gap-inline); height: var(--control-h-sm); padding: 0 var(--gap-inline); border: 0; border-radius: var(--radius-sm); background: none; color: inherit; font: inherit; font-size: var(--text-sm); text-align: left; }
+.pvx-menu__item:hover, .pvx-menu__item.is-hover { background: var(--accent); color: var(--accent-foreground); }
+.pvx-static { position: static; transform: none; width: auto; max-width: var(--dialog-w); }
+.pvx-dialog-title { margin: 0; font: 600 var(--text-lg) / var(--leading-lg) var(--font-heading); }
+.pvx-toasts { display: grid; gap: var(--gap-stack); grid-column: 2; }
 .btn.pvx-icon { color: var(--muted-foreground); }
 .btn.pvx-icon:hover, .btn.pvx-icon.is-hover { background: var(--accent); color: var(--accent-foreground); }
 .btn.pvx-icon:active, .btn.pvx-icon.is-pressed { background: var(--neutral-200); color: var(--accent-foreground); }

@@ -1,5 +1,9 @@
 "use client";
 
+import { Ellipsis, Inbox } from "lucide-react";
+import { PvIcon } from "../preview-icon";
+import { useVoiceCopy } from "../use-voice-copy";
+
 /** Invented people and example.com addresses only. */
 const PEOPLE = [
   { name: "Alex Morgan", email: "alex.morgan@example.com", role: "Admin", active: true, usage: "1,284" },
@@ -9,16 +13,11 @@ const PEOPLE = [
   { name: "Casey Patel", email: "casey.patel@example.com", role: "Viewer", active: false, usage: "312" },
 ] as const;
 
-const Dots = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-    <circle cx="3" cy="8" r="1.4" />
-    <circle cx="8" cy="8" r="1.4" />
-    <circle cx="13" cy="8" r="1.4" />
-  </svg>
-);
+const Dots = () => <PvIcon icon={Ellipsis} />;
 
 /** A "Team members" card with a table, drawn with the skill file's own classes. */
 export function TablesTab() {
+  const copy = useVoiceCopy();
   return (
     <div className="pvx-page">
       <div className="pvx-head">
@@ -78,6 +77,12 @@ export function TablesTab() {
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="card pvx-empty">
+        <PvIcon icon={Inbox} size={24} />
+        <h2>{copy.empty.main}</h2>
+        {copy.empty.extra ? <p className="pvx-note">{copy.empty.extra}</p> : null}
       </div>
     </div>
   );

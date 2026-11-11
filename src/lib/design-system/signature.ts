@@ -193,7 +193,7 @@ export function generateSignature(
       background: colors.roles.background,
       border: `${borders.width}px solid transparent`,
       borderRadius: radius.lg,
-      boxShadow: shadowAt(elevation, 2),
+      boxShadow: shadowAt(elevation, 1),
     },
     "tinted-bento-tile": {
       background: colors.roles.card,
@@ -210,7 +210,7 @@ export function generateSignature(
 
   // Hover (only the properties that change on hover)
   const hoverCss: Record<SignatureSettings["hover"], CssRecipe> = {
-    "lift-2px": { transform: "translateY(-2px)", boxShadow: shadowAt(elevation, 3), transition: HOVER_TRANSITION },
+    "lift-2px": { transform: "translateY(-2px)", boxShadow: shadowAt(elevation, 2), transition: HOVER_TRANSITION },
     "border-color-shift": { borderColor: colors.roles.primary, transition: HOVER_TRANSITION },
     "scale-1-02": { transform: "scale(1.02)", transition: HOVER_TRANSITION },
     "background-tint": { backgroundColor: brand[50], transition: HOVER_TRANSITION },
@@ -236,7 +236,7 @@ export function generateSignature(
 
   // Icon container
   const iconCss: Record<SignatureSettings["iconContainer"], CssRecipe> = {
-    bare: { color: colors.roles.primary },
+    bare: { color: iconInk },
     "tinted-circle": {
       width: ICON_CONTAINER_SIZE,
       height: ICON_CONTAINER_SIZE,
@@ -261,11 +261,12 @@ export function generateSignature(
     },
   };
 
-  // Focus ring
+  // Focus ring: the brand step that reads at 3:1, or the dark foreground color for brands close to the error red.
+  const ringColor = colors.brandReport.focus;
   const focusCss: Record<SignatureSettings["focusRing"], CssRecipe> = {
-    "offset-ring": { outline: `2px solid ${brand[500]}`, outlineOffset: 2 },
-    "soft-ring": { outline: "none", boxShadow: `0 0 0 4px ${withAlpha(brand[500], 0.3)}` },
-    "thick-outline": { outline: `3px solid ${brand[600]}`, outlineOffset: 0 },
+    "offset-ring": { outline: `2px solid ${ringColor}`, outlineOffset: 2 },
+    "soft-ring": { outline: "none", boxShadow: `0 0 0 4px ${withAlpha(ringColor, 0.3)}` },
+    "thick-outline": { outline: `3px solid ${ringColor}`, outlineOffset: 0 },
   };
 
   // Divider

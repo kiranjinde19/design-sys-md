@@ -2,7 +2,8 @@
 
 import { Trash2 } from "lucide-react";
 import { useDesignSystem } from "@/lib/design-system";
-import { pickReadableText } from "@/lib/design-system/contrast";
+import { contrastRatio, pickReadableText } from "@/lib/design-system/contrast";
+import { hexToOklch } from "@/lib/design-system/color-math";
 import { cn } from "@/lib/utils";
 
 /**
@@ -14,12 +15,30 @@ export function BrandNotice() {
   const report = tokens.colors.brandReport;
   const ink = tokens.colors.neutral[900];
   const exactText = pickReadableText(report.typed, "#FFFFFF", ink);
+  const exactIsWhite = exactText.toUpperCase() === "#FFFFFF";
+  // How far the adjusted color moved, in OKLCH lightness.
+  const change = Math.abs(hexToOklch(report.typed).l - hexToOklch(report.adjusted).l);
+  const size = change >= 0.12 ? "a lot" : "a little";
+  // Dark text on the typed color is a clear win when it reaches AAA (7:1).
+  const recommendExact = !exactIsWhite && contrastRatio(exactText, report.typed) >= 7;
   const options = [
-    { mode: "exact" as const, color: report.typed, text: exactText, label: "Keep my exact color, dark text" },
-    { mode: "adjusted" as const, color: report.adjusted, text: "#FFFFFF", label: `Adjust slightly so white text passes: ${report.adjusted}` },
+    {
+      mode: "exact" as const,
+      color: report.typed,
+      text: exactText,
+      label: exactIsWhite ? "Keep my exact color" : "Keep my exact color, dark text",
+      detail: report.typed,
+      recommended: recommendExact,
+    },
+    {
+      mode: "adjusted" as const,
+      color: report.adjusted,
+      text: "#FFFFFF",
+      label: `Darken ${size} so white text passes`,
+      detail: `${report.typed} to ${report.adjusted}`,
+      recommended: false,
+    },
   ];
-  // The first option says "dark text" only when dark text is what is used.
-  options[0].label = exactText.toUpperCase() === "#FFFFFF" ? "Keep my exact color" : "Keep my exact color, dark text";
 
   return (
     <div className="space-y-3">
@@ -42,7 +61,11 @@ export function BrandNotice() {
                   <span className="inline-flex h-8 items-center rounded-[10px] px-3 text-sm font-medium" style={{ background: option.color, color: option.text }}>
                     Button
                   </span>
-                  <span className="text-muted-foreground">{option.label}</span>
+                  <span className="text-muted-foreground">
+                    {option.label}
+                    {option.recommended ? <span className="font-medium text-foreground">{" "}(Recommended)</span> : null}
+                    <span className="mt-0.5 block font-mono">{option.detail}</span>
+                  </span>
                 </button>
               );
             })}
@@ -57,7 +80,7 @@ export function BrandNotice() {
       {report.nearError ? (
         <p className="flex items-start gap-2 text-xs leading-4 text-muted-foreground">
           <Trash2 aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-          This brand is close to the error red, so destructive buttons use a tinted style (light red background, dark red text, a trash icon). Solid red is kept for confirmation dialogs.
+          This brand is close to the error red, so destructive buttons use a tinted style (light red background, dark red text, a trash icon) and solid red is kept for confirmation dialogs. Focus rings use the dark text color so a focused field never looks like an error, and errors always show an icon and a message as well as color.
         </p>
       ) : null}
     </div>

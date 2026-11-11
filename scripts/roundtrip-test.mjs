@@ -221,3 +221,27 @@ test("a data format version 1 file (no brand mode) still imports, as exact", () 
   assert.equal(result.settings.colors.brandMode, "exact");
   assert.equal(result.settings.colors.brand, "#E54848");
 });
+
+test("a brand close to the error red uses the foreground color for focus, and says so in the file", () => {
+  const red = createDesignSystem(applyPatch(saas, { colors: { brand: "#E54848" } }));
+  assert.equal(red.tokens.colors.brandReport.focus, red.tokens.colors.roles.foreground);
+  assert.equal(red.tokens.colors.roles.ring, red.tokens.colors.roles.foreground);
+  assert.match(red.tokens.signature.focusRing.css.outline, new RegExp(red.tokens.colors.roles.foreground.replace("#", "#"), "i"));
+  for (const stack of STACKS) {
+    const file = generateSkillFile(red, { stack, presetId: "saas-clean" }).skill;
+    assert.match(file, /focus ring is the `foreground` color, never brand red/);
+  }
+  const teal = createDesignSystem(applyPatch(saas, { colors: { brand: "#0F766E" } }));
+  assert.notEqual(teal.tokens.colors.brandReport.focus, teal.tokens.colors.roles.foreground);
+  assert.doesNotMatch(generateSkillFile(teal, { stack: "html-css", presetId: "saas-clean" }).skill, /never brand red/);
+});
+
+test("shadow levels: cards 1, hover 2, menus 3, toasts 4, dialogs 5", () => {
+  const ds = createDesignSystem(applyPatch(saas, { signature: { cardStyle: "soft-shadow" }, elevation: { levels: 5 } }));
+  const shadows = ds.tokens.elevation.shadows;
+  assert.equal(ds.tokens.signature.cardStyle.css.boxShadow, shadows[1].css);
+  assert.equal(ds.tokens.signature.hover.css.boxShadow, shadows[2].css);
+  const file = generateSkillFile(ds, { stack: "html-css", presetId: "saas-clean" }).skill;
+  assert.match(file, /\.dialog ?\{[^}]*var\(--shadow-5\)/);
+  assert.match(file, /\.toast ?\{[^}]*var\(--shadow-4\)/);
+});

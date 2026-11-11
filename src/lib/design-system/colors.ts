@@ -453,11 +453,13 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
   const focusSurfaces = [background, brand[50], card];
   const FOCUS_STEPS = [500, 600, 700, 800, 900] as const;
   const focusStep = FOCUS_STEPS.find((step) => focusSurfaces.every((surface) => contrastRatio(brand[step], surface) >= 3));
-  const focus = focusStep === undefined ? ink : brand[focusStep];
-  const primaryText = readable(primary);
   const errorHue = hexToOklch(SEMANTIC_ANCHORS.error).h;
   const brandOklch = hexToOklch(effective);
   const nearError = brandOklch.c > 0.06 && hueDistance(brandOklch.h, errorHue) < ERROR_CLASH_DEGREES;
+  // A brand close to the error red would make a focused field look like an error field, so focus is the
+  // neutral dark foreground color then.
+  const focus = nearError || focusStep === undefined ? foreground : brand[focusStep];
+  const primaryText = readable(primary);
   const brandReport: BrandReport = {
     typed,
     mode: settings.brandMode === "adjusted" ? "adjusted" : "exact",
@@ -493,7 +495,7 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     "destructive-foreground": readable(destructive),
     border: resolve(r.border),
     input,
-    ring: contrastRatio(resolve(r.ring), background) >= 3 && contrastRatio(resolve(r.ring), card) >= 3 ? resolve(r.ring) : focus,
+    ring: !nearError && contrastRatio(resolve(r.ring), background) >= 3 && contrastRatio(resolve(r.ring), card) >= 3 ? resolve(r.ring) : focus,
     "chart-1": charts[0],
     "chart-2": charts[1],
     "chart-3": charts[2],
@@ -507,7 +509,7 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     "sidebar-accent": accentFill,
     "sidebar-accent-foreground": onQuiet(accentFill),
     "sidebar-border": resolve(r.border),
-    "sidebar-ring": contrastRatio(resolve(r.ring), background) >= 3 ? resolve(r.ring) : focus,
+    "sidebar-ring": !nearError && contrastRatio(resolve(r.ring), background) >= 3 ? resolve(r.ring) : focus,
   };
 
   type Surface = ColorRoleTokenName | { name: "tinted-tile"; hex: string };

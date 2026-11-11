@@ -256,7 +256,7 @@ export function tokensSection(ctx: SkillContext): string[] {
   const sp = (px: number) => (tw ? `\`${unit(px)}\`` : `${px}px`);
   const shadows = elevation.shadows
     .filter((s) => s.level > 0)
-    .map((s) => `${tw ? `\`${shadowClass(s.level)}\`` : `\`--shadow-${s.level}\``} ${["resting cards", "raised cards, hover", "dropdowns, popovers", "dialogs", "toasts, drag and drop"][s.level - 1] ?? ""}`)
+    .map((s) => `${tw ? `\`${shadowClass(s.level)}\`` : `\`--shadow-${s.level}\``} ${["resting cards", "raised cards, hover", "dropdowns, popovers", "toasts", "dialogs, drag and drop"][s.level - 1] ?? ""}`)
     .join("; ");
 
   return lines(

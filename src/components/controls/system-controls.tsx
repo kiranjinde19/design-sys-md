@@ -66,7 +66,7 @@ export function ColorsControls({ afterBrand }: { afterBrand?: ReactNode }) {
   const { colors } = settings;
   return (
     <div className="space-y-4">
-      <HexColorField label="Brand color" value={colors.brand} onCommit={(brand) => update({ colors: { brand } })} />
+      <HexColorField label="Brand color" value={colors.brand} onCommit={(brand) => update({ colors: { brand, brandMode: "exact" } })} />
       {afterBrand}
       <SecondaryColor />
       <Choice<NeutralTone>
