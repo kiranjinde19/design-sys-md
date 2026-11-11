@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Design Sys.md: Colors editor open</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#14171C}
+a{color:#4F46E5}a:hover{color:#3C35CD}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #6466FB;outline-offset:2px}
+input::placeholder{color:#73777D;opacity:1}
+</style>
+</helmet>
+<div style="min-height:940px;background:#FFFFFF;color:#14171C;font-size:16px;line-height:24px">
+
+<header style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;box-sizing:border-box;min-height:56px;padding:8px 32px;background:#FFFFFF;border-bottom:1px solid #E0E6ED">
+  <div style="display:flex;align-items:center;gap:12px">
+    <span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;background:#F4F6FF;border:1px solid #E1E6FF;color:#3830BF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="4" rx="1"></rect><rect x="4" y="10" width="10" height="4" rx="1"></rect><rect x="4" y="16" width="13" height="4" rx="1"></rect></svg></span>
+    <span style="font-size:16px;line-height:24px;font-weight:600">Design Sys.md</span>
+  </div>
+  <div role="group" aria-label="Preset" style="display:inline-flex;gap:4px;padding:4px;background:#EFF5FC;border-radius:10px">
+    <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:#FFFFFF;color:#14171C;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;box-shadow:0px 1px 2px 0px rgb(20 23 28 / 0.06),0px 2px 4px 0px rgb(20 23 28 / 0.04);cursor:pointer">SaaS Clean</button>
+    <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:transparent;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;cursor:pointer">Blank slate</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:transparent;color:#4F46E5;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m17 8-5-5-5 5"></path><path d="M12 3v12"></path></svg>Import file</button>
+    <button type="button" aria-label="Switch to dark mode" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid transparent;border-radius:10px;background:#E0E6ED;color:#14171C;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg></button>
+    <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:#4F46E5;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path><path d="M12 15V3"></path></svg>Export file</button>
+  </div>
+</header>
+
+<main style="max-width:1440px;margin:0 auto;box-sizing:border-box;padding:32px;display:flex;flex-direction:column;gap:16px">
+
+  <a href="Main.dc.html" style="display:inline-flex;align-items:center;gap:4px;align-self:flex-start;font-size:14px;line-height:20px;font-weight:500;text-decoration:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>Back to board</a>
+
+  <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:stretch">
+
+    <!-- System list -->
+    <nav aria-label="Design systems" style="flex:0 0 224px;display:flex;flex-direction:column;gap:8px">
+      <button type="button" aria-current="step" style="display:flex;align-items:center;gap:8px;box-sizing:border-box;height:44px;padding:0 11px;background:#F4F6FF;border:2px solid #4F46E5;border-radius:10px;text-align:left;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;color:#14171C;cursor:pointer"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">1</span>Colors</button>
+      <button type="button" style="display:flex;align-items:center;gap:8px;box-sizing:border-box;height:44px;padding:0 12px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:10px;text-align:left;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;color:#14171C;cursor:pointer"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">2</span>Typography<svg role="img" aria-label="Reviewed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007A30" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><path d="M20 6 9 17l-5-5"></path></svg></button>
+      <button type="button" style="display:flex;align-items:center;gap:8px;box-sizing:border-box;height:44px;padding:0 12px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:10px;text-align:left;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;color:#14171C;cursor:pointer"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">3</span>Radius<svg role="img" aria-label="Reviewed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007A30" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><path d="M20 6 9 17l-5-5"></path></svg></button>
+      <button type="button" style="display:flex;align-items:center;gap:8px;box-sizing:border-box;height:44px;padding:0 12px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:10px;text-align:left;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;color:#14171C;cursor:pointer"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">4</span>Spacing<svg role="img" aria-label="Reviewed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007A30" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><path d="M20 6 9 17l-5-5"></path></svg></button>
+      <button type="button" style="display:flex;align-items:center;gap:8px;box-sizing:border-box;height:44px;padding:0 12px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:10px;text-align:left;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;color:#14171C;cursor:pointer"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">5</span>Borders</button>
+      <button type="button" style="display:flex;align-items:center;gap:8px;box-sizing:border-box;height:44px;padding:0 12px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:10px;text-align:left;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;color:#14171C;cursor:pointer"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">6</span>Shadows</button>
+      <button type="button" style="display:flex;align-items:center;gap:8px;box-sizing:border-box;height:44px;padding:0 12px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:10px;text-align:left;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;color:#14171C;cursor:pointer"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">7</span>Buttons and inputs</button>
+      <button type="button" style="display:flex;align-items:center;gap:8px;box-sizing:border-box;height:44px;padding:0 12px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:10px;text-align:left;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;color:#14171C;cursor:pointer"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">8</span>Signature details</button>
+      <button type="button" style="display:flex;align-items:center;gap:8px;box-sizing:border-box;height:44px;padding:0 12px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:10px;text-align:left;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;color:#14171C;cursor:pointer"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">9</span>Tone of voice</button>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:12px;line-height:16px;color:#50545A">SaaS Clean, edited</span>
+        <button type="button" style="align-self:flex-start;height:32px;padding:0 12px;border:0;border-radius:10px;background:transparent;color:#4F46E5;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;cursor:pointer">Reset to SaaS Clean</button>
+      </div>
+    </nav>
+
+    <!-- Colors editor -->
+    <section aria-label="Colors editor" style="flex:0 0 400px;position:relative;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;padding:24px;background:#FFFFFF;border:1px solid #E0E6ED;border-radius:16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <h2 style="margin:0;font-size:24px;line-height:32px;font-weight:600;letter-spacing:-0.01em">Colors</h2>
+          <p style="margin:4px 0 0;font-size:14px;line-height:20px;color:#50545A">Pick one brand color. Everything else is built from it.</p>
+        </div>
+        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500;white-space:nowrap">1 of 9</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label for="brand-hex" style="font-size:14px;line-height:20px;font-weight:500">Brand color</label>
+        <div style="display:flex;gap:8px">
+          <button type="button" aria-label="Open color picker" style="width:40px;height:40px;box-sizing:border-box;border:1px solid #898E95;border-radius:10px;background:#4F46E5;cursor:pointer"></button>
+          <input id="brand-hex" type="text" value="#4F46E5" style="height:40px;width:140px;box-sizing:border-box;padding:8px 12px;border:1px solid #898E95;border-radius:10px;background:#FFFFFF;color:#14171C;font-family:inherit;font-size:16px;line-height:24px;font-variant-numeric:tabular-nums">
+        </div>
+        <span aria-hidden="true" style="position:relative;display:block;height:12px;border-radius:9999px;background:linear-gradient(90deg,#FF0000,#FFFF00,#00FF00,#00FFFF,#0000FF,#FF00FF,#FF0000)"><span style="position:absolute;left:66%;top:-2px;width:16px;height:16px;box-sizing:border-box;border-radius:9999px;background:#4F46E5;border:2px solid #FFFFFF;box-shadow:0px 1px 3px 0px rgb(20 23 28 / 0.07),0px 4px 8px -1px rgb(20 23 28 / 0.06)"></span></span>
+        <p style="margin:0;font-size:12px;line-height:16px;color:#50545A">Step 600 is exactly this color.</p>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:14px;line-height:20px;font-weight:500">Neutral tone</span>
+        <div role="group" aria-label="Neutral tone" style="display:inline-flex;align-self:flex-start;gap:4px;padding:4px;background:#EFF5FC;border-radius:10px">
+          <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:#FFFFFF;color:#14171C;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;box-shadow:0px 1px 2px 0px rgb(20 23 28 / 0.06),0px 2px 4px 0px rgb(20 23 28 / 0.04);cursor:pointer">Cool</button>
+          <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:transparent;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;cursor:pointer">Warm</button>
+          <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:transparent;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;cursor:pointer">Pure</button>
+          <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:transparent;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;cursor:pointer">Brand</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:14px;line-height:20px;font-weight:500">Brand scale</span>
+        <div aria-hidden="true" style="display:flex;gap:4px">
+          <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:100%;height:32px;border-radius:5px;background:#F4F6FF;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.06)"></span><span style="font-size:12px;line-height:16px;color:#50545A">50</span></span>
+          <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:100%;height:32px;border-radius:5px;background:#E1E6FF;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.06)"></span><span style="font-size:12px;line-height:16px;color:#50545A">100</span></span>
+          <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:100%;height:32px;border-radius:5px;background:#CAD2FF"></span><span style="font-size:12px;line-height:16px;color:#50545A">200</span></span>
+          <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:100%;height:32px;border-radius:5px;background:#A9B4FF"></span><span style="font-size:12px;line-height:16px;color:#50545A">300</span></span>
+          <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:100%;height:32px;border-radius:5px;background:#828DFF"></span><span style="font-size:12px;line-height:16px;color:#50545A">400</span></span>
+          <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:100%;height:32px;border-radius:5px;background:#6466FB"></span><span style="font-size:12px;line-height:16px;color:#50545A">500</span></span>
+          <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:100%;height:32px;border-radius:5px;background:#4F46E5;outline:2px solid #14171C;outline-offset:1px"></span><span style="font-size:12px;line-height:16px;color:#14171C;font-weight:600">600</span></span>
+          <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:100%;height:32px;border-radius:5px;background:#3830BF"></span><span style="font-size:12px;line-height:16px;color:#50545A">700</span></span>
+          <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:100%;height:32px;border-radius:5px;background:#262091"></span><span style="font-size:12px;line-height:16px;color:#50545A">800</span></span>
+          <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:100%;height:32px;border-radius:5px;background:#171262"></span><span style="font-size:12px;line-height:16px;color:#50545A">900</span></span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px"><span style="font-size:14px;line-height:20px;font-weight:500">Roles</span><span style="font-size:12px;line-height:16px;color:#50545A">Drag a swatch onto a role</span></div>
+
+        <div style="position:relative;display:flex;align-items:center;gap:12px;box-sizing:border-box;min-height:52px;padding:7px 11px;background:#F4F6FF;border:2px dashed #6466FB;border-radius:10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6F747A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
+          <span aria-hidden="true" style="width:24px;height:24px;border-radius:5px;background:#4F46E5;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.12)"></span>
+          <span style="display:flex;flex-direction:column"><span style="font-size:14px;line-height:20px;font-weight:500">Primary</span><span style="font-size:12px;line-height:16px;color:#50545A">Now brand 600</span></span>
+          <span aria-hidden="true" style="position:absolute;right:12px;top:-6px;display:inline-flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border-radius:10px;background:#FFFFFF;border:1px solid #CFD5DC;box-shadow:0px 4px 10px -1px rgb(20 23 28 / 0.09),0px 16px 32px -4px rgb(20 23 28 / 0.1);transform:rotate(-3deg)"><span style="width:24px;height:24px;border-radius:5px;background:#3830BF"></span><span style="font-size:14px;line-height:20px;font-weight:500">brand 700</span></span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;box-sizing:border-box;min-height:52px;padding:8px 12px;background:#FFFFFF;border:1px solid #E0E6ED;border-radius:10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6F747A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
+          <span aria-hidden="true" style="width:24px;height:24px;border-radius:5px;background:#F4F6FF;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.12)"></span>
+          <span style="display:flex;flex-direction:column"><span style="font-size:14px;line-height:20px;font-weight:500">Surface</span><span style="font-size:12px;line-height:16px;color:#50545A">brand 50, #F4F6FF</span></span>
+          <span style="margin-left:auto;padding:2px 8px;border-radius:9999px;background:#F1FAF2;color:#007A30;font-size:12px;line-height:16px;font-weight:500;white-space:nowrap">Text AAA</span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;box-sizing:border-box;min-height:52px;padding:8px 12px;background:#FFFFFF;border:1px solid #E0E6ED;border-radius:10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6F747A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
+          <span aria-hidden="true" style="width:24px;height:24px;border-radius:5px;background:#14171C;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.12)"></span>
+          <span style="display:flex;flex-direction:column"><span style="font-size:14px;line-height:20px;font-weight:500">Text</span><span style="font-size:12px;line-height:16px;color:#50545A">neutral 900, #14171C</span></span>
+          <span style="margin-left:auto;padding:2px 8px;border-radius:9999px;background:#F1FAF2;color:#007A30;font-size:12px;line-height:16px;font-weight:500;white-space:nowrap">17.96 AAA</span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;box-sizing:border-box;min-height:52px;padding:8px 12px;background:#FFFFFF;border:1px solid #E0E6ED;border-radius:10px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6F747A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
+          <span aria-hidden="true" style="width:24px;height:24px;border-radius:5px;background:#898E95;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.12)"></span>
+          <span style="display:flex;flex-direction:column"><span style="font-size:14px;line-height:20px;font-weight:500">Input border</span><span style="font-size:12px;line-height:16px;color:#50545A">#898E95, 3:1 on every surface</span></span>
+          <span style="margin-left:auto;padding:2px 8px;border-radius:9999px;background:#F1FAF2;color:#007A30;font-size:12px;line-height:16px;font-weight:500;white-space:nowrap">3.00 pass</span>
+        </div>
+      </div>
+
+      <span style="display:inline-flex;align-items:center;gap:4px;align-self:flex-start;padding:2px 8px;border-radius:9999px;background:#F1FAF2;color:#007A30;font-size:12px;line-height:16px;font-weight:500"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Every text pair passes AA</span>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:8px">
+        <a href="Main.dc.html" style="display:inline-flex;align-items:center;height:40px;padding:0 16px;border-radius:10px;font-size:16px;line-height:24px;font-weight:500;text-decoration:none">Back to board</a>
+        <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:#E0E6ED;color:#14171C;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Next: Typography<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </div>
+    </section>
+
+    <!-- Live preview: Buttons and states -->
+    <section aria-label="Live preview" style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;box-sizing:border-box;background:#FFFFFF;border:1px solid #E0E6ED;border-radius:16px;overflow:hidden">
+      <div style="display:flex;align-items:flex-end;gap:4px;padding:8px 16px 0;border-bottom:1px solid #E0E6ED;overflow-x:auto">
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Pricing</button>
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid #4F46E5;background:none;color:#14171C;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Buttons and states</button>
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Forms</button>
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Tables</button>
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Dashboard</button>
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Charts</button>
+        <span style="margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:8px;font-size:12px;line-height:16px;color:#50545A;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:9999px;background:#007A30"></span>Live preview</span>
+      </div>
+
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:16px;background:#F7FAFF">
+        <div style="display:flex;justify-content:space-between;gap:16px;font-size:12px;line-height:16px;color:#50545A"><span>Buttons, inputs and controls, sample content</span><span>Changes as you edit</span></div>
+        <div style="flex:1;min-height:0;box-sizing:border-box;overflow:auto;display:flex;flex-direction:column;gap:24px;padding:24px;background:#FFFFFF;border:1px solid #E0E6ED;border-radius:10px;box-shadow:0px 1px 3px 0px rgb(20 23 28 / 0.07),0px 4px 8px -1px rgb(20 23 28 / 0.06)">
+
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <h3 style="margin:0;font-size:20px;line-height:28px;font-weight:600;letter-spacing:-0.005em">Buttons</h3>
+            <div style="display:grid;grid-template-columns:88px repeat(5,minmax(0,1fr));gap:12px;align-items:center">
+              <span></span>
+              <span style="font-size:12px;line-height:16px;color:#50545A">Default</span>
+              <span style="font-size:12px;line-height:16px;color:#50545A">Hover</span>
+              <span style="font-size:12px;line-height:16px;color:#50545A">Pressed</span>
+              <span style="font-size:12px;line-height:16px;color:#50545A">Focus</span>
+              <span style="font-size:12px;line-height:16px;color:#50545A">Disabled</span>
+
+              <span style="font-size:14px;line-height:20px;font-weight:500">Primary</span>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#4F46E5;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#3C35CD;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#2A24B3;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#4F46E5;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer;outline:2px solid #6466FB;outline-offset:2px">Button</button>
+              <button type="button" disabled style="height:40px;border:1px solid transparent;border-radius:10px;background:#EFF5FC;color:#9CA1A8;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:not-allowed">Button</button>
+
+              <span style="font-size:14px;line-height:20px;font-weight:500">Secondary</span>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#E0E6ED;color:#14171C;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#CFD5DC;color:#14171C;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#9CA1A8;color:#14171C;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#E0E6ED;color:#14171C;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer;outline:2px solid #6466FB;outline-offset:2px">Button</button>
+              <button type="button" disabled style="height:40px;border:1px solid transparent;border-radius:10px;background:#EFF5FC;color:#9CA1A8;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:not-allowed">Button</button>
+
+              <span style="font-size:14px;line-height:20px;font-weight:500">Tertiary</span>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:transparent;color:#4F46E5;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#F4F6FF;color:#4F46E5;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#E1E6FF;color:#4F46E5;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:transparent;color:#4F46E5;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer;outline:2px solid #6466FB;outline-offset:2px">Button</button>
+              <button type="button" disabled style="height:40px;border:1px solid transparent;border-radius:10px;background:transparent;color:#9CA1A8;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:not-allowed">Button</button>
+
+              <span style="font-size:14px;line-height:20px;font-weight:500">Destructive</span>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#DC2626;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#C40124;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#A6001A;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Button</button>
+              <button type="button" style="height:40px;border:1px solid transparent;border-radius:10px;background:#DC2626;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer;outline:2px solid #6466FB;outline-offset:2px">Button</button>
+              <button type="button" disabled style="height:40px;border:1px solid transparent;border-radius:10px;background:#EFF5FC;color:#9CA1A8;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:not-allowed">Button</button>
+            </div>
+          </div>
+
+          <hr style="height:0;margin:0;border:0;border-top:1px solid #E0E6ED">
+
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <h3 style="margin:0;font-size:20px;line-height:28px;font-weight:600;letter-spacing:-0.005em">Inputs</h3>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <label for="in-default" style="font-size:14px;line-height:20px;font-weight:500">Email</label>
+                <input id="in-default" type="text" placeholder="name@company.com" style="height:40px;width:100%;box-sizing:border-box;padding:8px 12px;border:1px solid #898E95;border-radius:10px;background:#FFFFFF;color:#14171C;font-family:inherit;font-size:16px;line-height:24px">
+                <p style="margin:0;font-size:14px;line-height:20px;color:#50545A">Helper text</p>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <label for="in-focus" style="font-size:14px;line-height:20px;font-weight:500">Email, focused</label>
+                <input id="in-focus" type="text" placeholder="name@company.com" style="height:40px;width:100%;box-sizing:border-box;padding:8px 12px;border:1px solid #4F46E5;border-radius:10px;background:#FFFFFF;color:#14171C;font-family:inherit;font-size:16px;line-height:24px;outline:2px solid #6466FB;outline-offset:2px">
+                <p style="margin:0;font-size:14px;line-height:20px;color:#50545A">Helper text</p>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <label for="in-error" style="font-size:14px;line-height:20px;font-weight:500">Email, error</label>
+                <input id="in-error" type="text" placeholder="name@company.com" aria-invalid="true" style="height:40px;width:100%;box-sizing:border-box;padding:8px 12px;border:1px solid #DC2626;border-radius:10px;background:#FFFFFF;color:#14171C;font-family:inherit;font-size:16px;line-height:24px">
+                <p style="margin:0;font-size:14px;line-height:20px;color:#AD001D">Enter a valid email.</p>
+              </div>
+            </div>
+          </div>
+
+          <hr style="height:0;margin:0;border:0;border-top:1px solid #E0E6ED">
+
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <h3 style="margin:0;font-size:20px;line-height:28px;font-weight:600;letter-spacing:-0.005em">Selection controls</h3>
+            <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+              <label style="display:inline-flex;align-items:center;gap:8px;font-size:16px;line-height:24px"><input type="checkbox" checked style="width:16px;height:16px;margin:0;accent-color:#4F46E5">Checkbox</label>
+              <label style="display:inline-flex;align-items:center;gap:8px;font-size:16px;line-height:24px"><input type="radio" name="sample-radio" checked style="width:16px;height:16px;margin:0;accent-color:#4F46E5">Radio</label>
+              <label style="display:inline-flex;align-items:center;gap:8px;font-size:16px;line-height:24px"><button type="button" role="switch" aria-checked="true" style="display:inline-flex;align-items:center;box-sizing:border-box;width:36px;height:20px;padding:2px;border:1px solid #4F46E5;border-radius:9999px;background:#4F46E5;cursor:pointer"><span style="display:block;width:14px;height:14px;border-radius:9999px;background:#FFFFFF;transform:translateX(16px)"></span></button>Switch</label>
+            </div>
+            <p style="margin:0;font-size:14px;line-height:20px;color:#50545A">Use a switch for settings that apply instantly. Use a checkbox inside a form.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;border-top:1px solid #E0E6ED">
+        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">Inter</span>
+        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">Indigo #4F46E5</span>
+        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">Radius 10</span>
+        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">4px grid</span>
+        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">Soft shadows</span>
+        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">Border beam</span>
+      </div>
+    </section>
+
+  </div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":940}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
