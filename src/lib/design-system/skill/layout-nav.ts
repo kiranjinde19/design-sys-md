@@ -46,11 +46,13 @@ export function layoutSection(ctx: SkillContext): string[] {
   return lines(
     "## Layout and navigation",
     "",
-    `Shell: sidebar (${layout.sidebar.width}px, ${layout.sidebar.collapsed}px collapsed to icons), a ${layout.headerHeight}px top bar, then centered content at most ${layout.maxContentWidth}px wide. Page padding ${pad.base}px on phones, ${pad.md}px from md, ${pad.lg}px from lg; sections ${spacing.semantic.sectionGap}px apart. Breakpoints: sm ${bp.sm}px (two columns), md ${bp.md}px (sidebar appears), lg ${bp.lg}px (three or four columns), xl ${bp.xl}px. ${ctx.shadcn ? "" : "Below md the sidebar is a menu opened from an icon button in the top bar."}`,
+    tw
+      ? `Shell: sidebar (${layout.sidebar.width}px, ${layout.sidebar.collapsed}px collapsed to icons), a ${layout.headerHeight}px top bar, then centered content at most ${layout.maxContentWidth}px wide. Page padding ${pad.base}px on phones, ${pad.md}px from md, ${pad.lg}px from lg; sections ${spacing.semantic.sectionGap}px apart. Breakpoints: sm ${bp.sm}px (two columns), md ${bp.md}px (sidebar appears), lg ${bp.lg}px (three or four columns), xl ${bp.xl}px. ${ctx.shadcn ? "" : "Below md the sidebar is a menu opened from an icon button in the top bar."}`
+      : `Shell: sidebar (\`--sidebar-w\`, ${layout.sidebar.collapsed}px collapsed to icons), a \`--header-h\` top bar, then centered content at most \`--content-max\` wide, padded by \`--page-pad\`, sections \`--gap-section\` apart. Breakpoints: sm ${bp.sm}px (two columns), md ${bp.md}px (sidebar appears), lg ${bp.lg}px (three or four columns), xl ${bp.xl}px. Below md the sidebar is a menu opened from an icon button in the top bar.`,
     "",
     `**Public and marketing pages** (pricing, landing, sign in): no sidebar. A simple ${layout.headerHeight}px top bar with the logo and at most one action: secondary or tertiary when the page body has a primary button, primary only when it has none, and never \`cta\` (at most one action per screen has it). Then centered content at most ${layout.maxContentWidth}px wide with the same page padding.`,
     "",
-    `Sidebar roles: \`sidebar\` the panel, \`sidebar-accent\` the hovered or current item, \`sidebar-primary\` an accent mark (logo, active icon), \`sidebar-border\` its edge. One current item (\`aria-current="page"\`), muted ${tw ? "`text-xs`" : "`--text-xs`"} group labels, one level only.${tw ? "" : " Markup: `.shell` holds `.sidebar` (with `.nav-item` links) and `.shell__main` (`.header`, then `.page`)."}`,
+    `Sidebar roles: \`sidebar\` the panel, \`sidebar-accent\` the hovered or current item, \`sidebar-primary\` an accent mark (logo, active icon), \`sidebar-border\` its edge. One current item (\`aria-current="page"\`), muted ${tw ? "`text-xs`" : "`--text-xs`"} group labels, one level only.`,
     "",
     fence(tw ? "tsx" : "css", tight(ctx, compact(code))),
     "",

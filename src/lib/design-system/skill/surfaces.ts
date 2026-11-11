@@ -10,11 +10,9 @@ function cardsSection(ctx: SkillContext): string[] {
   return lines(
     "### Cards",
     "",
-    `A card is \`card\` (see Signature details): padding ${spacing.semantic.cardPadding}px, ${spacing.semantic.stackGap}px between parts, title ${title.px}px in the heading font, muted body text, one primary action at the bottom.`,
+    `A card is \`card\` (see Signature details): title in the heading font, muted body text, one primary action at the bottom.`,
     "",
-    fence(tw ? "tsx" : "html", tw
-      ? `<div className="card card-hover flex flex-col gap-${unit(spacing.semantic.stackGap)}"><span className="icon-tile"><Icon className="size-${unit(icons.sizes.md)}" /></span><h3 className="font-heading text-${title.name} ${weightClass(typography.headingWeight)} tracking-heading-xs">Title</h3><p className="text-sm ${TILE}">Text.</p></div>`
-      : `<div class="card card-hover"><span class="icon-tile">…</span><h3>Title</h3><p>Text.</p></div>`),
+    tw ? fence("tsx", [`<div className="card card-hover flex flex-col gap-${unit(spacing.semantic.stackGap)}"><span className="icon-tile"><Icon className="size-${unit(icons.sizes.md)}" /></span><h3 className="font-heading text-${title.name} ${weightClass(typography.headingWeight)} tracking-heading-xs">Title</h3><p className="text-sm ${TILE}">Text.</p></div>`]) : null,
     "",
   );
 }
@@ -25,7 +23,7 @@ function formsSection(ctx: SkillContext): string[] {
   return lines(
     "### Forms",
     "",
-    `One column, full width. Labels above fields (${spacing.semantic.inlineGap / 2}px), fields ${spacing.semantic.stackGap}px apart, primary button last. Helper text is small and muted. An error replaces it (${tw ? "" : "`field__help--error`, "}\`${statusRef(ctx, "error")}\`) and says what to fix; the field also gets the destructive border and \`aria-invalid\`, so color is never the only signal.`,
+    `One column, full width. Labels above fields, primary button last. Helper text is small and muted. An error replaces it (${tw ? "" : "`field__help--error`, "}\`${statusRef(ctx, "error")}\`) and says what to fix; the field also gets the destructive border and \`aria-invalid\`, so color is never the only signal.`,
     "",
     fence(tw ? "tsx" : "html", tw
       ? [`<form className="flex flex-col gap-${unit(spacing.semantic.stackGap)}"><div className="flex flex-col gap-${unit(spacing.semantic.inlineGap / 2)}">`, `  <label htmlFor="email" className="text-sm font-medium">Email</label>`, `  <input id="email" className="${inputClassString(ctx)}" aria-describedby="email-help" />`, `  <p id="email-help" className="text-sm ${TILE}">Helper text.</p>`, "</div></form>"]
@@ -77,11 +75,9 @@ function pricingSection(ctx: SkillContext): string[] {
   return lines(
     "### Pricing cards",
     "",
-    `Grid with ${spacing.semantic.stackGap}px gaps, equal height. The section title and intro are centered; everything inside the cards (plan name, description, price, feature list) is left aligned. Every plan is \`card card-hover\`. The recommended plan adds \`card-featured\`: a hovered featured card lifts and keeps its glow. Only it has the primary button with \`cta\`; the others are secondary. Price ${big.px}px, heading font, tabular figures.`,
+    `${tw ? "Grid" : "A `.plans` grid"} with ${spacing.semantic.stackGap}px gaps, equal height. The section title and intro are centered; everything inside the cards (plan name, description, price, feature list) is left aligned. Every plan is \`card card-hover\`. The recommended plan adds \`card-featured\`: a hovered featured card lifts and keeps its glow. Only it has the primary button with \`cta\`; the others are secondary. Price ${big.px}px, heading font, tabular figures.`,
     "",
-    fence(tw ? "tsx" : "html", tw
-      ? [`<div className="grid gap-${unit(spacing.semantic.stackGap)} md:grid-cols-3">`, `  <div className="card card-hover">…</div>`, `  <div className="card card-hover card-featured">…<Button variant="primary" className="cta">…</Button></div>`, "</div>"]
-      : [`<div class="plans"><div class="card card-hover">…</div><div class="card card-hover card-featured">…<button class="btn btn--primary cta">…</button></div></div>`]),
+    tw ? fence("tsx", [`<div className="grid gap-${unit(spacing.semantic.stackGap)} md:grid-cols-3">`, `  <div className="card card-hover">…</div>`, `  <div className="card card-hover card-featured">…<Button variant="primary" className="cta">…</Button></div>`, "</div>"]) : null,
     tw ? null : "",
     tw ? null : fence("css", tight(ctx, [`.plans { display: grid; gap: var(--gap-stack); } @media (min-width: ${ctx.t.layout.breakpoints.md}px) { .plans { grid-template-columns: repeat(3, 1fr); } }`])),
     "",

@@ -1,7 +1,7 @@
 import { SYSTEM_STACKS, nearestWeight } from "../fonts";
 import { selectedFontsUrl } from "../font-loading";
 import { SCALE_STEPS, type ColorScale, type FontToken, type SemanticName } from "../types";
-import { compactCss, fence, lines, recipeLines, remOf, shadowClass, spaceVar, unit, type SkillContext } from "./context";
+import { compactCss, fence, lines, recipeLines, remOf, shadowClass, spaceVar, tightCss, unit, type SkillContext } from "./context";
 
 /** Semantic scale steps written out. Enough for status text, badges and alerts. */
 const SEMANTIC_STEPS = [50, 600, 700, 800] as const;
@@ -222,7 +222,7 @@ function plainCss(ctx: SkillContext): string[] {
     pack(spacing.scale.map((step) => `--space-${step.key.replace(".", "_")}: ${step.px}px;`), 6),
     `  --control-h-sm: ${controls.buttons.height.sm}px; --control-h: ${controls.buttons.height.md}px; --control-h-lg: ${controls.buttons.height.lg}px; --button-px: ${spacing.semantic.buttonPaddingX}px; --button-py: ${spacing.semantic.buttonPaddingY}px; --input-px: ${spacing.semantic.inputPaddingX}px; --input-py: ${spacing.semantic.inputPaddingY}px;`,
     `  --border-w: ${ctx.t.borders.width}px; --gap-inline: ${spaceVar(ctx, spacing.semantic.inlineGap)}; --gap-stack: ${spaceVar(ctx, spacing.semantic.stackGap)}; --pad-card: ${spaceVar(ctx, spacing.semantic.cardPadding)}; --gap-section: ${spaceVar(ctx, spacing.semantic.sectionGap)};`,
-    `  --check-size: ${sel.size}px; --switch-w: ${sel.switch.width}px; --switch-h: ${sel.switch.height}px; --switch-thumb: ${sel.switch.thumb}px; --switch-pad: ${switchPad}px; --switch-travel: ${switchTravel}px; --row-h: ${rowHeight}px;`,
+    `  --check-size: ${sel.size}px; --mark-size: ${sel.size - 4}px; --dot-size: ${Math.round(sel.size / 2.5 / 2) * 2}px; --switch-w: ${sel.switch.width}px; --switch-h: ${sel.switch.height}px; --switch-thumb: ${sel.switch.thumb}px; --switch-pad: ${switchPad}px; --switch-travel: ${switchTravel}px; --row-h: ${rowHeight}px;`,
     `  --header-h: ${ctx.t.layout.headerHeight}px; --sidebar-w: ${ctx.t.layout.sidebar.width}px; --content-max: ${ctx.t.layout.maxContentWidth}px; --dialog-w: ${ctx.t.layout.dialogWidth}px;`,
     "}",
     "body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: var(--text-base); line-height: var(--leading-base); }",
@@ -250,7 +250,7 @@ export function tokensSection(ctx: SkillContext): string[] {
     "",
     tw ? `### ${ctx.shadcn ? "globals.css" : "src/index.css"} (Tailwind 4: tokens live in CSS, no tailwind.config)` : "### styles.css",
     "",
-    fence("css", tw ? tailwindCss(ctx) : plainCss(ctx)),
+    fence("css", tightCss(tw ? tailwindCss(ctx) : plainCss(ctx))),
     "",
     fontLoading(ctx),
     "### Type, radius, spacing, borders, shadows",
@@ -261,7 +261,7 @@ export function tokensSection(ctx: SkillContext): string[] {
     tw
       ? `- **Radius:** sm ${radius.sm}px \`rounded-sm\` checkboxes; md ${radius.md}px \`rounded-md\` buttons, inputs, selects, icon tiles; lg ${radius.lg}px \`rounded-lg\` cards, dialogs, popovers; full \`rounded-full\` radios, switches, avatars, badges.`
       : `- **Radius:** \`--radius-sm\` ${radius.sm}px checkboxes; \`--radius-md\` ${radius.md}px buttons, inputs, selects, icon tiles; \`--radius-lg\` ${radius.lg}px cards, dialogs, popovers; \`--radius-full\` radios, switches, avatars, badges.`,
-    `- **Spacing** (${spacing.base}px grid, ${spacing.density}): ladder ${spacing.scale.map((s) => s.px).join(", ")}${tw ? "; the class number is px divided by 4 (16px is `p-4`)" : " as `--space-N`"}. ${tw ? `Inline gap ${sp(spacing.semantic.inlineGap)}, stack gap ${sp(spacing.semantic.stackGap)}, button padding ${sp(spacing.semantic.buttonPaddingX)} by ${sp(spacing.semantic.buttonPaddingY)}, input padding ${sp(spacing.semantic.inputPaddingX)} by ${sp(spacing.semantic.inputPaddingY)}, card padding ${sp(spacing.semantic.cardPadding)}, section gap ${sp(spacing.semantic.sectionGap)}.` : `Roles: \`--gap-inline\` ${spacing.semantic.inlineGap}px, \`--gap-stack\` ${spacing.semantic.stackGap}px, \`--button-px\` and \`--button-py\`, \`--input-px\` and \`--input-py\`, \`--pad-card\` ${spacing.semantic.cardPadding}px, \`--gap-section\` ${spacing.semantic.sectionGap}px.`}`,
+    `- **Spacing** (${spacing.base}px grid, ${spacing.density}): ladder ${tw ? `${spacing.scale.map((s) => s.px).join(", ")}; the class number is px divided by 4 (16px is \`p-4\`)` : "`--space-N`"}. ${tw ? `Inline gap ${sp(spacing.semantic.inlineGap)}, stack gap ${sp(spacing.semantic.stackGap)}, button padding ${sp(spacing.semantic.buttonPaddingX)} by ${sp(spacing.semantic.buttonPaddingY)}, input padding ${sp(spacing.semantic.inputPaddingX)} by ${sp(spacing.semantic.inputPaddingY)}, card padding ${sp(spacing.semantic.cardPadding)}, section gap ${sp(spacing.semantic.sectionGap)}.` : `Roles: \`--gap-inline\`, \`--gap-stack\`, \`--button-px\` and \`--button-py\`, \`--input-px\` and \`--input-py\`, \`--pad-card\`, \`--gap-section\`.`}`,
     `- **Borders** ${borders.width}px. Dividers and card edges use ${tw ? "`border-border`" : "`var(--border)`"}. Form controls use ${tw ? "`border-input`" : "`var(--input)`"}, the lightest neutral that reaches 3:1 on every surface. Never \`border\` on a form control.`,
     `- **Shadows:** ${elevation.levels === 0 ? "off. Separate surfaces with borders and tints." : `${elevation.levels} levels, ${elevation.style}. ${shadows}.`}`,
     "",

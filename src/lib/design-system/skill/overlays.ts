@@ -6,25 +6,24 @@ import type { SemanticName } from "../types";
 
 /** Overlays and feedback for plain CSS: variables and classes the file defines, with no Tailwind names. */
 function overlaysCss(ctx: SkillContext): string[] {
-  const { colors, layout, elevation, typography } = ctx.t;
+  const { colors, layout, elevation } = ctx.t;
   const r = colors.roles;
   const lvl = (n: number) => `var(--shadow-${Math.min(n, elevation.levels)})`;
   const shadow = (n: number) => (elevation.levels > 0 ? `box-shadow: ${lvl(n)}; ` : "");
   const pct = Math.round(layout.overlayOpacity * 100);
   const popover = `border: var(--border-w) solid ${ctx.cssVar(r.border, "border", ["border"])}; border-radius: var(--radius-lg); background: ${ctx.cssVar(r.popover, "fill", ["popover"])}; color: ${ctx.cssVar(r["popover-foreground"], "text", ["popover-foreground"])};`;
   const muted = ctx.cssVar(r["muted-foreground"], "text");
-  const tint = (name: SemanticName) => `${ctx.cssVar(colors.semantic[name][50], "fill")}; color: var(--${name}-${onTint(colors.semantic[name])})`;
   const fg = ctx.cssVar(r.foreground, "text", ["foreground"]);
   const css = [
     `.overlay { position: fixed; inset: 0; background: color-mix(in srgb, ${fg} ${pct}%, transparent); }`,
     `.dialog, .toast { ${popover} }`,
     `.dialog { position: fixed; inset: 50% auto auto 50%; width: min(var(--dialog-w), 100%); padding: var(--pad-card); transform: translate(-50%, -50%); ${shadow(4)}}`,
-    `.dialog__title { margin: 0; font: ${typography.headingWeight} var(--text-lg)/var(--leading-lg) var(--font-heading); letter-spacing: var(--tracking-heading-xs); } .dialog__desc { margin: ${spaceVar(ctx, ctx.t.spacing.semantic.inlineGap / 2)} 0 0; font-size: var(--text-sm); color: ${muted}; }`,
+    `.dialog__desc { margin: ${spaceVar(ctx, ctx.t.spacing.semantic.inlineGap / 2)} 0 0; font-size: var(--text-sm); color: ${muted}; }`,
     `.dialog__footer { display: flex; justify-content: flex-end; gap: var(--gap-inline); margin-top: var(--pad-card); }`,
-    `.toast { display: flex; gap: var(--gap-stack); padding: var(--gap-stack); ${shadow(5)}} ${(["success", "error", "warning", "info"] as SemanticName[]).map((n) => `.toast--${n} .toast__icon { color: var(--${n}-700); }`).join(" ")}`,
+    `.toast { display: flex; gap: var(--gap-stack); padding: var(--gap-stack); ${shadow(5)}} .toast__icon { color: var(--tone); }`,
     `.tabs { display: flex; gap: var(--gap-stack); border-bottom: var(--border-w) solid ${ctx.cssVar(r.border, "border", ["border"])}; } .tab { height: var(--control-h); padding: 0 var(--input-px); border: 0; border-bottom: ${spaceVar(ctx, 2)} solid transparent; background: none; color: ${muted}; font: ${ctx.t.controls.buttons.fontWeight} var(--text-sm) var(--font-body); cursor: pointer; } .tab[aria-selected="true"] { color: ${fg}; border-bottom-color: ${ctx.cssVar(r.primary, "border", ["primary"])}; }`,
-    `.badge { display: inline-flex; padding: ${spaceVar(ctx, 2)} var(--gap-inline); border-radius: var(--radius-full); background: ${ctx.cssVar(r.muted, "fill", ["muted"])}; color: ${muted}; font-size: var(--text-xs); font-weight: ${ctx.t.controls.buttons.fontWeight}; }`,
-    `.badge--brand { background: ${ctx.cssVar(colors.brand[50], "fill")}; color: var(--brand-${onTint(colors.brand)}); } ${(["success", "warning", "error", "info"] as SemanticName[]).map((n) => `.badge--${n} { background: ${tint(n)}; }`).join(" ")}`,
+    `.badge { display: inline-flex; padding: ${spaceVar(ctx, 2)} var(--gap-inline); border-radius: var(--radius-full); background: var(--tint, ${ctx.cssVar(r.muted, "fill", ["muted"])}); color: var(--tone, ${muted}); font-size: var(--text-xs); font-weight: ${ctx.t.controls.buttons.fontWeight}; }`,
+    `${([["brand", colors.brand], ...(["success", "warning", "error", "info"] as SemanticName[]).map((n) => [n, colors.semantic[n]] as const)] as const).map(([n, sc]) => `.tone-${n} { --tint: ${ctx.cssVar(sc[50], "fill")}; --tone: var(--${n}-${onTint(sc)}); }`).join(" ")}`,
     `.avatar { display: inline-flex; align-items: center; justify-content: center; width: var(--control-h); height: var(--control-h); border-radius: var(--radius-full); background: ${ctx.cssVar(r.muted, "fill", ["muted"])}; color: ${muted}; font-size: var(--text-sm); }`,
     `.skeleton { border-radius: var(--radius-md); background: ${ctx.cssVar(r.muted, "fill", ["muted"])}; animation: ds-pulse 2s ease-in-out infinite; } @keyframes ds-pulse { 50% { opacity: 0.5; } } @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }`,
   ];
@@ -37,7 +36,7 @@ function overlaysHtml(ctx: SkillContext): string[] {
   return lines(
     "## Overlays and feedback",
     "",
-    `Floating layers use the \`popover\` colors (not the tinted \`card\`), \`--radius-lg\` and a shadow for their height: popovers ${lvl(3)}, dialogs ${lvl(4)}, toasts ${lvl(5)}. **Dialog:** \`.overlay\` behind \`.dialog\` (\`.dialog__title\`, \`.dialog__desc\`, \`.dialog__footer\`): tertiary Cancel, one primary action (destructive for deletes); focus trapped, Escape closes. **Toast:** \`.toast\` plus \`--success\`, \`--error\`, \`--warning\` or \`--info\`; \`role="status"\` (\`alert\` for errors); only non-critical toasts auto-dismiss. **Tabs:** \`.tabs\` with \`.tab\` (\`role="tab"\`, \`aria-selected\`). **Badge:** \`.badge\` plus \`--brand\`, \`--success\`, \`--warning\`, \`--error\` or \`--info\`; a label, never a button. **Avatar:** \`.avatar\` with initials. **Skeleton:** \`.skeleton\` shaped like the content it replaces; never a page-wide spinner.`,
+    `Floating layers use the \`popover\` colors (not the tinted \`card\`), \`--radius-lg\` and shadows ${lvl(3)} (popovers), ${lvl(4)} (dialogs), ${lvl(5)} (toasts). **Dialog:** \`.overlay\` behind \`.dialog\` (an \`h2\` title, \`.dialog__desc\`, \`.dialog__footer\`): tertiary Cancel, one primary action (destructive for deletes); focus trapped, Escape closes. **Toast:** \`.toast\` with a tone class (\`.tone-success\`, \`-error\`, \`-warning\`, \`-info\`); \`role="status"\` (\`alert\` for errors); only non-critical toasts auto-dismiss. **Tabs:** \`role="tab"\`, \`aria-selected\`. **Badge:** plain or with a tone class (\`.tone-brand\` too); a label, never a button. **Skeleton:** shaped like the content it replaces; never a page-wide spinner.`,
     "",
     fence("css", tight(ctx, compactCss(overlaysCss(ctx).join("\n"), 600).split("\n"))),
     "",
@@ -78,7 +77,7 @@ export function iconsSection(ctx: SkillContext): string[] {
   return lines(
     "## Icons",
     "",
-    `${tw ? `Use \`lucide-react\` only, with \`strokeWidth={${icons.strokeWidth}}\`.` : `Use inline SVG copied from lucide with \`stroke-width="${icons.strokeWidth}"\`.`} Sizes ${sizes.join(", ")}px${tw ? ` (\`size-${unit(sizes[0])}\`, \`size-${unit(sizes[1])}\`, \`size-${unit(sizes[2])}\`)` : ""}: ${sizes[0]} in buttons and inputs, ${sizes[1]} beside text and in icon tiles, ${sizes[2]} in empty states. An icon-only button needs an \`aria-label\`; an icon beside a label is \`aria-hidden\`.${icons.style !== "outline" ? ` The chosen style is ${icons.style}; lucide draws outlines only, so match that look with the same stroke and sizes.` : ""}`,
+    `${tw ? `Use \`lucide-react\` only, with \`strokeWidth={${icons.strokeWidth}}\`.` : `Use inline SVG copied from lucide with \`stroke-width="${icons.strokeWidth}"\`.`} Sizes ${sizes.join(", ")}px${tw ? ` (\`size-${unit(sizes[0])}\`, \`size-${unit(sizes[1])}\`, \`size-${unit(sizes[2])}\`)` : ""}: ${sizes[0]} in buttons and inputs, ${sizes[1]} beside text and in icon tiles, ${sizes[2]} in empty states. An icon-only button needs an \`aria-label\`; an icon beside a label is \`aria-hidden\`.${ctx.tailwind && !ctx.shadcn ? " The checkbox tick (`strokeWidth={3}`, 12px) is the only exception." : ""}${icons.style !== "outline" ? ` The chosen style is ${icons.style}; lucide draws outlines only, so match that look with the same stroke and sizes.` : ""}`,
     "",
   );
 }

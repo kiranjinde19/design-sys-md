@@ -1,5 +1,5 @@
 import type { CssRecipe } from "../types";
-import { compactCss, fence, lines, recipeLines, unit, type SkillContext } from "./context";
+import { compactCss, fence, lines, recipeLines, tightCss, unit, type SkillContext } from "./context";
 
 /**
  * The glow shadows repeat three times in the animation. Each distinct value is written once as a
@@ -87,7 +87,7 @@ export function signatureSection(ctx: SkillContext): string[] {
     "",
     `Apply these everywhere and never swap one. Add this CSS to ${ctx.shadcn ? "globals.css" : ctx.tailwind ? "src/index.css" : "styles.css"}, after the tokens. It is the exact definition.`,
     "",
-    fence("css", compactCss(css.join("\n")).split("\n")),
+    fence("css", tightCss(compactCss(css.join("\n")).split("\n"))),
     "",
     `Every container is a \`card\`, every icon with a title an \`icon-tile\`, every focusable element ${ctx.tailwind ? "`focus-ring`" : "ringed (automatic on controls and links, `focus-ring` on anything custom)"}, and sections are separated by \`divider\`, never a bare border or \`<hr>\`. The primary button ${ctx.tailwind ? "" : "(\`btn--primary\`) "}adds \`cta\` on at most one action per screen.`,
     sig.featuredHighlight.notes ? `Featured: ${sig.featuredHighlight.notes}` : null,

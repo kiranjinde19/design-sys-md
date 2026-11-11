@@ -338,11 +338,16 @@ export { nearestWeight };
  * Plain CSS only: removes the spaces around braces, colons and semicolons so component CSS costs
  * fewer bytes. Values keep their inner spaces, so calc(), font shorthands and selectors stay valid.
  */
+export function tightCss(css: string[]): string[] {
+  return css.map((raw) => {
+    const line = raw.trim();
+    return line.startsWith("/*") ? line : line.replace(/:\s+/g, ":").replace(/,\s+/g, ",").replace(/;\s*}/g, "}").replace(/;\s+/g, ";").replace(/\s*{\s*/g, "{").replace(/\s*}\s*/g, "}").replace(/(?<![\w.-])0px\b(?![^()]*\))/g, "0").replace(/(?<![\w.#-])0\.(\d)/g, ".$1").replace(/=\"([\w-]+)\"\]/g, "=$1]");
+  });
+}
+
+/** Same, but only for the plain CSS stack (the Tailwind stacks show class lists, not CSS). */
 export function tight(ctx: SkillContext, css: string[]): string[] {
-  if (ctx.tailwind) return css;
-  return css.map((line) =>
-    line.startsWith("/*") ? line : line.replace(/:\s+/g, ":").replace(/;\s*}/g, "}").replace(/;\s+/g, ";").replace(/\s*{\s*/g, "{").replace(/\s*}\s*/g, "}"),
-  );
+  return ctx.tailwind ? css : tightCss(css);
 }
 
 /** The first text step of a scale that reads at 4.5:1 on its own 50 tint, for badges. */
