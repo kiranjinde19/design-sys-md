@@ -9,7 +9,7 @@ export function voiceSection(ctx: SkillContext): string[] {
   return lines(
     "## Tone of voice",
     "",
-    `Voice: **${voiceSummary(voice)}** (${VOICE_AXES.map((axis) => `${axis.low.toLowerCase()} to ${axis.high.toLowerCase()}`).join("; ")}). Write every label, message and heading in it.`,
+    `Voice: **${voiceSummary(voice)}** (${VOICE_AXES.map((axis) => `${axis.low.toLowerCase()} to ${axis.high.toLowerCase()}`).join("; ")}).`,
     "",
     voicePrinciples(voice).map((p, i) => `${i + 1}. ${p}`),
     "",

@@ -44,7 +44,7 @@ export function accessibilitySection(ctx: SkillContext): string[] {
   return lines(
     "## Accessibility",
     "",
-    "Every pair was measured from these tokens and passes (text needs 4.5:1, interface parts 3:1). Use no other pair without checking it.",
+    "Every pair was measured from these tokens and passes (text needs 4.5:1, interface parts 3:1).",
     "",
     `At 7:1 or more (lowest ${worst(strong).levels.ratio.toFixed(2)}:1): ${strong.map((p) => (p.foregroundRole === "foreground" ? "foreground on background" : p.foregroundRole === `${p.backgroundRole}-foreground` ? p.backgroundRole : p.label)).join(", ")}.`,
     "",
