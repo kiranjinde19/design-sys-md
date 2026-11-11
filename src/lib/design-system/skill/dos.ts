@@ -23,6 +23,9 @@ export function dosAndDontsSection(ctx: SkillContext): string[] {
     ["A hover class that replaces the featured pricing card's border, or no hover on it.", `Every pricing card is ${code("card card-hover")}; the featured one adds ${code("card-featured")} (2px brand border).`],
   ];
 
+  if (ctx.t.colors.brandReport.uiStep !== 600) {
+    rows.push(["Step 600 as a border or outline on this light brand.", `${code(ctx.tailwind ? `border-brand-${ctx.t.colors.brandReport.uiStep}` : `var(--brand-${ctx.t.colors.brandReport.uiStep})`)} (3:1); 600 stays the fill.`]);
+  }
   if (ctx.t.controls.buttons.destructiveStyle === "tinted") {
     rows.push(["A solid red destructive button outside a confirmation dialog.", "Tinted destructive and a trash icon; solid red only in the dialog."]);
   }

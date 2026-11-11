@@ -14,6 +14,7 @@
 
 import { contrastLevels, pickReadableText, relativeLuminance } from "./contrast";
 import { WHITE, lightestShadeReaching, shiftKeepingHue } from "./colors";
+import { hexToOklch } from "./color-math";
 import type {
   BorderTokens,
   ButtonState,
@@ -101,10 +102,24 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
   const solid = (base: string, fixedText?: string): Record<ButtonState, ControlStateStyle> => {
     // With one fixed text color (the primary button), every state keeps it. Dark text gets lighter hover and
     // pressed shades, because darker ones would drop below 4.5:1.
-    const direction = fixedText !== undefined && relativeLuminance(fixedText) < 0.4 ? -1 : 1;
-    const ease = direction === -1 ? 0.6 : 1; // lighter shades move less, so a light brand never washes out
-    const hover = shiftKeepingHue(base, HOVER_SHIFT * direction * ease, 0.97);
-    const pressed = shiftKeepingHue(base, PRESSED_SHIFT * direction * ease, 0.92);
+    // Dark text on a light brand: hover and pressed get lighter, unless the fill is already almost white (then there is no room, so they get darker).
+    const darkText = fixedText !== undefined && relativeLuminance(fixedText) < 0.4 && hexToOklch(base).l < 0.93;
+    // A very dark brand (like #111827) has no room to get darker, so its hover and pressed get lighter too. White text
+    // stays at 4.5:1 or better.
+    const veryDark = fixedText !== undefined && brandReport.veryDark && base === roles.primary;
+    const direction = darkText || veryDark ? -1 : 1;
+    const ease = darkText ? 0.6 : 1; // lighter shades move less, so a light brand never washes out
+    const shifted = (shift: number, chroma: number) => {
+      let delta = shift * direction * ease;
+      let out = shiftKeepingHue(base, delta, chroma);
+      while (veryDark && fixedText !== undefined && contrastLevels(fixedText, out).ratio < 4.5 && Math.abs(delta) > 0.01) {
+        delta *= 0.9;
+        out = shiftKeepingHue(base, delta, chroma);
+      }
+      return out;
+    };
+    const hover = shifted(HOVER_SHIFT, 0.97);
+    const pressed = shifted(PRESSED_SHIFT, 0.92);
     const text = (bg: string) => fixedText ?? readable(bg);
     return withStates(
       style(base, text(base), TRANSPARENT),
@@ -186,7 +201,8 @@ export function generateControls(settings: ControlSettings, ctx: ControlContext)
     return {
       default: { background: roles.background, borderColor: roles.input, markColor: off },
       hover: { background: roles.background, borderColor: neutral[500], markColor: offHover },
-      checked: { background: roles.primary, borderColor: roles.primary, markColor: roles["primary-foreground"] },
+      // The fill stays the primary color; the outline uses the first brand step that reads at 3:1, so a light brand still shows its edge.
+      checked: { background: roles.primary, borderColor: brandReport.ui, markColor: roles["primary-foreground"] },
       focus: { background: roles.background, borderColor: brandReport.focus, markColor: off },
       disabled: { background: roles.muted, borderColor: roles.border, markColor: offDisabled },
       error: { background: roles.background, borderColor: roles.destructive, markColor: offError },

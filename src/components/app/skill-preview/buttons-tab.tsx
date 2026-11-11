@@ -31,6 +31,7 @@ export function ButtonsTab() {
 
       <section className="pvx-section" aria-label="Button states">
         <h2>Buttons</h2>
+        <div className="pvx-matrix-wrap">
         <div className="pvx-matrix">
           <span />
           {STATES.map((state) => (
@@ -41,6 +42,7 @@ export function ButtonsTab() {
           {VARIANTS.map((variant) => (
             <Row key={variant} variant={variant} tinted={tinted} />
           ))}
+        </div>
         </div>
         {tinted ? (
           <div className="pvx-row">

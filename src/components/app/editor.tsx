@@ -2,7 +2,6 @@
 
 import { Check, ChevronRight } from "lucide-react";
 import { PRESETS, SYSTEMS, useDesignSystem, type SystemId } from "@/lib/design-system";
-import { cn } from "@/lib/utils";
 import {
   BordersControls,
   ButtonControls,
@@ -14,28 +13,19 @@ import {
   TypeScaleControls,
 } from "@/components/controls/system-controls";
 import { BrandNotice } from "./brand-notice";
+import { BrandScale } from "./brand-scale";
 import { TypographyEditor } from "@/components/typography/typography-editor";
 import { VoiceEditor } from "@/components/voice/voice-editor";
 
 /** The 10 step brand scale with its step labels (600 is the exact brand color), and the generated status colors. */
 function ColorScales() {
   const { tokens } = useDesignSystem();
-  const { brand, semantic, brandReport: report } = tokens.colors;
+  const { semantic, brandReport: report } = tokens.colors;
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
         <div className="text-sm font-medium leading-5">Brand scale</div>
-        <div className="grid grid-cols-10 gap-1">
-          {Object.entries(brand).map(([step, hex]) => (
-            <div key={step} className="flex flex-col items-center gap-1" title={`${step} ${hex}`}>
-              <div
-                className="h-8 w-full rounded-[5px]"
-                style={{ background: hex, border: "1px solid var(--border)", ...(step === "600" ? { outline: "2px solid var(--foreground)", outlineOffset: -2 } : {}) }}
-              />
-              <span className={cn("text-xs leading-4", step === "600" ? "font-semibold text-foreground" : "text-muted-foreground")}>{step}</span>
-            </div>
-          ))}
-        </div>
+        <BrandScale labels />
         <p className="text-xs leading-4 text-muted-foreground">
           {report.mode === "adjusted" && report.whiteFails ? `Step 600 is ${report.effective}, adjusted from your ${report.typed}.` : "Step 600 is your exact brand color."}
         </p>
@@ -45,7 +35,7 @@ function ColorScales() {
         <div className="grid grid-cols-4 gap-2">
           {(["success", "warning", "error", "info"] as const).map((name) => (
             <div key={name} className="flex flex-col gap-1">
-              <div className="h-8 rounded" style={{ background: semantic[name][600], border: "1px solid var(--border)" }} />
+              <div className="tool-sample h-8 rounded-[5px]" style={{ background: semantic[name][600] }} />
               <span className="text-xs leading-4 text-muted-foreground">{name[0].toUpperCase() + name.slice(1)}</span>
             </div>
           ))}

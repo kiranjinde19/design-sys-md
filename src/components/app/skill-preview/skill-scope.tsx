@@ -19,7 +19,7 @@ export function SkillScope({ children }: { children: ReactNode }) {
   return (
     // The controls are live: they take focus, typing and clicks. Only a form submit (which would reload the page) and a
     // link jump are stopped. A mouse click leaves no focus ring because the CSS only draws one for :focus-visible.
-    <div className="pv-skill" style={{ minHeight: "100%" }} onSubmit={(event) => event.preventDefault()}>
+    <div className="pv-skill" style={{ minHeight: "100%", ["--pvx-brand-text" as string]: tokens.colors.brandReport.text }} onSubmit={(event) => event.preventDefault()}>
       <style>{css}</style>
       {children}
     </div>

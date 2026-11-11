@@ -8,6 +8,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { Check } from "lucide-react";
+import { BrandScale } from "./brand-scale";
 import { VOICE_AXES, voiceLevelLabel, useDesignSystem, type SystemId } from "@/lib/design-system";
 import { asStyle } from "@/components/preview/preview-stage";
 
@@ -18,24 +19,11 @@ const Stack = ({ children }: { children: ReactNode }) => (
   </div>
 );
 
-function Swatches({ scale, height, mark }: { scale: Record<number, string>; height: number; mark?: number }) {
+function Swatches({ scale }: { scale: Record<number, string> }) {
   return (
-    <div className="flex gap-1">
+    <div aria-hidden className="flex gap-1">
       {Object.entries(scale).map(([step, hex]) => (
-        <div
-          key={step}
-          title={`${step}`}
-          style={{
-            flex: 1,
-            height,
-            background: hex,
-            borderRadius: 5,
-            // The lightest steps get a faint inner edge so they stay visible on the tinted tile.
-            ...(Number(step) <= 100 ? { boxShadow: "inset 0 0 0 1px rgb(20 23 28 / 0.06)" } : {}),
-            // Step 600 is the exact brand color. A dark outline marks it.
-            ...(mark !== undefined && Number(step) === mark ? { outline: "2px solid var(--foreground)", outlineOffset: 1 } : {}),
-          }}
-        />
+        <div key={step} title={step} className="tool-sample" style={{ flex: 1, height: 32, background: hex, borderRadius: 5 }} />
       ))}
     </div>
   );
@@ -46,19 +34,19 @@ function ColorsSample() {
   const { brand, neutral, semantic, contrastPairs } = tokens.colors;
   const failing = contrastPairs.filter((pair) => pair.kind === "text" && !pair.passes).length;
   return (
-    <Stack>
-      <div className="flex flex-col gap-1">
-        <Swatches scale={brand} height={32} mark={600} />
+    <div className="flex flex-col gap-2">
+      <div className="pointer-events-auto flex flex-col gap-1">
+        <BrandScale />
         <Caption>Brand, step 600 is {brand[600]}</Caption>
       </div>
       <div className="flex flex-col gap-1">
-        <Swatches scale={neutral} height={32} />
+        <Swatches scale={neutral} />
         <Caption>Neutral, {tokens.colors.neutral[500]} at the middle</Caption>
       </div>
       <div className="flex items-center gap-3">
         {(["success", "warning", "error", "info"] as const).map((name) => (
           <span key={name} className="flex items-center gap-1 text-xs leading-4 text-muted-foreground">
-            <span style={{ width: 12, height: 12, borderRadius: 9999, background: semantic[name][600] }} />
+            <span className="tool-sample" style={{ width: 12, height: 12, borderRadius: 9999, background: semantic[name][600] }} />
             {name[0].toUpperCase() + name.slice(1)}
           </span>
         ))}
@@ -70,7 +58,7 @@ function ColorsSample() {
         <Check aria-hidden width={12} height={12} strokeWidth={2} />
         {failing ? `${failing} text pair${failing === 1 ? "" : "s"} below AA` : "All text pairs pass AA"}
       </span>
-    </Stack>
+    </div>
   );
 }
 
@@ -112,7 +100,7 @@ function RadiusSample() {
     <Stack>
       <div className="flex gap-2">
         {([radius.sm, radius.md, radius.lg, radius.full] as const).map((r, index) => (
-          <div key={index} style={{ width: 32, height: 32, boxSizing: "border-box", background: colors.brand[100], border: `1px solid ${colors.brand[300]}`, borderRadius: Math.min(r, 16) }} />
+          <div key={index} className="tool-sample-outline" style={{ width: 32, height: 32, boxSizing: "border-box", background: colors.brand[100], border: `1px solid ${colors.brand[300]}`, borderRadius: Math.min(r, 16) }} />
         ))}
       </div>
       <Caption>
@@ -130,7 +118,7 @@ function SpacingSample() {
     <Stack>
       <div className="flex items-end gap-1.5" style={{ height: 32 }}>
         {steps.map((step) => (
-          <div key={step.key} style={{ width: step.px, height: step.px, background: colors.brand[400], borderRadius: 2 }} />
+          <div key={step.key} className="tool-sample" style={{ width: step.px, height: step.px, background: colors.brand[400], borderRadius: 2 }} />
         ))}
       </div>
       <Caption>
@@ -154,7 +142,7 @@ function BordersSample() {
       <div className="flex flex-col gap-1">
         {rows.map(([name, color]) => (
           <div key={name} className="flex items-center gap-2" title={`${name} ${color}`}>
-            <span style={{ width: 20, height: 12, borderRadius: 3, background: color, border: "1px solid var(--border)" }} />
+            <span className="tool-sample" style={{ width: 20, height: 12, borderRadius: 3, background: color }} />
             <span style={{ flex: 1, height: borders.width, background: color }} />
           </div>
         ))}
@@ -164,19 +152,27 @@ function BordersSample() {
   );
 }
 
+/** An inset rounded panel (10px radius, 8px padding, the page color of the user's design, like the preview window) that holds samples. */
+function Panel({ children }: { children: ReactNode }) {
+  const { tokens } = useDesignSystem();
+  return (
+    <div aria-hidden className="tool-sample-outline flex w-fit max-w-full items-center gap-2 overflow-hidden rounded-[10px] p-2" style={{ background: tokens.colors.roles.background }}>
+      {children}
+    </div>
+  );
+}
+
 function ShadowsSample() {
   const { tokens } = useDesignSystem();
   const { shadows, levels, style } = tokens.elevation;
   const all = shadows.slice(1);
   return (
-    <div aria-hidden className="flex flex-col gap-2">
-      <div className="flex gap-3 px-0.5 pt-0.5">
-        {all.length ? (
-          all.map((shadow) => <div key={shadow.level} style={{ width: 32, height: 24, borderRadius: 5, background: tokens.colors.roles.background, boxShadow: shadow.css }} />)
-        ) : (
-          <div style={{ width: 20, height: 20, borderRadius: 6, background: tokens.colors.roles.background, border: "1px solid var(--border)" }} />
-        )}
-      </div>
+    <div className="flex flex-col gap-1.5">
+      <Panel>
+        {(all.length ? all : [null]).map((shadow, index) => (
+          <div key={shadow?.level ?? index} className="tool-sample-outline" style={{ width: 24, height: 24, borderRadius: 5, background: tokens.colors.roles.background, boxShadow: shadow?.css }} />
+        ))}
+      </Panel>
       <Caption>
         {levels} levels, {style}
       </Caption>
@@ -240,21 +236,24 @@ function SignatureSample() {
   const { tokens } = useDesignSystem();
   const { signature, colors, controls } = tokens;
   const cta = signature.primaryCta;
-  const box: CSSProperties = { height: 32, flexShrink: 0 };
+  const box: CSSProperties = { height: 24, flexShrink: 0, boxSizing: "border-box" };
   return (
-    <Stack>
-      {/* One row, 8px gaps, left aligned, using the chosen options. The border beam itself is only shown in the preview. */}
-      <div className="flex items-center gap-2 rounded-[10px] px-2" style={{ background: colors.roles.background, width: "fit-content", maxWidth: "100%" }}>
-        <div style={{ ...box, width: 56, ...asStyle(signature.cardStyle.css), ...asStyle(signature.featuredHighlight.css), borderRadius: 10, padding: 0 }} />
-        <div style={{ ...box, width: 56, ...asStyle(signature.cardStyle.css), borderRadius: 10, padding: 0 }} />
-        <div style={{ ...box, ...asStyle(signature.iconContainer.css), width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>★</div>
+    <div className="flex flex-col gap-1.5">
+      {/* The chosen options on an inset panel, each with a 1px border. The border beam itself is only shown in the preview. */}
+      <Panel>
+        <div className="tool-sample-outline" style={{ ...box, width: 48, ...asStyle(signature.cardStyle.css), ...asStyle(signature.featuredHighlight.css), borderRadius: 8, padding: 0 }} />
+        <div className="tool-sample-outline" style={{ ...box, width: 48, ...asStyle(signature.cardStyle.css), borderRadius: 8, padding: 0 }} />
+        <div className="tool-sample-outline" style={{ ...box, ...asStyle(signature.iconContainer.css), width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>
+          ★
+        </div>
         <span
+          className="tool-sample-outline"
           style={{
             ...box,
             display: "inline-flex",
             alignItems: "center",
-            padding: "0 12px",
-            borderRadius: 10,
+            padding: "0 8px",
+            borderRadius: 8,
             fontSize: 12,
             lineHeight: "16px",
             fontWeight: controls.buttons.fontWeight,
@@ -267,12 +266,12 @@ function SignatureSample() {
         >
           Get started
         </span>
-        <div style={{ ...box, width: 48, borderRadius: 10, background: colors.roles.background, border: `1px solid ${colors.roles.border}`, ...asStyle(signature.focusRing.css) }} />
-      </div>
+        <div style={{ ...box, width: 40, borderRadius: 8, background: colors.roles.background, border: `1px solid ${colors.roles.input}`, ...asStyle(signature.focusRing.css) }} />
+      </Panel>
       <Caption>
         {signature.featuredHighlight.label}, {signature.primaryCta.label}, {signature.hover.label}
       </Caption>
-    </Stack>
+    </div>
   );
 }
 

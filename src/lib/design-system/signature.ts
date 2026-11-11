@@ -153,6 +153,8 @@ export function generateSignature(
 ): SignatureTokens {
   const { colors, radius, borders, spacing, elevation } = ctx;
   const brand = colors.brand;
+  // Parts that identify a component without text use the first brand step that reads at 3:1 (step 600 for most brands).
+  const ui = colors.brandReport.ui;
   const border = `${borders.width}px solid`;
   // The glyph inside an icon container: brand 700, or the first deeper step that reads at 4.5:1 on its tint.
   const iconInk =
@@ -162,13 +164,13 @@ export function generateSignature(
   const featuredCss: Record<SignatureSettings["featuredHighlight"], CssRecipe> = {
     // 2px brand border. A card with a thinner border grows outward by the difference, so its content does not move.
     "crisp-border": {
-      border: `2px solid ${brand[600]}`,
+      border: `2px solid ${ui}`,
       ...(borders.width < 2 ? { margin: -(2 - borders.width) } : {}),
     },
     "offset-shadow": {
       border: `${border} ${colors.roles.foreground}`,
       // A hard offset drop shadow with no blur. It is a filter, so the hover shadow can not replace it.
-      filter: `drop-shadow(6px 6px 0 ${brand[600]})`,
+      filter: `drop-shadow(6px 6px 0 ${ui})`,
     },
     "solid-accent-fill": {
       background: colors.roles.primary,

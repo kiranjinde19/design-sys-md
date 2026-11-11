@@ -354,6 +354,11 @@ export interface BrandReport {
   focus: string;
   /** True when the brand hue is within about 20 degrees of the error hue. */
   nearError: boolean;
+  /** The brand step used for parts that identify a component or state without text (the featured card border, selected control outlines): the first from 600 up that reaches 3:1 on the page and the tint. Step 600 stays the fill. */
+  ui: string;
+  uiStep: 600 | 700 | 800 | 900 | null;
+  /** True when step 600 is so dark that darker steps look the same: hover and pressed get lighter, not darker. */
+  veryDark: boolean;
 }
 
 export interface ColorTokens {

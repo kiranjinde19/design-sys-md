@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 export function BrandNotice() {
   const { tokens, settings, update } = useDesignSystem();
   const report = tokens.colors.brandReport;
+  const hasDetails = report.textStep !== 600 || report.uiStep !== 600 || report.nearError || report.veryDark;
   const ink = tokens.colors.neutral[900];
   const exactText = pickReadableText(report.typed, "#FFFFFF", ink);
   const exactIsWhite = exactText.toUpperCase() === "#FFFFFF";
@@ -72,16 +73,33 @@ export function BrandNotice() {
           </div>
         </div>
       ) : null}
-      {report.textStep !== 600 ? (
+      {report.veryDark ? <p className="text-xs leading-4 text-muted-foreground">Very dark brand: hover and pressed get lighter, not darker.</p> : null}
+      {report.whiteFails ? (
         <p className="text-xs leading-4 text-muted-foreground">
-          Brand colored text (links, tertiary buttons, labels) uses {report.textStep === null ? "the dark text color" : `step ${report.textStep}`}, so it stays readable.
+          Primary buttons use {exactIsWhite || settings.colors.brandMode === "adjusted" ? "white" : "dark"} text.
         </p>
       ) : null}
-      {report.nearError ? (
-        <p className="flex items-start gap-2 text-xs leading-4 text-muted-foreground">
-          <Trash2 aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-          This brand is close to the error red, so destructive buttons use a tinted style (light red background, dark red text, a trash icon) and solid red is kept for confirmation dialogs. Focus rings use the dark text color so a focused field never looks like an error, and errors always show an icon and a message as well as color.
-        </p>
+      {hasDetails ? (
+        <details className="group rounded-[10px] border border-border px-3 py-2 text-xs leading-4 text-muted-foreground">
+          <summary className="cursor-pointer text-sm font-medium leading-5 text-foreground">Why this matters</summary>
+          <div className="mt-2 space-y-2">
+            {report.textStep !== 600 ? (
+              <p>Brand colored text (links, tertiary buttons, labels) uses {report.textStep === null ? "the dark text color" : `step ${report.textStep}`}, so it stays readable.</p>
+            ) : null}
+            {report.uiStep !== 600 ? (
+              <p>Parts that identify a component without text (the featured card border, selected outlines) use {report.uiStep === null ? "the dark text color" : `step ${report.uiStep}`}, the first step that reaches 3:1. Step 600 stays the fill.</p>
+            ) : null}
+            {report.nearError ? (
+              <p className="flex items-start gap-2">
+                <Trash2 aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+                This brand is close to the error red, so destructive buttons use a tinted style (light red background, dark red text, a trash icon) and solid red is kept for confirmation dialogs. Focus rings use the dark text color so a focused field never looks like an error, and errors always show an icon and a message as well as color.
+              </p>
+            ) : null}
+            {report.veryDark ? (
+              <p>Steps 700 to 900 are nearly identical for a very dark brand, so they cannot be told apart. The tool&apos;s own black Export button and a near-black brand look alike; the white preview stage keeps your color readable.</p>
+            ) : null}
+          </div>
+        </details>
       ) : null}
     </div>
   );

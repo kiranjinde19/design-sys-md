@@ -32,6 +32,8 @@ export function accessibilitySection(ctx: SkillContext): string[] {
     low("error-700 on background, card (lowest)", [ratio(err, r.background), ratio(err, r.card)]),
     low("button text on hover and pressed, all variants (lowest)", [...states("primary"), ...states("destructive"), ...states("secondary")]),
     low(`brand text (step ${colors.brandReport.textStep ?? "ink"}) and links, on background and brand tints (lowest)`, [colors.brandReport.text, colors.brandReport.link.hover, colors.brandReport.link.pressed, colors.brandReport.link.visited].flatMap((hex) => [r.background, colors.brand[50], colors.brand[100]].map((surface) => ratio(hex, surface)))),
+    // Light brands: the featured border and selected control outlines use a deeper step so they reach 3:1.
+    ...(colors.brandReport.uiStep !== 600 ? [low(`brand step ${colors.brandReport.uiStep ?? "ink"} for the featured border and selected outlines, on background and tint (3:1)`, [r.background, colors.brand[50], r.card].map((surface) => ratio(colors.brandReport.ui, surface)), 3)] : []),
   ];
   const rows = [
     ...tight.map((p) => row(p.label, p)),

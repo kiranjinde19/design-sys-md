@@ -322,6 +322,8 @@ export function BarChart({ title, unit, labels, series, mode = "grouped", height
 export function Donut({ title, unit, data }: { title: string; unit: string; data: { name: string; value: number }[] }) {
   const id = cleanId(useId());
   const total = data.reduce((sum, d) => sum + d.value, 0);
+  // The center shows the top segment (name and share), not the total.
+  const top = data.reduce((best, d) => (d.value > best.value ? d : best), data[0]);
   const size = 168;
   const c = size / 2;
   const outer = c - 4;
@@ -343,10 +345,10 @@ export function Donut({ title, unit, data }: { title: string; unit: string; data
           <path key={arc.k} d={arc.d} fill={fillFor(id, arc.k)} stroke="var(--card)" strokeWidth={2} />
         ))}
         <text className="pvx-value" x={c} y={c - 2} textAnchor="middle" style={{ fontSize: "var(--text-xl)", fontWeight: 600 }}>
-          {total}%
+          {top.value}%
         </text>
         <text className="pvx-axis" x={c} y={c + 16} textAnchor="middle">
-          of visits
+          {top.name}
         </text>
       </svg>
       <Legend kind="box" items={data.map((d) => ({ name: d.name, value: `${d.value}%` }))} />

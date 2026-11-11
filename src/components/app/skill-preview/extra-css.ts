@@ -8,7 +8,10 @@ export const EXTRA_CSS = `
 .pvx-head p, .pvx-note { margin: 0; font-size: var(--text-sm); line-height: var(--leading-sm); color: var(--muted-foreground); }
 .pvx-section { display: grid; gap: var(--gap-stack); }
 .pvx-section > h2 { margin: 0; font: 600 var(--text-lg) / var(--leading-lg) var(--font-heading); letter-spacing: var(--tracking-heading-xs); }
-.pvx-matrix { display: grid; grid-template-columns: 88px repeat(5, minmax(0, 1fr)); gap: var(--gap-stack) var(--gap-inline); align-items: center; }
+.pvx-matrix-wrap { overflow-x: auto; padding: 6px; margin: -6px; }
+.pvx-matrix { display: grid; grid-template-columns: 88px repeat(5, minmax(max-content, 1fr)); gap: var(--gap-stack) max(12px, var(--gap-inline)); align-items: center; width: max-content; min-width: 100%; }
+.pvx-matrix > span:not(.pvx-label):not(.pvx-rowlabel) { display: flex; }
+.pvx-matrix .btn { flex: 1; white-space: nowrap; }
 .pvx-label { font-size: var(--text-xs); line-height: var(--leading-xs); color: var(--muted-foreground); }
 .pvx-rowlabel { font-size: var(--text-sm); line-height: var(--leading-sm); font-weight: 500; }
 .pvx-row { display: flex; flex-wrap: wrap; gap: var(--gap-stack); align-items: center; }
@@ -34,6 +37,21 @@ export const EXTRA_CSS = `
 .pvx-person { display: grid; line-height: var(--leading-sm); }
 .pvx-person small { font-size: var(--text-xs); line-height: var(--leading-xs); color: var(--muted-foreground); }
 .pvx-select { appearance: auto; }
+.pvx-pricing__page { display: grid; gap: var(--gap-section); padding: var(--gap-section) var(--page-pad); }
+.pvx-pricing__head { display: grid; justify-items: center; gap: var(--gap-inline); text-align: center; }
+.pvx-pricing__head h1 { margin: 0; font: 600 var(--text-4xl) / var(--leading-4xl) var(--font-heading); letter-spacing: var(--tracking-heading); }
+.pvx-pricing__head p { margin: 0; color: var(--muted-foreground); max-width: 520px; }
+.pvx-logo { display: inline-flex; align-items: center; gap: var(--gap-inline); font-family: var(--font-heading); font-size: var(--text-lg); }
+.pvx-pricing .plan { gap: var(--gap-stack); }
+.pvx-pricing .plan h3 { margin: 0; font: 600 var(--text-xl) / var(--leading-xl) var(--font-heading); letter-spacing: var(--tracking-heading-xs); }
+.pvx-pricing .plan p { margin: 0; }
+.pvx-plan__title { display: flex; align-items: baseline; justify-content: space-between; gap: var(--gap-inline); }
+.pvx-rec { font-size: var(--text-sm); font-weight: 500; color: var(--pvx-brand-text); }
+.pvx-price { font: 600 var(--text-4xl) / var(--leading-4xl) var(--font-heading); letter-spacing: var(--tracking-heading); font-variant-numeric: tabular-nums; }
+.pvx-price small { font: 400 var(--text-sm) / var(--leading-sm) var(--font-body); letter-spacing: 0; color: var(--muted-foreground); }
+.pvx-features { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--gap-stack); font-size: var(--text-base); }
+.pvx-features li { display: flex; align-items: center; gap: var(--gap-inline); }
+.pvx-features svg { flex: none; color: var(--pvx-brand-text); }
 .pvx-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .pvx-mono { font-family: var(--font-mono); }
 .pvx-dash.shell { min-height: 0; }
@@ -54,7 +72,7 @@ export const EXTRA_CSS = `
 .pvx-statrow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-inline); margin-top: var(--gap-inline) !important; }
 .pvx-statrow .badge { align-items: center; gap: var(--space-0_5); font-variant-numeric: tabular-nums; }
 .pvx-charts { display: grid; grid-template-columns: 2fr 1fr; gap: var(--gap-stack); align-items: start; }
-.pvx-grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--gap-stack); align-items: start; }
+.pvx-grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--gap-stack); align-items: stretch; }
 .pvx-chart { margin: 0; position: relative; min-width: 0; }
 .pvx-chart svg, .pvx-donut svg { display: block; overflow: visible; }
 .pvx-axis { font: 400 var(--text-xs) / 1 var(--font-body); fill: var(--muted-foreground); font-variant-numeric: tabular-nums; }

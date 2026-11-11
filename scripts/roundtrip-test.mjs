@@ -266,3 +266,41 @@ test("a tinted destructive brand keeps solid red hover and pressed tokens for th
     assert.ok(file.toUpperCase().includes(`DESTRUCTIVE-HOVER:${solid.hover.background.toUpperCase()}`.replace(/\s/g, "")) || file.toUpperCase().includes(`DESTRUCTIVE-HOVER: ${solid.hover.background.toUpperCase()}`));
   }
 });
+
+test("default, hover and pressed primary buttons are visibly different for the five test brands (lightness gap)", () => {
+  const lightness = (hex) => {
+    const c = (v) => { const x = parseInt(v, 16) / 255; return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
+    const [r, g, b] = [hex.slice(1, 3), hex.slice(3, 5), hex.slice(5, 7)].map(c);
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    return 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+  };
+  for (const brand of ["#E54848", "#FACC15", "#0F766E", "#111827", "#A5B4FC", "#4F46E5", "#FFFFFF"]) {
+    const v = createDesignSystem(applyPatch(saas, { colors: { brand } })).tokens.controls.buttons.variants.primary;
+    const [d, h, p] = [v.default.background, v.hover.background, v.pressed.background].map(lightness);
+    assert.ok(Math.abs(h - d) >= 0.03, `${brand}: hover differs from default by ${Math.abs(h - d).toFixed(3)}`);
+    assert.ok(Math.abs(p - h) >= 0.03, `${brand}: pressed differs from hover by ${Math.abs(p - h).toFixed(3)}`);
+  }
+  const dark = createDesignSystem(applyPatch(saas, { colors: { brand: "#111827" } })).tokens;
+  assert.equal(dark.colors.brandReport.veryDark, true);
+  const v = dark.controls.buttons.variants.primary;
+  assert.ok(lightness(v.hover.background) > lightness(v.default.background), "a very dark brand gets lighter on hover");
+  assert.ok(lightness(v.pressed.background) > lightness(v.hover.background), "and lighter again when pressed");
+  assert.ok(generateSkillFile(createDesignSystem(applyPatch(saas, { colors: { brand: "#111827" } })), { stack: "html-css", presetId: "saas-clean" }).skill.includes("very dark"));
+});
+
+test("light brands use the first 3:1 brand step for the featured border and selected outlines; 600 stays the fill", () => {
+  const yellow = createDesignSystem(applyPatch(saas, { colors: { brand: "#FACC15" } }));
+  const report = yellow.tokens.colors.brandReport;
+  assert.notEqual(report.uiStep, 600);
+  assert.equal(yellow.tokens.signature.featuredHighlight.css.border, `2px solid ${report.ui}`);
+  assert.equal(yellow.tokens.controls.selection.states.checkbox.checked.borderColor, report.ui);
+  assert.equal(yellow.tokens.controls.selection.states.checkbox.checked.background, yellow.tokens.colors.roles.primary);
+  const indigo = createDesignSystem(saas);
+  assert.equal(indigo.tokens.colors.brandReport.uiStep, 600, "an ordinary brand keeps step 600");
+  for (const stack of STACKS) {
+    const file = generateSkillFile(yellow, { stack, presetId: "saas-clean" }).skill;
+    assert.match(file, /3:1/);
+  }
+});

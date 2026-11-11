@@ -18,6 +18,43 @@ const SPAN: Record<SystemId, string> = {
   voice: "",
 };
 
+/** The two tiles whose samples sit on an inset panel are tighter, so the panel and its caption fit the 120px row. */
+const COMPACT = new Set<SystemId>(["signature", "shadows"]);
+
+function Tile({ id, index, label, done, onOpen }: { id: SystemId; index: number; label: string; done: boolean; onOpen: (id: SystemId) => void }) {
+  const compact = COMPACT.has(id);
+  const content = (
+    <>
+      <span className={cn("flex items-center gap-2", compact ? "min-h-5" : "min-h-6")}>
+        <span className="tool-num" aria-hidden>
+          {index + 1}
+        </span>
+        <span className="min-w-0 truncate text-sm font-medium leading-5">{label}</span>
+        {done ? <Check aria-hidden className="ml-auto size-4 shrink-0 text-foreground" strokeWidth={1.5} /> : null}
+      </span>
+      <span className="block min-h-0 flex-1">
+        <TileSample id={id} />
+      </span>
+    </>
+  );
+  const common = cn("tool-tile tool-hover min-h-0 overflow-hidden p-4 text-left", SPAN[id]);
+  const aria = `${label}${done ? ", reviewed" : ""}. Open the editor.`;
+  // The Colors tile holds focusable swatches, so it can not be one button: a stretched button sits behind its content.
+  if (id === "colors") {
+    return (
+      <div className={cn(common, "relative")}>
+        <button type="button" onClick={() => onOpen(id)} aria-label={aria} className="absolute inset-0 rounded-[16px]" />
+        <div className="pointer-events-none relative flex flex-col items-stretch justify-start gap-2">{content}</div>
+      </div>
+    );
+  }
+  return (
+    <button type="button" onClick={() => onOpen(id)} aria-label={aria} className={cn(common, "flex flex-col items-stretch justify-start", compact ? "gap-1.5" : "gap-2")}>
+      {content}
+    </button>
+  );
+}
+
 /** The bento board: 560px wide, 3 columns, 120px rows, 12px gaps. Every tile is a real button. */
 export function Board({ onOpen }: { onOpen: (id: SystemId) => void }) {
   const { reviewed } = useDesignSystem();
@@ -27,24 +64,7 @@ export function Board({ onOpen }: { onOpen: (id: SystemId) => void }) {
       {SYSTEMS.map((system, index) => {
         const done = reviewed.includes(system.id);
         return (
-          <button
-            key={system.id}
-            type="button"
-            onClick={() => onOpen(system.id)}
-            aria-label={`${system.label}${done ? ", reviewed" : ""}. Open the editor.`}
-            className={cn("tool-tile tool-hover flex min-h-0 flex-col items-stretch justify-start gap-2 overflow-hidden p-4 text-left", SPAN[system.id])}
-          >
-            <span className="flex min-h-6 items-center gap-2">
-              <span className="tool-num" aria-hidden>
-                {index + 1}
-              </span>
-              <span className="min-w-0 truncate text-sm font-medium leading-5">{system.label}</span>
-              {done ? <Check aria-hidden className="ml-auto size-4 shrink-0 text-foreground" strokeWidth={1.5} /> : null}
-            </span>
-            <span className="block min-h-0 flex-1">
-              <TileSample id={system.id} />
-            </span>
-          </button>
+          <Tile key={system.id} id={system.id} index={index} label={system.label} done={done} onOpen={onOpen} />
         );
       })}
     </div>

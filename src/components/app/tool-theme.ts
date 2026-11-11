@@ -6,6 +6,7 @@
 
 import type { CSSProperties } from "react";
 import { PRESETS, generateTokens } from "@/lib/design-system";
+import { withAlpha } from "@/lib/design-system/color-math";
 
 // The tool's own design system: the Blank slate preset (pure gray neutrals) with a near black brand color, so the
 // whole interface is black, white and gray. Indigo only ever appears as a sample of the user's own brand color.
@@ -49,6 +50,10 @@ const LIGHT: Record<string, string> = {
   "--input": roles.input,
   "--ring": neutral[900],
   "--t-surface": neutral[100],
+  // A 1px outline for every color sample, a two tone ring for the user's own color, and the tooltip colors.
+  "--t-outline": withAlpha(neutral[900], 0.14),
+  "--t-ring-inner": roles.background,
+  "--t-ring-outer": neutral[900],
   "--t-track": neutral[300],
   "--t-chip": neutral[700],
   "--t-primary-hover": neutral[700],
@@ -86,6 +91,9 @@ const DARK: Record<string, string> = {
   "--input": neutral[500],
   "--ring": neutral[50],
   "--t-surface": neutral[800],
+  "--t-outline": withAlpha(neutral[50], 0.22),
+  "--t-ring-inner": neutral[900],
+  "--t-ring-outer": neutral[50],
   "--t-track": neutral[600],
   "--t-chip": neutral[200],
   "--t-primary-hover": neutral[200],

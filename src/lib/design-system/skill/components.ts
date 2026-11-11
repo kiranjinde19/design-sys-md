@@ -103,7 +103,7 @@ function buttonsSection(ctx: SkillContext): string[] {
   return lines(
     "### Buttons",
     "",
-    `**primary** the one main action; **secondary** supporting actions; **tertiary** low emphasis such as cancel; **destructive** only for deleting or irreversible actions, with a confirmation.${tinted ? ` Brand near the error red: destructive is tinted (error tint, dark text) with a trash icon (\`Trash2\`) on delete actions; solid red (${ctx.tailwind ? `\`${solidClasses}\`` : "`btn--confirm`"}) only for a confirmation dialog's confirm button.` : ""}`,
+    `**primary** the one main action; **secondary** supporting actions; **tertiary** low emphasis such as cancel; **destructive** only for deleting or irreversible actions, with a confirmation.${ctx.t.colors.brandReport.veryDark ? " This brand is very dark: primary hover and pressed are lighter than default, never darker." : ""}${tinted ? ` Brand near the error red: destructive is tinted (error tint, dark text) with a trash icon (\`Trash2\`) on delete actions; solid red (${ctx.tailwind ? `\`${solidClasses}\`` : "`btn--confirm`"}) only for a confirmation dialog's confirm button.` : ""}`,
     "",
     fence(ctx.tailwind ? "tsx" : "css", ctx.tailwind ? tw : tight(ctx, css)),
     "",

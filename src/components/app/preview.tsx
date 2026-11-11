@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 import { useDesignSystem } from "@/lib/design-system";
 import { PricingPreview } from "./pricing-preview";
 import { previewVars } from "./preview-vars";
-import "./preview.css";
 
 const SCALE = 0.65;
 const TAB_KEY = "design-sys-md:preview-tab";

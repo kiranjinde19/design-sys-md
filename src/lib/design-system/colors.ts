@@ -376,6 +376,9 @@ export function shiftKeepingHue(hex: string, delta: number, chromaScale = 1): st
   return darkStep(clamp(l + delta, 0, 1), c * chromaScale, h, hslHue(hex));
 }
 
+/** Below this OKLCH lightness a fill counts as very dark (like #111827). */
+export const VERY_DARK_LIGHTNESS = 0.3;
+
 /** Brand hues closer than this to the error hue make a solid destructive button look like the primary one. */
 export const ERROR_CLASH_DEGREES = 20;
 
@@ -459,6 +462,11 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
   // A brand close to the error red would make a focused field look like an error field, so focus is the
   // neutral dark foreground color then.
   const focus = nearError || focusStep === undefined ? foreground : brand[focusStep];
+  const UI_STEPS = [600, 700, 800, 900] as const;
+  const uiStep = UI_STEPS.find((step) => focusSurfaces.every((surface) => contrastRatio(brand[step], surface) >= 3)) ?? null;
+  const ui = uiStep === null ? foreground : brand[uiStep];
+  // Very dark: white text sits on a fill whose lightness is so low that darker hover shades are not visible.
+  const veryDark = hexToOklch(primary).l < VERY_DARK_LIGHTNESS && contrastRatio(WHITE, primary) >= 4.5;
   const primaryText = readable(primary);
   const brandReport: BrandReport = {
     typed,
@@ -473,6 +481,9 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     link: { hover: darker(1), pressed: darker(2), visited: darker(3) },
     focus,
     nearError,
+    ui,
+    uiStep,
+    veryDark,
   };
 
   const roles: ColorTokens["roles"] = {

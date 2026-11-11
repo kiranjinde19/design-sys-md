@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, Boxes, ChartColumn, CreditCard, FolderKanban, LayoutDashboard, Minus, PanelLeft, Settings, Users } from "lucide-react";
 import { PvIcon } from "../preview-icon";
 import { BarChart, Legend, LineChart, TooltipSample } from "./charts";
-import { ACTIVITY, BY_PLAN, METRICS, REQUESTS } from "./sample-data";
+import { ACTIVITY, BY_PLAN, METRICS, requestsFor } from "./sample-data";
 
 const NAV = [
   { group: "Workspace", items: [{ label: "Overview", icon: LayoutDashboard, current: true }, { label: "Projects", icon: FolderKanban }, { label: "Reports", icon: ChartColumn }] },
@@ -17,7 +17,8 @@ const TREND = { up: { icon: ArrowUp, badge: "badge tone-success" }, down: { icon
 /** An app screen drawn with the skill file's own shell, metric card, chart and table recipes. */
 export function DashboardTab() {
   const [range, setRange] = useState<(typeof RANGES)[number]>("30 days");
-  const tooltipAt = 8;
+  const requests = requestsFor(range);
+  const tooltipAt = Math.round((requests.labels.length - 1) * 0.66);
   return (
     <div className="shell pvx-dash">
       <aside className="sidebar pvx-sidebar" aria-label="Sample navigation">
@@ -91,14 +92,14 @@ export function DashboardTab() {
                 <h2>Requests over time</h2>
                 <p className="pvx-note">Thousands of requests per day. Sample content.</p>
               </div>
-              <Legend kind="line" items={REQUESTS.series.map((s) => ({ name: s.name }))} />
+              <Legend kind="line" items={requests.series.map((s) => ({ name: s.name }))} />
               <LineChart
                 title="Requests over time"
                 unit="thousands of requests per day"
-                labels={REQUESTS.labels}
-                series={REQUESTS.series}
+                labels={requests.labels}
+                series={requests.series}
                 tooltipAt={tooltipAt}
-                tooltip={<TooltipSample label={`${REQUESTS.labels[tooltipAt]}, day ${tooltipAt + 1}`} rows={REQUESTS.series.map((s, index) => ({ name: s.name, value: String(s.values[tooltipAt]), index }))} />}
+                tooltip={<TooltipSample label={requests.labels[tooltipAt]} rows={requests.series.map((s, index) => ({ name: s.name, value: String(s.values[tooltipAt]), index }))} />}
               />
             </div>
             <div className="card">

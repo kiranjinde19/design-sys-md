@@ -3,6 +3,7 @@
 Plain-language log of what is built. Newest first.
 
 ## Latest
+- **Samples, swatches, Dashboard and Charts fixes, preview equals output, brand edge cases.** Buttons grid: columns size to their content (min gap 12px, room for the focus ring, scrolls sideways if it must). Every color sample has a 1px subtle outline (light and dark); the Signature and Shadows tiles sit on an inset rounded panel (10px, 8px padding, the user's page color, samples 24px tall so the panel fits the 120px row). Brand swatches in the Colors tile and the editor are focusable buttons ("Brand 600, #4F46E5, your color"), with a tooltip row above them (hover and keyboard focus, never over text) and click to copy ("Copied"); the Colors tile is now a div with a stretched open button behind it, so no button sits inside a button. Step 600 has a two tone ring (flipped in dark mode) and aria-current. Header inner container uses the page's max width and padding (checked at 1280, 1440 and 1920). Brand notice: first line, two sample options and one summary line stay; the long explanations are in a "Why this matters" disclosure; very dark brands get one visible line. Dashboard and Charts: donut center shows the top segment, the x axis shows dates for 30 and 90 days and weekdays for 7 days, the sparkline card matches the donut card, and a mouse click on a tab shows no ring (tested). Pricing is drawn with the skill file's classes (`header`, `plans`, `plan`, `card`, `card-hover`, `card-featured`, `icon-tile`, `divider`, `btn`, `cta`). Very dark brands (#111827): hover and pressed get lighter (white text stays at 4.5:1), in the preview, the tokens and the button recipe; test for the lightness gap between default, hover and pressed for seven brands. Light brands (#FACC15): the featured border, selected control outlines use the first brand step reaching 3:1 (`brandReport.ui`), step 600 stays the fill; in the preview, the Signature sample and the generated file (Accessibility row and a do and don't row, only when it applies). Sizes (AGENTS.md worst case): default brand Next.js 29.40, React 30.24, plain HTML 31.496 KiB (unchanged); yellow 31.65, near black 31.53, teal 31.51, light indigo 31.68, red 32.17 KiB for plain HTML (all under 32 KiB except red, accepted earlier). Round trip tests 77 of 77; live behavior tests 16 of 16.
 - **The tool is monochrome.** The tool's own interface (buttons, active tab and list item, progress bar, links, ticks, focus rings, slider tracks, number chips) is now black, white and pure gray, matching the new monochrome mockups in `design/reference`. The theme is built from the Blank slate preset with a near black brand color (`tool-theme.ts`, light and dark). Indigo appears only inside the tile samples and the preview, as the user's brand color. Lint, build, 75 round trip tests and 11 live behavior tests pass.
 - **Live behavior restored and tested.** Audit with a real browser against the commit before the mockup pass (93d59a0) and now. Found: the loading spinner never rotated (since the Preview fixes commit 3440c31: its `@keyframes` sat inside the nested preview block, where CSS drops it) and preview inputs could not take typing, and the select could not open (since the Color engine commit 181647b: every mouse press in the preview was blocked and every control removed from keyboard focus). The mockup pass itself replaced the shadcn buttons in the top bar and the Next button with plain buttons, which lost their hover, pressed and disabled states; nothing was replaced by static markup from `design/reference`. Fixed: `@keyframes` are hoisted out of the nested block so the spinner always rotates, and under reduced motion it is replaced by three still dots; the preview controls are live again (a mouse click still shows no focus ring because the ring is drawn only for `:focus-visible`); the tool's own primary and secondary buttons (`tool-btn`) have real hover, pressed and disabled states, links and list items have pressed states. New `npm run test:live` (11 tests, real headless Chrome, no new packages): spinner rotation and reduced motion fallback, border beam and its fallback, six tabs, checkbox, radio, switch, typing, select focus, focus ring rules, segmented controls, hover on tiles, tabs, buttons, list items and top bar buttons, card lift, keyboard focus rings, dark mode, Back, Next, Previous, Reset, reviewed ticks. Passes on the dev server and on the production build, with reduced motion off and on. New CLAUDE.md rule: the mockups are a visual reference, not a behavior spec. Round trip tests: 75 of 75.
 - **Visual match to the mockups.** `/app` now matches `design/reference` in layout, spacing, radii, type sizes and tile anatomy, with every value still coming from the design system. See "Differences from the mockups" for what was kept on purpose. Round trip tests: 75 of 75.
@@ -38,12 +39,12 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 | Stage | Done | Total |
 |---|---|---|
 | Stage 1: Project setup | 5 | 5 |
-| Stage 2: Token engine | 10 | 10 |
+| Stage 2: Token engine | 11 | 11 |
 | Stage 3: Skill file generator | 6 | 7 |
 | Stage 4: The tool's own screen (shell) | 7 | 7 |
-| Stage 5: Live preview and editors | 9 | 13 |
+| Stage 5: Live preview and editors | 11 | 15 |
 | Stage 6: Landing page and final polish | 0 | 4 |
-| **Overall** | **37** | **46** |
+| **Overall** | **40** | **49** |
 
 ## Checklist by stage
 
@@ -63,6 +64,7 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 - [x] Presets (SaaS Clean, Blank slate) with versions, frozen snapshots and a guard
 - [x] Autosave in the browser
 - [x] Brand color mode (exact or adjusted), brand text steps, focus steps and tinted destructive
+- [x] Very dark and light brand rules: lighter hover and pressed for very dark brands, 3:1 outline step for light brands, with tests
 - [x] Stress test with five brand colors (#E54848, #FACC15, #0F766E, #111827, #A5B4FC)
 - [x] `/debug` pages for checking the engine
 
@@ -93,7 +95,9 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 - [x] Preview tab: Dashboard
 - [x] Preview tab: Charts
 - [x] Charts accessible: summary, hidden data table, shape as well as color
-- [x] Live behavior tests (`npm run test:live`) pass: spinner, beam, tabs, controls, segmented controls, hover, focus, dark mode, flows
+- [x] Live behavior tests (`npm run test:live`) pass: spinner, beam, tabs, controls, segmented controls, hover, focus, dark mode, flows, grid, swatches, header, charts
+- [x] Preview equals output: Pricing uses the skill file's classes (differences listed below)
+- [x] Tile samples: outlines, inset panels, swatch buttons with tooltip and copy, header alignment
 - [ ] Colors editor: roles drag and drop
 - [ ] Real Export screen (links to `/debug` for now)
 - [ ] Real Import screen (links to `/debug` for now)
@@ -114,3 +118,12 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 ## Differences from the mockups (checked at 1440px, after the visual match pass)
 Matched (every tile, the list, the panel and the preview now sit at the same pixel positions as the mockups): top bar (preset switch centered, 16px type, indigo Import file, sun icon), page padding and the 24px column gaps, the 28px title and the single 200px progress bar, tile anatomy (white circle number chip, thin check, 16px padding, swatch radius and 32px rows, 12px status dots, AA badge with a check), the editor (Back to board link above the list, medium weight list labels, no title row, 810px columns, "1 of 9" chip weight, dark field labels, 40px swatch button and 140px input, capitalized options, footer link and button sizes), and the preview (16px tab padding, a sub header line, a grey stage with a shadowed white card, Buttons, Forms and Tables at 100%, Pricing, Dashboard and Charts at 65%, chips without a dot).
 Kept on purpose: the page title "Your design system" and its subtitle; all sample content and captions (they show your real values); the roles drag and drop (not built yet, so there is no Roles list and no hue slider); the status colors strip, secondary color and brand notice in the Colors editor; the "Sample content" label instead of the "Live preview" dot; the Loading section and the Dashboard and Charts content; the white backdrop in the Signature tile; the Previous button; the mockup's 846px preview height (the app keeps 648px on the board).
+
+## Preview versus the skill file (where preview styles still differ)
+All six tabs use the plain HTML file's own CSS. What the preview adds on top (`pvx-` classes), and why:
+- Pricing: price and feature list typography, the gap between card children, the logo and the page heading. The file describes these in words; its `.plan` rule has no `gap`. Adding `gap: var(--gap-stack)` would cost about 25 bytes in the plain HTML file, which has 4 bytes of room under 31.5 KiB. Decision needed.
+- Forms: the page heading and the 480px form width, the fieldset and choice rows, the icon beside error text, and the static menu, dialog and toast layout (the file has `.dialog` and `.toast` but no menu class, and its dialog is `position: fixed`, so the preview makes it static).
+- Tables: the rounded frame around the table, the muted More button, the empty card.
+- Buttons and states: the state matrix, the loading row, the labels. The forced hover, pressed and focus rows copy the file's rules as `.is-*` classes on purpose.
+- Dashboard: the brand tile and navigation group labels, the date range control, the metric row layout (4 columns), and the SVG charts. The file defines the shell, `.stats` and `.table`; the charts are described in words and drawn by hand written SVG with the same chart colors.
+- Charts: all chart drawing and the colors strip are preview only.

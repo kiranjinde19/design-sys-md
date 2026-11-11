@@ -169,17 +169,17 @@ test("reduced motion replaces the spinner with a static indicator", async () => 
 test("the border beam animates, and has a steady fallback under reduced motion", async () => {
   await fresh();
   await goTab("Pricing");
-  const on = await ev(`(()=>{const b=document.querySelector(".ds-cta-beam");const c=getComputedStyle(b,"::before");return {found:!!b,name:c.animationName,duration:c.animationDuration}})()`);
-  assert.equal(on.found, true, "the recommended button carries the beam class");
+  const on = await ev(`(()=>{const b=document.querySelector("[role=tabpanel] .cta");const c=getComputedStyle(b,"::before");return {found:!!b,name:c.animationName,duration:c.animationDuration}})()`);
+  assert.equal(on.found, true, "the recommended button carries the cta class");
   assert.equal(on.name, "ds-beam");
   assert.equal(on.duration, "3.6s");
-  const a1 = await ev(`getComputedStyle(document.querySelector(".ds-cta-beam"),"::before").backgroundImage`);
+  const a1 = await ev(`getComputedStyle(document.querySelector("[role=tabpanel] .cta"),"::before").backgroundImage`);
   await sleep(400);
-  const a2 = await ev(`getComputedStyle(document.querySelector(".ds-cta-beam"),"::before").backgroundImage`);
+  const a2 = await ev(`getComputedStyle(document.querySelector("[role=tabpanel] .cta"),"::before").backgroundImage`);
   assert.notEqual(a1, a2, "the light moved around the ring");
 
   await open("/app", { reduced: true });
-  const off = await ev(`(()=>{const c=getComputedStyle(document.querySelector(".ds-cta-beam"),"::before");return {name:c.animationName,image:c.backgroundImage,color:c.backgroundColor}})()`);
+  const off = await ev(`(()=>{const c=getComputedStyle(document.querySelector("[role=tabpanel] .cta"),"::before");return {name:c.animationName,image:c.backgroundImage,color:c.backgroundColor}})()`);
   assert.equal(off.name, "none", "no animation under reduced motion");
   assert.equal(off.image, "none", "a steady ring color instead of the moving gradient");
   assert.notEqual(off.color, "rgba(0, 0, 0, 0)");
@@ -288,7 +288,7 @@ test("hover changes the computed style of a button, a tab, a tile, a list item a
 test("pricing cards lift on hover", async () => {
   await fresh();
   await goTab("Pricing");
-  const card = await hover(`document.querySelector(".pv-hover")`, ["transform", "boxShadow"]);
+  const card = await hover(`document.querySelector("[role=tabpanel] .card-hover")`, ["transform", "boxShadow"]);
   assert.ok(card.changed, `card hover lift: ${JSON.stringify(card)}`);
 });
 
@@ -340,4 +340,112 @@ test("dark mode toggles, and Back, Next, Previous, reviewed ticks and Reset work
   await click(byText("button", "Reset to"));
   assert.ok(!(await ev(`document.body.innerText`)).includes("edited"), "Reset clears the edit");
   assert.equal(await ev(`${byText("a", "Import file")}.getAttribute("href")`), "/debug#export", "Import file link");
+});
+
+// ---------------------------------------------------------------------------------------------- layout and samples
+
+const setBrand = async (hex) => {
+  await ev(`(()=>{const i=document.querySelector("input[aria-label='Brand color hex code']");const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;set.call(i,${JSON.stringify(hex)});i.dispatchEvent(new Event("input",{bubbles:true}))})()`);
+  await sleep(600);
+};
+const openEditor = async (name = "Colors") => click(`document.querySelector('button[aria-label^="${name}"]')`);
+
+test("the Buttons grid sizes to its content: no collisions with the red brand or a long label, and the focus ring has room", async () => {
+  await fresh();
+  await openEditor();
+  await setBrand("#E54848");
+  await goTab("Buttons and states");
+  const measure = `(()=>{
+    const wrap=${PANEL}.querySelector(".pvx-matrix-wrap");const buttons=[...wrap.querySelectorAll(".btn")];
+    const rows={};buttons.forEach(b=>{const r=b.getBoundingClientRect();(rows[Math.round(r.top)]??=[]).push(r)});
+    let minGap=1e9,overlap=false;Object.values(rows).forEach(list=>{list.sort((a,b)=>a.left-b.left);for(let i=1;i<list.length;i++){const gap=list[i].left-list[i-1].right;minGap=Math.min(minGap,gap);if(gap<0)overlap=true}});
+    const w=wrap.getBoundingClientRect();const f=wrap.querySelector(".is-focus").getBoundingClientRect();
+    return {minGap,overlap,focusRoom:Math.min(f.left-w.left,w.right-f.right,f.top-w.top,w.bottom-f.bottom),trash:!!wrap.querySelector("svg")}})()`;
+  let m = await ev(measure);
+  assert.equal(m.overlap, false, "no two buttons overlap");
+  assert.ok(m.minGap >= 11.5, `at least a 12px gap (${m.minGap})`);
+  assert.ok(m.focusRoom >= 4, `room for the 2px ring with its 2px offset (${m.focusRoom})`);
+  // A long label: every column grows to fit it.
+  await ev(`${PANEL}.querySelectorAll(".pvx-matrix .btn--destructive").forEach(b=>{b.lastChild.textContent="Delete everything permanently"})`);
+  await sleep(300);
+  m = await ev(measure);
+  assert.equal(m.overlap, false, "no overlap with a long label");
+  assert.ok(m.minGap >= 11.5, `gap kept with a long label (${m.minGap})`);
+});
+
+test("brand swatches are focusable buttons with labels, a tooltip row, copy, and a visible step 600 marker (also near black)", async () => {
+  await fresh();
+  const tile = `document.querySelector('button[aria-label^="Colors"]').parentElement`;
+  const swatches = `${tile}.querySelectorAll("button.tool-swatch")`;
+  assert.equal(await ev(`${swatches}.length`), 10, "ten swatch buttons in the Colors tile");
+  assert.equal(await ev(`${swatches}[0].getAttribute("aria-label")`), "Brand 50, #F4F6FF");
+  assert.equal(await ev(`${swatches}[6].getAttribute("aria-label")`), "Brand 600, #4F46E5, your color");
+  assert.equal(await ev(`${swatches}[6].getAttribute("aria-current")`), "true");
+  // Keyboard focus shows the tooltip, in a reserved row that holds nothing else.
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Shift", code: "ShiftLeft", windowsVirtualKeyCode: 16 });
+  await ev(`${swatches}[2].focus()`);
+  await sleep(200);
+  const tip = await ev(`(()=>{const t=document.querySelector(".tool-tip");return t?{text:t.textContent,onlyChild:t.parentElement.children.length===1,hidden:t.parentElement.getAttribute("aria-hidden")}:null})()`);
+  assert.ok(tip, "tooltip shows on keyboard focus");
+  assert.match(tip.text, /200 · #CAD2FF/);
+  assert.equal(tip.onlyChild, true, "the tooltip row holds no other text");
+  // Clicking copies and says so.
+  await click(`${swatches}[2]`);
+  assert.equal(await ev(`document.querySelector(".tool-tip")?.textContent`), "Copied");
+
+  // The step 600 ring is visible on a near black brand (two tone) and a white brand.
+  for (const brand of ["#111827", "#FFFFFF", "#FACC15"]) {
+    await openEditor();
+    await setBrand(brand);
+    const ring = await ev(`(()=>{const e=document.querySelector("section[aria-labelledby=editor-title] button.tool-swatch[aria-current=true]");const c=getComputedStyle(e);return {shadow:c.boxShadow,label:e.getAttribute("aria-label")}})()`);
+    assert.match(ring.shadow, /0px 0px 0px 2px[\s\S]*0px 0px 0px 4px/, `two tone ring on ${brand}`);
+    assert.match(ring.label, /your color/);
+    await click(byText("button", "Back to board"));
+  }
+});
+
+test("the header lines up with the page at 1280, 1440 and 1920", async () => {
+  await fresh();
+  try {
+    for (const width of [1280, 1440, 1920]) {
+      await send("Emulation.setDeviceMetricsOverride", { width, height: 900, deviceScaleFactor: 1, mobile: false });
+      await sleep(500);
+      const m = await ev(`(()=>{const l=document.querySelector("header span[aria-hidden]").getBoundingClientRect().left;const h=document.querySelector("h1").getBoundingClientRect().left;const e=[...document.querySelectorAll("header a")].find(a=>a.textContent.includes("Export")).getBoundingClientRect().right;const p=document.querySelector("[role=status] span[aria-hidden]").getBoundingClientRect().right;return {l,h,e,p}})()`);
+      assert.ok(Math.abs(m.l - m.h) < 1.5, `${width}: logo left ${m.l} vs title left ${m.h}`);
+      assert.ok(Math.abs(m.e - m.p) < 1.5, `${width}: Export right ${m.e} vs progress right ${m.p}`);
+    }
+  } finally {
+    await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  }
+});
+
+test("Dashboard and Charts: the donut center shows the top segment, the date axis follows the range, the cards match, and a tab click leaves no ring", async () => {
+  await fresh();
+  await goTab("Dashboard");
+  const range = `${PANEL}.querySelector("[role=group][aria-label='Date range']")`;
+  const axis = () => ev(`[...${PANEL}.querySelectorAll("figure svg text.pvx-axis")].map(t=>t.textContent).filter(t=>/[A-Za-z]/.test(t)&&!/^\\d/.test(t)).slice(0,12)`);
+  await click(`${range}.querySelectorAll("button")[1]`);
+  const days30 = await axis();
+  assert.ok(days30.some((t) => /^[A-Z][a-z]{2} \d{1,2}$/.test(t)), `30 days shows dates: ${days30}`);
+  await click(`${range}.querySelectorAll("button")[0]`);
+  const days7 = await axis();
+  assert.ok(days7.some((t) => /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/.test(t)), `7 days shows weekdays: ${days7}`);
+
+  await goTab("Charts");
+  const donut = await ev(`${PANEL}.querySelector(".pvx-donut svg").textContent`);
+  assert.ok(donut.includes("40%") && donut.includes("Email") && !donut.includes("100%"), `donut center: ${donut}`);
+  const h = await ev(`(()=>{const d=${PANEL}.querySelector(".pvx-donut").closest(".card").getBoundingClientRect().height;const s=${PANEL}.querySelector(".pvx-statcard").getBoundingClientRect().height;return [d,s]})()`);
+  assert.ok(Math.abs(h[0] - h[1]) < 1.5, `sparkline card ${h[1]} equals donut card ${h[0]}`);
+
+  await click(tabButton("Forms"));
+  const ring = await ev(`(()=>{const t=${tabButton("Forms")};const c=getComputedStyle(t);return {fv:t.matches(":focus-visible"),outline:c.outlineStyle}})()`);
+  assert.equal(ring.fv, false, "a mouse click on a tab is not focus-visible");
+  assert.equal(ring.outline, "none", "and shows no outline");
+});
+
+test("the Pricing tab is drawn with the skill file's classes", async () => {
+  await fresh();
+  await goTab("Pricing");
+  const info = await ev(`(()=>{const q=s=>${PANEL}.querySelectorAll(s).length;return {plans:q(".plans > .card.card-hover.plan"),featured:q(".card-featured"),cta:q(".btn--primary.cta"),tiles:q(".icon-tile"),dividers:q(".divider"),border:getComputedStyle(${PANEL}.querySelector(".card-featured")).borderTopWidth}})()`);
+  assert.deepEqual({ ...info }, { plans: 3, featured: 1, cta: 1, tiles: 3, dividers: 3, border: "2px" });
 });

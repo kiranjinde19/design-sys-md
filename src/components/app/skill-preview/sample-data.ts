@@ -59,3 +59,21 @@ export const ACTIVITY = [
   { name: "Taylor Kim", event: "Updated billing details", status: "Failed", tone: "tone-error", count: "1" },
   { name: "Casey Patel", event: "Joined the workspace", status: "Complete", tone: "tone-success", count: "7" },
 ] as const;
+
+export type DateRange = "7 days" | "30 days" | "90 days";
+
+/** A fixed sample "today", so the dates on the axis are sample content too. */
+const ANCHOR = Date.UTC(2026, 10, 11);
+const DAY = 86_400_000;
+const date = (daysAgo: number) => new Date(ANCHOR - daysAgo * DAY).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+const weekday = (daysAgo: number) => new Date(ANCHOR - daysAgo * DAY).toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+
+/** The requests chart for a date range: weekday names for 7 days, dates (like "Oct 12") for 30 and 90 days. */
+export function requestsFor(range: DateRange) {
+  if (range === "7 days") {
+    return { labels: Array.from({ length: 7 }, (_, i) => weekday(6 - i)), series: REQUESTS.series.map((s) => ({ ...s, values: s.values.slice(5) })) };
+  }
+  const span = range === "30 days" ? 30 : 90;
+  const n = REQUESTS.labels.length;
+  return { labels: Array.from({ length: n }, (_, i) => date(Math.round(span - (span * i) / (n - 1)))), series: REQUESTS.series };
+}
