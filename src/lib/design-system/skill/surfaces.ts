@@ -41,13 +41,13 @@ function dashboardsSection(ctx: SkillContext): string[] {
   return lines(
     "### Dashboards",
     "",
-    `Section gaps ${spacing.semantic.sectionGap}px, card grid gaps ${spacing.semantic.stackGap}px. Metrics first, then charts, then the table. A metric card: small muted label, the number (${big.px}px, heading font, tabular figures), one optional change line in \`${statusRef(ctx, "success")}\` or \`${statusRef(ctx, "error")}\` with an arrow or sign.`,
+    `Section gaps ${spacing.semantic.sectionGap}px, card grid gaps ${spacing.semantic.stackGap}px. Metrics first, then charts, then the table. A metric card: small muted label, the number (${big.px}px, heading font, tabular figures), then an optional change badge (${tw ? "success 50 tint up, error 50 tint down, muted flat" : "`badge tone-success` up, `tone-error` down, plain `badge` flat"}) with an arrow icon and the value, and one muted helper line.`,
     "",
     fence(tw ? "tsx" : "html", tw
       ? `<div className="grid gap-${unit(spacing.semantic.stackGap)} sm:grid-cols-2 lg:grid-cols-4"><div className="card"><p className="text-sm ${TILE}">Label</p><p className="font-heading text-${big.name} ${weightClass(typography.headingWeight)} tracking-heading ${typography.tabularNumbers.className}">11,111</p></div></div>`
-      : `<div class="stats"><div class="card"><p class="stat__label">Label</p><p class="stat__value">11,111</p><p class="stat__change stat__change--up">+12.4%</p></div></div>`),
+      : `<div class="stats"><div class="card"><p class="stat__label">Label</p><p class="stat__value">11,111</p><span class="badge tone-success">+12.4%</span></div></div>`),
     tw ? null : "",
-    tw ? null : fence("css", tight(ctx, compactCss([`.stats { display: grid; gap: var(--gap-stack); } .stats p { margin: 0; }`, `@media (min-width: ${ctx.t.layout.breakpoints.sm}px) { .stats { grid-template-columns: repeat(2, 1fr); } } @media (min-width: ${ctx.t.layout.breakpoints.lg}px) { .stats { grid-template-columns: repeat(4, 1fr); } }`, `.stat__label { font-size: var(--text-sm); color: ${ctx.cssVar(ctx.t.colors.roles["muted-foreground"], "text")}; }`, `.stat__value { font: ${typography.headingWeight} var(--text-3xl)/var(--leading-3xl) var(--font-heading); letter-spacing: var(--tracking-heading); font-variant-numeric: ${typography.tabularNumbers.css.fontVariantNumeric}; }`, `.stat__change { font-size: var(--text-sm); font-variant-numeric: ${typography.tabularNumbers.css.fontVariantNumeric}; } .stat__change--up { color: ${statusRef(ctx, "success")}; } .stat__change--down { color: ${statusRef(ctx, "error")}; }`].join("\n")).split("\n"))),
+    tw ? null : fence("css", tight(ctx, compactCss([`.stats { display: grid; gap: var(--gap-stack); } .stats p { margin: 0; }`, `@media (min-width: ${ctx.t.layout.breakpoints.sm}px) { .stats { grid-template-columns: repeat(2, 1fr); } } @media (min-width: ${ctx.t.layout.breakpoints.lg}px) { .stats { grid-template-columns: repeat(4, 1fr); } }`, `.stat__label { font-size: var(--text-sm); color: ${ctx.cssVar(ctx.t.colors.roles["muted-foreground"], "text")}; }`, `.stat__value { font: ${typography.headingWeight} var(--text-3xl)/var(--leading-3xl) var(--font-heading); letter-spacing: var(--tracking-heading); font-variant-numeric: ${typography.tabularNumbers.css.fontVariantNumeric}; }`].join("\n")).split("\n"))),
     "",
   );
 }
@@ -57,13 +57,13 @@ function chartsSection(ctx: SkillContext): string[] {
   const check = colors.chartCheck;
   const tw = ctx.tailwind;
   const claim = check.passes
-    ? `Color blind check (deuteranopia, protanopia, tritanopia): the closest pair differs by ${check.minDistance} (OKLab; ${check.threshold} or more is clearly different) and each color reaches ${check.minContrast}:1 on the background. Still add markers or direct labels.`
+    ? `Color blind check (deuteranopia, protanopia, tritanopia): the closest pair differs by ${check.minDistance} (OKLab; ${check.threshold} or more is clearly different) and each color reaches ${check.minContrast}:1 on the background. `
     : `The color check found charts ${check.worstPair.join(" and ")} close under ${check.worstVision} (${check.minDistance}, below ${check.threshold}). Never rely on color alone: always add markers, patterns or direct labels.`;
   return lines(
     "### Charts",
     "",
     `Series colors, in order: ${[1, 2, 3, 4, 5].map((n) => (tw ? `\`fill-chart-${n}\`` : `\`var(--chart-${n})\``)).join(", ")}${tw ? " (and `stroke-chart-N`)" : ""}. Chart 1 is the brand color. Never reorder them or add a sixth: group extras as "Other" in ${tw ? "`fill-neutral-400`" : "`var(--neutral-400)`"}. ${claim}`,
-    `Axis and legend text ${tw ? "`text-xs fill-muted-foreground`" : "`var(--text-xs)` in `var(--muted-foreground)`"}; grid lines ${tw ? "`stroke-border`" : "`var(--border)`"}, horizontal only; no borders, 3D or gradients. Tooltips are floating layers (${tw ? "`bg-popover text-popover-foreground border border-border rounded-md shadow-md`" : "popover colors, border, radius md, shadow 3"}) with tabular figures. Every chart has a title, a unit and a text summary for screen readers.`,
+    `Axis and legend text ${tw ? "`text-xs fill-muted-foreground`" : "`var(--text-xs)` in `var(--muted-foreground)`"}; grid lines ${tw ? "`stroke-border`" : "`var(--border)`"}, horizontal only; no borders, 3D or gradients. Tooltips are floating layers (${tw ? "`bg-popover text-popover-foreground border border-border rounded-md shadow-md`" : "popover colors, border, radius md, shadow 3"}) with tabular figures. Every chart has a title, a unit, \`role="img"\` with an \`aria-label\`, and a hidden data table. Never color alone: each line a dash style and marker, each bar and segment a pattern or label. Area fill: ${tw ? "`fill-brand-200`" : "`var(--brand-200)`"}.`,
     "",
   );
 }

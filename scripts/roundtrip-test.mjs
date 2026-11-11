@@ -245,3 +245,15 @@ test("shadow levels: cards 1, hover 2, menus 3, toasts 4, dialogs 5", () => {
   assert.match(file, /\.dialog ?\{[^}]*var\(--shadow-5\)/);
   assert.match(file, /\.toast ?\{[^}]*var\(--shadow-4\)/);
 });
+
+test("chart and metric card recipes carry the accessibility and badge details, in every stack", () => {
+  const ds = createDesignSystem(saas);
+  for (const stack of STACKS) {
+    const file = generateSkillFile(ds, { stack, presetId: "saas-clean" }).skill;
+    assert.match(file, /role="img"/);
+    assert.match(file, /hidden data table/);
+    assert.match(file, /dash style and marker/);
+    assert.match(file, /change badge/);
+    assert.doesNotMatch(file, /stat__change/);
+  }
+});

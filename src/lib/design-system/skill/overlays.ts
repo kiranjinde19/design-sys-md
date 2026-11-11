@@ -25,7 +25,7 @@ function overlaysCss(ctx: SkillContext): string[] {
     `.badge { display: inline-flex; padding: ${spaceVar(ctx, 2)} var(--gap-inline); border-radius: var(--radius-full); background: var(--tint, ${ctx.cssVar(r.muted, "fill", ["muted"])}); color: var(--tone, ${muted}); font-size: var(--text-xs); font-weight: ${ctx.t.controls.buttons.fontWeight}; }`,
     `${([["brand", colors.brand], ...(["success", "warning", "error", "info"] as SemanticName[]).map((n) => [n, colors.semantic[n]] as const)] as const).map(([n, sc]) => `.tone-${n} { --tint: ${ctx.cssVar(sc[50], "fill")}; --tone: var(--${n}-${onTint(sc)}); }`).join(" ")}`,
     `.avatar { display: inline-flex; align-items: center; justify-content: center; width: var(--control-h); height: var(--control-h); border-radius: var(--radius-full); background: ${ctx.cssVar(r.muted, "fill", ["muted"])}; color: ${muted}; }`,
-    `.skeleton { border-radius: var(--radius-md); background: ${ctx.cssVar(r.muted, "fill", ["muted"])}; animation: ds-pulse 2s ease-in-out infinite; } @keyframes ds-pulse { 50% { opacity: 0.5; } } @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }`,
+    `.skeleton { border-radius: var(--radius-md); background: ${ctx.cssVar(colors.neutral[200], "fill")}; animation: ds-pulse 2s ease-in-out infinite; } @keyframes ds-pulse { 50% { opacity: 0.5; } } @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }`,
   ];
   return css;
 }

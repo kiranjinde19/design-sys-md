@@ -3,6 +3,7 @@
 Plain-language log of what is built. Newest first.
 
 ## Latest
+- **Stage 5, Step A6: Dashboard and Charts preview tabs.** Both "Coming next" messages are gone. Both tabs are drawn with the plain HTML CSS from the skill file, scoped like the other tabs, so they follow brand color, chart colors, font, radius, density, shadows and card style. Dashboard: the skill's app shell (sidebar with brand tile, two nav groups with 16px icons, "Overview" current; 56px top bar with a sidebar toggle and an avatar button, both labeled), heading with a 7, 30, 90 days control, four metric cards (value in 3xl with tabular numbers, change badge up/down/flat, helper line), a line chart card with a legend and a static tooltip at one point, a bar chart card ("By plan", three bars with value labels) and a "Recent activity" table. Charts: a chart colors strip (chart-1 to chart-5 with hex, contrast on the background, marker, and a note on what the engine adjusted and the color blind result), line (2 series), area (soft fill is brand step 200), grouped bars (3 series), stacked bars (3 segments, direct labels), donut (4 segments with a values legend), a metric card with a sparkline, a loading skeleton card and an empty card. Charts are small hand written SVG (`charts.tsx`) fed by one sample data file; no library was installed. Each chart is `role="img"` with an aria-label that says what it shows and has a visually hidden data table; lines differ by dash style and marker, bars and donut segments by pattern; chart text is 12px (measured). No primary button and no border beam in either tab. Skill file changes (all stacks): the metric card change line became a change badge (up: success tint, down: error tint, flat: plain) plus a helper line, and the `.stat__change` CSS was removed (saves bytes); the Charts paragraph now requires `role="img"` with an `aria-label`, a hidden data table, shape as well as color (dash style and marker per line, pattern or label per bar and segment) and the area fill step; the HTML skeleton now uses neutral 200 instead of the muted fill, which was invisible on a tinted card. Sizes: worst cases Next.js 29.40, React 30.24, plain HTML 31.50 KiB (31.496, 4 bytes under my 31.5 limit; I tightened my own new wording to fit, no rule was cut). Round trip tests: 74 of 74.
 - **Small fixes before Dashboard and Charts (Step A5).** (1) Brand notice default: "Adjust" was a saved choice, not the default. The mode is part of the saved settings, so choosing Adjust for one color stayed on when a new color was typed. A new typed brand color now always starts in "Keep my exact color"; Reset to SaaS Clean and old files were already exact. (2) The adjust option is labeled by the size of the change ("Darken a little" or "Darken a lot", lightness change of 0.12 or more) and shows both hex values; the exact option says "(Recommended)" when dark text reaches 7:1 (yellow does, red does not). (3) A brand within about 20 degrees of the error red uses the foreground color for the focus ring and the focus border of controls (the signature ring now also uses the 3:1 focus step instead of a fixed brand-500, which fixes light brands); error text gets an alert icon; the rule is in the Accessibility section of the file (only when it applies) and in the editor notice. (4) The editor panel reserves a scrollbar gutter plus right padding. (5) Preview: every icon goes through one component that applies the icon style, stroke width and line ends (check marks, plan icon tiles, top bar, row actions, spinner, trash, alert); sample copy now comes from the tone of voice code the file uses (pricing CTA, Save label and helper, success and error toasts, empty state); shadows: cards level 1, hover lift level 2, menus 3, toasts 4, dialogs 5 (this swapped toasts and dialogs in the file, and the hover shadow was level 3 before, now 2 as the file's own table says); the Forms tab has a static menu, confirm dialog and two toasts. (6) Standing size rule added to CLAUDE.md. Found while checking: with a red brand (near the error hue) the plain HTML worst case file is 32.32 KiB, over the 32 KiB Codex cap; it was 32.16 KiB before this step, so it was already over (see sizes). Not cut; waiting for a decision.
 - **Brand color engine and fixes (Step A4).** Brand mode (exact or adjusted) with a notice and two live sample buttons under the brand color field; the typed color and the mode are saved in autosave and in the data block (data format version 2, older files still import as exact); SaaS Clean is now version 4 and Blank slate version 2. The generated file has a new hard rule 15 (primary button text color, never change it). Brand colored text uses the first brand step that reads at 4.5:1; focus ring and control focus borders use a step that reads at 3:1; a brand within about 20 degrees of the error hue gets a tinted destructive variant (solid red only in confirmation dialogs) with a trash icon, notes in the button recipes and a do and don't row. Primary hover and pressed shades keep the primary text color (lighter shades with dark text). Preview fixes: no scrollbar unless the page is taller than the frame (thin when it shows), focus rings only for the keyboard, Forms fields max 480px, neutral muted More buttons in Tables, a white backdrop for the Signature tile sample. Stress tested with five brands (see the report). The checklist below replaces the old totals.
 - **Stage 5, Step A3: polish and three more preview tabs.** Done from the written spec; `design/reference` still has no mockup files, so the comparison against them is still open. Polish: the logo mark is now three bars of different lengths (long, short, medium, 1.5px stroke); the Signature tile is one left aligned row (crisp border box, card, icon tile, "Get started" button with a static 2px inset ring, focus ring box) using the real chosen options; the Buttons tile field is 32px with 10px radius; the Colors editor shows the 10 step brand scale with step labels (600 marked) and the generated status colors. The "SaaS Clean, edited. Reset" bug: the check compared every setting including product name, description and stack (set on the Export screen), so a changed product fact looked like an edit and Reset could never clear it. It now compares design values only, ignoring key order and product facts: hidden on a fresh load, hidden with product facts set, shown after a real edit, hidden after Reset (tested). The editor panel was confirmed in the browser: #FFFFFF, 1px #E0E6ED, 16px radius, 24px padding. New preview tabs: Buttons and states (4 variants by 5 states, loading, inputs, checkbox, radio and switch with the usage rules), Forms (settings screen with a Profile card) and Tables (Team members). They are drawn with the plain HTML CSS that the skill file itself contains (scoped to the preview, with hover, pressed and focus copied as classes), so the preview shows what an AI would build from the file. The selected tab is remembered. Checked at 1440px in three setups (default, Editorial font with compact density and radius 4, teal with spacious density and radius 20) and a secondary outline, hard shadow, solid call to action setup.
@@ -23,10 +24,10 @@ Plain-language log of what is built. Newest first.
 Worst case = 60 character name, 200 character description, own fonts for heading and body.
 | Stack | Normal | Worst case | Cap |
 |---|---|---|---|
-| Next.js | 27.99 KiB | 29.23 KiB | normal under 28.5 (met) |
-| React | 29.28 KiB | 30.08 KiB | under 31.5 (met) |
-| Plain HTML | 30.70 KiB | 31.49 KiB | under 31.5 (met, almost no room left) |
-| Plain HTML, red brand #E54848 | 31.53 KiB | 32.32 KiB | **over 32 KiB** (was 32.16 before step A5) |
+| Next.js | 28.16 KiB | 29.40 KiB | normal under 28.5 (met) |
+| React | 29.44 KiB | 30.24 KiB | under 31.5 (met) |
+| Plain HTML | 30.71 KiB | 31.50 KiB | under 31.5 (met, almost no room left) |
+| Plain HTML, red brand #E54848 | 31.54 KiB | 32.33 KiB | **over 32 KiB** (was 32.16 before step A5; decision still open) |
 
 ## Checklist counts
 | Stage | Done | Total |
@@ -35,9 +36,9 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 | Stage 2: Token engine | 10 | 10 |
 | Stage 3: Skill file generator | 5 | 7 |
 | Stage 4: The tool's own screen (shell) | 6 | 7 |
-| Stage 5: Live preview and editors | 5 | 11 |
+| Stage 5: Live preview and editors | 8 | 12 |
 | Stage 6: Landing page and final polish | 0 | 4 |
-| **Overall** | **31** | **44** |
+| **Overall** | **34** | **45** |
 
 ## Checklist by stage
 
@@ -63,7 +64,7 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 ### Stage 3: Skill file generator
 - [x] Skill file for three stacks (Next.js, React, plain HTML) with SKILL.md and AGENTS.md download
 - [x] Import with feedback, plus the data block (format version 2, older files import)
-- [x] Round trip test (73 tests)
+- [x] Round trip test (74 tests)
 - [x] Size under the Codex cap for every stack
 - [x] Next.js and React files built in fresh projects
 - [ ] Plain HTML worst case under 31.5 KiB for every brand color (red brand is 32.32 KiB)
@@ -84,8 +85,9 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 - [x] Preview tab: Forms
 - [x] Preview tab: Tables
 - [x] Icon, tone of voice and shadow settings show in the preview
-- [ ] Preview tab: Dashboard
-- [ ] Preview tab: Charts
+- [x] Preview tab: Dashboard
+- [x] Preview tab: Charts
+- [x] Charts accessible: summary, hidden data table, shape as well as color
 - [ ] Colors editor: roles drag and drop
 - [ ] Real Export screen (links to `/debug` for now)
 - [ ] Real Import screen (links to `/debug` for now)
@@ -102,5 +104,4 @@ Worst case = 60 character name, 200 character description, own fonts for heading
 
 ## Next
 - Add the two mockup files to `design/reference/` and compare the screen against them (CLAUDE.md "Visual match rule").
-- Build the Dashboard and Charts preview tabs.
 - Colors editor: roles drag and drop.

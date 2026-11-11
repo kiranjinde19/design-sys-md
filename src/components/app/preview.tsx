@@ -6,6 +6,8 @@ import { FormsTab } from "./skill-preview/forms-tab";
 import { ScaledStage } from "./scaled-stage";
 import { SkillScope } from "./skill-preview/skill-scope";
 import { TablesTab } from "./skill-preview/tables-tab";
+import { DashboardTab } from "./skill-preview/dashboard-tab";
+import { ChartsTab } from "./skill-preview/charts-tab";
 import { cn } from "@/lib/utils";
 import { useDesignSystem } from "@/lib/design-system";
 import { PricingPreview } from "./pricing-preview";
@@ -72,17 +74,15 @@ export function Preview() {
       <div className="relative min-h-0 flex-1 p-3">
         {/* The frame. The page inside is a normal desktop page, shown at 65% scale. Light only. */}
         <div role="tabpanel" className="tool-scroll h-full overflow-y-auto overflow-x-hidden rounded-[var(--t-radius-md)] border border-border" style={{ ...previewVars(tokens), background: "var(--pv-background)" }}>
-          {tab === "Pricing" || tab === "Buttons and states" || tab === "Forms" || tab === "Tables" ? (
-            <ScaledStage scale={SCALE}>
-              {tab === "Pricing" ? (
-                <PricingPreview />
-              ) : (
-                <SkillScope>{tab === "Buttons and states" ? <ButtonsTab /> : tab === "Forms" ? <FormsTab /> : <TablesTab />}</SkillScope>
-              )}
-            </ScaledStage>
-          ) : (
-            <div className="flex h-full items-center justify-center bg-background text-sm text-muted-foreground">Coming next</div>
-          )}
+          <ScaledStage scale={SCALE}>
+            {tab === "Pricing" ? (
+              <PricingPreview />
+            ) : (
+              <SkillScope>
+                {tab === "Buttons and states" ? <ButtonsTab /> : tab === "Forms" ? <FormsTab /> : tab === "Tables" ? <TablesTab /> : tab === "Dashboard" ? <DashboardTab /> : <ChartsTab />}
+              </SkillScope>
+            )}
+          </ScaledStage>
         </div>
       </div>
 
