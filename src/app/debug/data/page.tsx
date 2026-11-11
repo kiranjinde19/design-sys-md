@@ -323,8 +323,8 @@ const sections: { title: string; body: string }[] = [
       .join("\n\n"),
   },
   {
-    title: "Primary CTA stylesheet (glow, keyframes and reduced-motion fallback)",
-    body: tokens.signature.primaryCta.stylesheet ?? "The primary CTA is not animated in this preset.",
+    title: "Primary CTA stylesheet (animation, keyframes and reduced-motion fallback)",
+    body: tokens.signature.primaryCta.stylesheet ?? "The primary CTA is not animated here.",
   },
 ];
 

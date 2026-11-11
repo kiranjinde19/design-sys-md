@@ -107,13 +107,13 @@ export function DebugSignature() {
         </div>
         {cta.stylesheet ? (
           <div className="space-y-2">
-            <h3 className="text-sm font-medium">Primary CTA CSS (with reduced-motion fallback)</h3>
+            <h3 className="text-sm font-medium">Primary CTA CSS (animation and reduced-motion fallback)</h3>
             <pre className="overflow-x-auto rounded-lg border border-border p-4 font-mono text-xs leading-relaxed">
               {cta.stylesheet}
             </pre>
             <p className="text-xs text-muted-foreground">
-              To test: turn on &quot;Reduce motion&quot; in your computer&apos;s accessibility settings and reload. The glow stops
-              pulsing and stays on as a steady border.
+              To test: turn on &quot;Reduce motion&quot; in your computer&apos;s accessibility settings and reload. The animation
+              stops and a steady ring stays on.
             </p>
           </div>
         ) : null}

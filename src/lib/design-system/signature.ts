@@ -63,6 +63,7 @@ export const SIGNATURE_CATALOG: Catalog = {
     label: "Primary call to action",
     options: [
       { id: "solid", label: "Solid", description: "A plain solid brand button." },
+      { id: "border-beam", label: "Border beam", description: "A thin brand border with one streak of light travelling around it." },
       { id: "animated-glow-border", label: "Animated glow border", description: "A slow, soft glow pulses around the button." },
       { id: "gradient-fill", label: "Gradient fill", description: "A subtle brand gradient fill." },
       { id: "underline-sweep", label: "Underline sweep", description: "A text button with an underline that sweeps in on hover." },
@@ -101,7 +102,7 @@ export const SAAS_CLEAN_SIGNATURE: SignatureSettings = {
   featuredHighlight: "glow-border",
   cardStyle: "tinted-bento-tile",
   hover: "lift-2px",
-  primaryCta: "animated-glow-border",
+  primaryCta: "border-beam",
   iconContainer: "rounded-square-tile",
   focusRing: "offset-ring",
   divider: "hairline",
@@ -120,6 +121,7 @@ export const BLANK_SLATE_SIGNATURE: SignatureSettings = {
 
 const ICON_CONTAINER_SIZE = 40;
 const CTA_GLOW_CLASS = "ds-cta-glow";
+const CTA_BEAM_CLASS = "ds-cta-beam";
 const HOVER_TRANSITION = "transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease";
 
 interface SignatureContext {
@@ -222,13 +224,17 @@ export function generateSignature(
     solid: ctaBase,
     // The glow itself lives in the stylesheet below, so reduced motion can override it.
     "animated-glow-border": ctaBase,
+    // The ring is a pseudo-element in the stylesheet below, so the button keeps its own fill, hover and disabled colors.
+    "border-beam": ctaBase,
     "gradient-fill": {
       background: `linear-gradient(135deg, ${brand[500]}, ${brand[700]})`,
       color: colors.roles["primary-foreground"],
     },
     "underline-sweep": { background: "transparent", color: colors.roles.primary },
   };
-  const animated = settings.primaryCta === "animated-glow-border";
+  const beam = settings.primaryCta === "border-beam";
+  const glow = settings.primaryCta === "animated-glow-border";
+  const animated = beam || glow;
 
   // Icon container
   const iconCss: Record<SignatureSettings["iconContainer"], CssRecipe> = {
@@ -294,11 +300,30 @@ export function generateSignature(
         ctaCss[settings.primaryCta],
         settings.primaryCta === "underline-sweep"
           ? "On hover, an underline sweeps in from the left under the label."
-          : undefined,
+          : beam
+            ? "The beam is decorative: a 2px ring at the button edge. Button text and its contrast are unchanged."
+            : undefined,
       ),
       animated,
-      className: animated ? CTA_GLOW_CLASS : null,
-      stylesheet: animated
+      className: beam ? CTA_BEAM_CLASS : glow ? CTA_GLOW_CLASS : null,
+      stylesheet: beam
+        ? [
+            `@property --beam-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }`,
+            `.${CTA_BEAM_CLASS} { position: relative; border-color: ${brand[400]}; }`,
+            `@supports (mask-composite: exclude) {`,
+            `  .${CTA_BEAM_CLASS}::before {`,
+            `    content: ""; position: absolute; inset: 0; padding: 2px; border-radius: inherit;`,
+            `    --m: linear-gradient(black 0 0);`,
+            `    background: conic-gradient(from var(--beam-angle), ${brand[400]} 75%, ${brand[100]});`,
+            `    mask: var(--m) content-box, var(--m); mask-composite: exclude;`,
+            `    animation: ds-beam 3.6s linear infinite;`,
+            `  }`,
+            `}`,
+            `@keyframes ds-beam { to { --beam-angle: 360deg; } }`,
+            `/* Reduced motion: steady brand-400 ring */`,
+            `@media (prefers-reduced-motion: reduce) { .${CTA_BEAM_CLASS}::before { animation: none; background: ${brand[400]}; } }`,
+          ].join("\n")
+        : glow
         ? [
             `.${CTA_GLOW_CLASS} {`,
             `  box-shadow: ${glowFrom};`,
@@ -319,7 +344,7 @@ export function generateSignature(
             `}`,
           ].join("\n")
         : null,
-      reducedMotionCss: animated ? { animation: "none", boxShadow: glowStatic } : {},
+      reducedMotionCss: glow ? { animation: "none", boxShadow: glowStatic } : beam ? { animation: "none" } : {},
     },
     iconContainer: recipe("iconContainer", settings.iconContainer, iconCss[settings.iconContainer]),
     focusRing: recipe("focusRing", settings.focusRing, focusCss[settings.focusRing]),

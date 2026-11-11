@@ -92,7 +92,7 @@ Roles use the exact shadcn/ui names: background, foreground, card, card-foregrou
 | Featured highlight | **Glow border**, offset shadow, solid accent fill, corner ribbon |
 | Card style | Hairline border, soft shadow, **tinted bento tile**, glass blur |
 | Hover | **Lift 2px**, border color shift, scale 1.02, background tint |
-| Primary CTA | Solid, **animated glow border**, gradient fill, underline sweep |
+| Primary CTA | Solid, **border beam**, animated glow border, gradient fill, underline sweep |
 | Icon container | Bare, tinted circle, **rounded square tile**, outlined badge |
 | Focus ring | **Offset ring**, glow ring, thick outline |
 | Divider | **Hairline**, dotted, spacing only, gradient fade |
@@ -131,6 +131,8 @@ The file must go beyond a list of values. It should carry rules for decisions, n
 - **Plain HTML and React stacks:** HTML prose never names Tailwind classes; every class used in an example is defined in the file's CSS, component CSS uses `--space-N`, `--control-h` and the other variables (raw px only in breakpoints and the signature CSS), and focus rings are automatic. React uses `src/index.css`, `aria-checked:` / `group-aria-checked:` on the switch, and complete Button, Checkbox and Radio components. The Next.js file states its CSS order as one numbered line. **Size now (secondary color added):** Next.js 28.06 KiB, React 29.36 KiB, HTML 30.69 KiB. Worst case (60 character name, 200 character description, own heading and body fonts): Next.js 29.30, React 30.15, HTML 31.48 KiB. Next.js stays under 28.5 KiB normally; every stack stays under 31.5 KiB in the worst case, and Codex's 32 KiB is the real cap. HTML has almost no room left. The Export step shows a gentle note above 30 KiB and the strong warning above 32 KiB. Code blocks are minified (`tightCss`). Plain HTML checkboxes and radios draw their tick and dot with `::before` and token colors; the React checkbox tick is the one allowed exception to the icon stroke and size rule.
 - **Public page top bar:** at most one action, secondary or tertiary when the page body has a primary button, primary only when it has none, and never `cta`.
 - **Import feedback and test:** the export step shows the file name and a summary or the exact failure reason. Run `npm run test:roundtrip` after changing the generator or settings; it must stay green.
+- **Border beam (Primary CTA default):** CSS only. A registered `@property --beam-angle` rotates a `conic-gradient` (brand-400 ring, bright brand-100 head fading into a tail about a quarter long) drawn on a `::before` ring that is cut out with a masked `mask-composite: exclude`; it sits inside `@supports (mask-composite: exclude)`. Why: `@property` and mask compositing work in current Chrome, Edge, Safari and Firefox, the streak needs no extra element or JavaScript, and the button keeps its own fill, hover and disabled colors. Older browsers show the static 1px brand-400 border only. Reduced motion: no animation, a steady brand-400 ring. The beam is decorative; button text contrast is unchanged. The old pulsing glow stays as the option "Animated glow border".
+- **SaaS Clean is at version 2** (Primary CTA changed from animated glow border to border beam). Version 1 files keep the glow because their snapshot is frozen in `preset-history.ts`.
 - **Review page:** `/debug/skill` prints the full SaaS Clean SKILL.md as plain text, rebuilt on every deploy.
 
 ## Pricing page reference scenario (the success test)
@@ -140,7 +142,7 @@ Prompt "build me a pricing page" with the generated file loaded should produce:
 - Voice: "You decide when to start. Cancel any time and it stops."
 - Plan cards where the recommended plan has a static glowing border. All cards lift 2px on hover.
 - Compact spacing, centered headings, one accent color per screen.
-- Only one primary CTA per screen has a slow animated glow border. Respect reduced motion settings with a static border.
+- Only one primary CTA per screen has the border beam (a 2px brand ring with one streak of light travelling around it, 3.6s, CSS only), and `cta` is on at most one action because the effect repaints every frame. Respect reduced motion settings with a steady brand-400 ring.
 
 If the output looks like any generic SaaS template, the skill file is not strong enough.
 

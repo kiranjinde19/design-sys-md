@@ -95,7 +95,7 @@ const BLANK_SLATE: DesignSystemSettings = {
 export const PRESETS: Record<PresetId, Preset> = {
   "saas-clean": {
     id: "saas-clean",
-    version: 1,
+    version: 2,
     name: "SaaS Clean",
     description: "Indigo brand, cool grays, soft shadows and a few signature moves.",
     settings: SAAS_CLEAN,

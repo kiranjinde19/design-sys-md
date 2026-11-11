@@ -115,7 +115,7 @@ export type SecondaryButtonStyle = "fill" | "outline";
 export type FeaturedHighlight = "glow-border" | "offset-shadow" | "solid-accent-fill" | "corner-ribbon";
 export type CardStyle = "hairline-border" | "soft-shadow" | "tinted-bento-tile" | "glass-blur";
 export type HoverEffect = "lift-2px" | "border-color-shift" | "scale-1-02" | "background-tint";
-export type PrimaryCta = "solid" | "animated-glow-border" | "gradient-fill" | "underline-sweep";
+export type PrimaryCta = "solid" | "border-beam" | "animated-glow-border" | "gradient-fill" | "underline-sweep";
 export type IconContainer = "bare" | "tinted-circle" | "rounded-square-tile" | "outlined-badge";
 export type FocusRingStyle = "offset-ring" | "glow-ring" | "thick-outline";
 export type DividerStyle = "hairline" | "dotted" | "spacing-only" | "gradient-fade";
@@ -565,7 +565,7 @@ export interface SignatureTokens {
   hover: SignatureRecipe<HoverEffect>;
   primaryCta: SignatureRecipe<PrimaryCta> & {
     animated: boolean;
-    /** Class name the stylesheet targets, or null when the CTA is not animated. */
+    /** Class name the stylesheet targets (the beam or the glow), or null when the CTA is not animated. */
     className: string | null;
     /**
      * Complete CSS for animated CTAs: the glow, the @keyframes, and the

@@ -46,6 +46,8 @@ const CASES = [
   ["icons", "saas-clean", saas, { icons: { style: "solid", strokeWidth: 2, ends: "sharp" } }],
   ["signature details", "saas-clean", saas, { signature: { featuredHighlight: "offset-shadow", cardStyle: "glass-blur", hover: "scale", primaryCta: "gradient-fill", iconContainer: "tinted-circle", focusRing: "thick-outline", divider: "dotted" } }],
   ["tone of voice", "saas-clean", saas, { voice: { formality: 1, energy: 5, detail: 5 } }],
+  ["old animated glow border chosen again", "saas-clean", saas, { signature: { primaryCta: "animated-glow-border" } }],
+  ["solid call to action", "saas-clean", saas, { signature: { primaryCta: "solid" } }],
   ["everything at once", "blank-slate", blank, { colors: { brand: "#2563EB", secondary: "#F59E0B" }, radius: { base: 16 }, voice: { formality: 2, energy: 3, detail: 4 }, project: { name: "Northwind 2025", description: "Inventory tools." } }],
 ];
 
@@ -107,4 +109,29 @@ test("failures say why", () => {
   assert.match(parseSkillFile('```json\n{"format":"design-sys-md","version":99,"settings":{}}\n```').error, /Unsupported version/);
   assert.match(parseSkillFile('```json\n{"format":"design-sys-md","preset":"saas-clean","presetVersion":99,"settings":{}}\n```').error, /Unsupported version/);
   assert.match(parseSkillFile('```json\n{"format":"design-sys-md"}\n```').error, /no settings/);
+});
+
+test("SaaS Clean version 2 defaults to the border beam", () => {
+  assert.equal(PRESETS["saas-clean"].version, 2);
+  assert.equal(saas.signature.primaryCta, "border-beam");
+  const file = generateSkillFile(createDesignSystem(saas), { presetId: "saas-clean" });
+  assert.match(file.skill, /@property --beam-angle/);
+  assert.doesNotMatch(file.skill, /--glow-rest/);
+});
+
+test("a preset version 1 file keeps its animated glow border", () => {
+  const v1 = '# Old file\n\n```json\n{"format":"design-sys-md","version":1,"preset":"saas-clean","presetVersion":1,"settings":{"colors":{"brand":"#0D9488"}}}\n```\n';
+  const result = parseSkillFile(v1);
+  assert.ok(result.ok);
+  assert.equal(result.settings.signature.primaryCta, "animated-glow-border");
+  assert.equal(result.settings.colors.brand, "#0D9488");
+  // Importing, then exporting again, keeps the glow and does not turn into the beam.
+  const again = generateSkillFile(createDesignSystem(result.settings), { presetId: result.presetId });
+  assert.match(again.skill, /ds-glow-border/);
+  assert.doesNotMatch(again.skill, /@property --beam-angle/);
+  // Its own data block now records the choice, so the next import is exact too.
+  const second = parseSkillFile(again.skill);
+  assert.ok(second.ok);
+  assert.equal(second.settings.signature.primaryCta, "animated-glow-border");
+  assert.deepEqual(second.settings, result.settings);
 });

@@ -13,6 +13,12 @@ function glowVariables(css: string): string {
   return [":root {", ...values.map((v, i) => `  ${names[i]}: ${v};`), "}", out].join("\n");
 }
 
+/** The head of the beam is brand 100. Name it as the brand step, not as the card border that happens to share the color. */
+function brandNames(ctx: SkillContext, css: string): string {
+  const brand100 = ctx.t.colors.brand[100];
+  return css.split(ctx.cssVar(brand100, "fill")).join(ctx.cssVar(brand100, "fill", ["brand-100"]));
+}
+
 /** Two CSS properties clash if setting one would replace the other. */
 const canon = (key: string) => (/^border/.test(key) ? "border" : key === "backgroundColor" ? "background" : key);
 
@@ -58,7 +64,7 @@ export function signatureSection(ctx: SkillContext): string[] {
     "}",
     "",
     `/* Primary call to action: ${cta.label}. One per screen */`,
-    cta.stylesheet ? glowVariables(ctx.varize(cta.stylesheet).replace(/\.ds-cta-glow/g, ".cta")) : [".cta {", ...recipeLines(ctx, cta.css), "}"].join("\n"),
+    cta.stylesheet ? (cta.id === "animated-glow-border" ? glowVariables : (css: string) => css)(brandNames(ctx, ctx.varize(cta.stylesheet)).replace(/\.ds-cta-(glow|beam)/g, ".cta")) : [".cta {", ...recipeLines(ctx, cta.css), "}"].join("\n"),
     "",
     `/* Icon container: ${sig.iconContainer.label} */`,
     ".icon-tile {",
@@ -87,9 +93,9 @@ export function signatureSection(ctx: SkillContext): string[] {
     "",
     `Apply these everywhere and never swap one. Add this CSS to ${ctx.shadcn ? "globals.css" : ctx.tailwind ? "src/index.css" : "styles.css"}, after the tokens. It is the exact definition.`,
     "",
-    fence("css", tightCss(compactCss(css.join("\n")).split("\n"))),
+    fence("css", tightCss(compactCss(css.join("\n"), 520).split("\n"))),
     "",
-    `Every container is a \`card\`, every icon with a title an \`icon-tile\`, focusable elements ${ctx.tailwind ? "`focus-ring`" : "ringed (automatic in this CSS)"}, and sections are separated by \`divider\`, never a bare border or \`<hr>\`. The primary button ${ctx.tailwind ? "" : "(\`btn--primary\`) "}adds \`cta\` on at most one action per screen.`,
+    `Every container is a \`card\`, every icon with a title an \`icon-tile\`, focusable elements ${ctx.tailwind ? "`focus-ring`" : "ringed (automatic in this CSS)"}, and sections are separated by \`divider\`, never a bare border or \`<hr>\`. The primary button ${ctx.tailwind ? "" : "(\`btn--primary\`) "}adds \`cta\` on at most one action per screen${cta.animated ? " (it repaints every frame)" : ""}.`,
     sig.featuredHighlight.notes ? `Featured: ${sig.featuredHighlight.notes}` : null,
     cta.notes ? `CTA: ${cta.notes}` : null,
     "",

@@ -3,6 +3,7 @@
 Plain-language log of what is built. Newest first.
 
 ## Latest
+- **Border beam replaces the pulsing glow as the default Primary CTA.** The button now has a thin static brand border and one streak of light (bright head, fading tail, about a quarter of the ring) travelling around a 2px ring in 3.6s, linear, forever. No blurred glow, no JavaScript, tokens only. Technique: a registered `@property` angle on a `conic-gradient`, shown through a masked ring (`mask-composite: exclude`) on `::before`, inside `@supports`. Reduced motion shows a steady brand-400 ring; browsers without support show the static border. "Border beam" is a new option in the Signature details step and the default for SaaS Clean (now version 2). "Animated glow border" stays as its own option. Preset version 1 files keep their glow (tested). The old `--glow-*` variables only appear when the glow option is chosen. Checked in headless Chrome: the streak travels top, right, bottom, left; reduced motion shows a steady ring; with the technique removed the button shows the plain hairline border.
 - **32 KiB is the real cap; two new rules; size notes.** Codex's 32 KiB is now the cap for React and plain HTML, and nothing was cut (no palette steps, no examples). New rules in all three stacks: rule 13 (placeholder data never uses real personal details, use invented names and example.com addresses) and rule 14 plus a token based `:-webkit-autofill` CSS rule (autofill keeps the input background and text color). The Export step now shows a gentle note above 30 KiB ("close to the Codex limit") and keeps the strong warning above 32 KiB.
 - **Catch-up list.** Skipped because already done: HTML checkbox tick and radio dot, React checkbox tick exception sentence, import feedback and the round trip test. Done now: pricing cards keep price, divider and features aligned (two lines reserved for the description, button pinned to the bottom); the placeholder rule covers all copy including page titles and meta descriptions (meta description uses the product line the user entered, or is omitted) and requires inert buttons and links to be reported; a new "Links" recipe in all three stacks (default, hover, active, visited, focus, and a bare logo or nav variant), with its contrast row in Accessibility and links added to the interactive states checklist item. Size work (not finished): shorter signature comments, selection rules, plain HTML focus ring as one rule.
 - **Import feedback.** The "Import my previous file" step now shows a status box next to the button: the file name plus either a summary ("Restored SaaS Clean with 7 changes, product name Acme Billing, stack ...") or the exact reason it failed (no data block, invalid JSON, unsupported version, damaged block). The file name stays visible after the picker resets, the same file can be imported twice, and any .md, .markdown or .txt file is accepted. Checked: the data block already stores product name, description, stack, preset version and every setting that differs from the preset, so no format change was needed and older files still import.
@@ -16,11 +17,9 @@ Plain-language log of what is built. Newest first.
 Worst case = 60 character name, 200 character description, own fonts for heading and body.
 | Stack | Normal | Worst case | Cap |
 |---|---|---|---|
-| Next.js | 28.06 KiB | 29.30 KiB | normal under 28.5 (met) |
-| React | 29.36 KiB | 30.15 KiB | under 31.5 (met) |
-| Plain HTML | 30.69 KiB | 31.48 KiB | under 31.5 (met, with almost no room left) |
-
-Plain HTML is very close to its cap. New content in that stack will need matching savings.
+| Next.js | 28.05 KiB | 29.29 KiB | normal under 28.5 (met) |
+| React | 29.35 KiB | 30.15 KiB | under 31.5 (met) |
+| Plain HTML | 30.70 KiB | 31.49 KiB | under 31.5 (met, almost no room left) |
 
 ## Built so far
 1. Project setup, GitHub, Vercel deploy.
