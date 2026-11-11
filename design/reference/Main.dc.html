@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Design Sys.md: board overview</title>
+<title>Design Sys.md: board overview, monochrome</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -10,9 +10,9 @@
 <helmet>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
-body{margin:0;font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#14171C}
-a{color:#4F46E5}a:hover{color:#3C35CD}
-a:focus-visible,button:focus-visible{outline:2px solid #6466FB;outline-offset:2px}
+body{margin:0;font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#171717}
+a{color:#171717}a:hover{color:#404040}
+a:focus-visible,button:focus-visible{outline:2px solid #171717;outline-offset:2px}
 .tile{transition:transform 150ms ease,box-shadow 150ms ease}
 .tile:hover{transform:translateY(-2px);box-shadow:0px 2px 6px 0px rgb(20 23 28 / 0.08),0px 8px 16px -2px rgb(20 23 28 / 0.08)}
 @property --beam-angle{syntax:'<angle>';inherits:false;initial-value:0deg}
@@ -22,21 +22,21 @@ a:focus-visible,button:focus-visible{outline:2px solid #6466FB;outline-offset:2p
 @media (prefers-reduced-motion:reduce){.beam::after{animation:none;background:#828DFF}.tile,.tile:hover{transition:none;transform:none}}
 </style>
 </helmet>
-<div style="min-height:880px;background:#FFFFFF;color:#14171C;font-size:16px;line-height:24px">
+<div style="min-height:880px;background:#FFFFFF;color:#171717;font-size:16px;line-height:24px">
 
-<header style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;box-sizing:border-box;min-height:56px;padding:8px 32px;background:#FFFFFF;border-bottom:1px solid #E0E6ED">
+<header style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;box-sizing:border-box;min-height:56px;padding:8px 32px;background:#FFFFFF;border-bottom:1px solid #E5E5E5">
   <div style="display:flex;align-items:center;gap:12px">
-    <span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;background:#F4F6FF;border:1px solid #E1E6FF;color:#3830BF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="4" rx="1"></rect><rect x="4" y="10" width="10" height="4" rx="1"></rect><rect x="4" y="16" width="13" height="4" rx="1"></rect></svg></span>
+    <span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;background:#FAFAFA;border:1px solid #E5E5E5;color:#171717"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="4" rx="1"></rect><rect x="4" y="10" width="10" height="4" rx="1"></rect><rect x="4" y="16" width="13" height="4" rx="1"></rect></svg></span>
     <span style="font-size:16px;line-height:24px;font-weight:600">Design Sys.md</span>
   </div>
-  <div role="group" aria-label="Preset" style="display:inline-flex;gap:4px;padding:4px;background:#EFF5FC;border-radius:10px">
-    <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:#FFFFFF;color:#14171C;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;box-shadow:0px 1px 2px 0px rgb(20 23 28 / 0.06),0px 2px 4px 0px rgb(20 23 28 / 0.04);cursor:pointer">SaaS Clean</button>
-    <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:transparent;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;cursor:pointer">Blank slate</button>
+  <div role="group" aria-label="Preset" style="display:inline-flex;gap:4px;padding:4px;background:#F5F5F5;border-radius:10px">
+    <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:#FFFFFF;color:#171717;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;box-shadow:0px 1px 2px 0px rgb(20 23 28 / 0.06),0px 2px 4px 0px rgb(20 23 28 / 0.04);cursor:pointer">SaaS Clean</button>
+    <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:transparent;color:#525252;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;cursor:pointer">Blank slate</button>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
-    <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:transparent;color:#4F46E5;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m17 8-5-5-5 5"></path><path d="M12 3v12"></path></svg>Import file</button>
-    <button type="button" aria-label="Switch to dark mode" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid transparent;border-radius:10px;background:#E0E6ED;color:#14171C;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg></button>
-    <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:#4F46E5;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path><path d="M12 15V3"></path></svg>Export file</button>
+    <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:transparent;color:#171717;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m17 8-5-5-5 5"></path><path d="M12 3v12"></path></svg>Import file</button>
+    <button type="button" aria-label="Switch to dark mode" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid transparent;border-radius:10px;background:#E5E5E5;color:#171717;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg></button>
+    <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:#171717;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path><path d="M12 15V3"></path></svg>Export file</button>
   </div>
 </header>
 
@@ -45,11 +45,11 @@ a:focus-visible,button:focus-visible{outline:2px solid #6466FB;outline-offset:2p
   <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
     <div style="display:flex;flex-direction:column;gap:4px">
       <h1 style="margin:0;font-size:28px;line-height:36px;font-weight:600;letter-spacing:-0.02em">Build your design system</h1>
-      <p style="margin:0;font-size:16px;line-height:24px;color:#50545A">Open a tile to adjust it. The preview updates as you go.</p>
+      <p style="margin:0;font-size:16px;line-height:24px;color:#525252">Open a tile to adjust it. The preview updates as you go.</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;width:200px">
       <span style="font-size:14px;line-height:20px;font-weight:500">4 of 9 reviewed</span>
-      <span aria-hidden="true" style="display:block;height:8px;border-radius:9999px;background:#E0E6ED"><span style="display:block;width:44%;height:8px;border-radius:9999px;background:#4F46E5"></span></span>
+      <span aria-hidden="true" style="display:block;height:8px;border-radius:9999px;background:#E5E5E5"><span style="display:block;width:44%;height:8px;border-radius:9999px;background:#171717"></span></span>
     </div>
   </div>
 
@@ -59,91 +59,91 @@ a:focus-visible,button:focus-visible{outline:2px solid #6466FB;outline-offset:2p
     <div style="flex:0 1 560px;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:120px;gap:12px;align-content:start">
 
       <!-- 1 Colors -->
-      <a class="tile" href="Editor.dc.html" style="grid-column:span 2;grid-row:span 2;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:16px;text-align:left;color:#14171C;overflow:hidden;text-decoration:none;cursor:pointer">
-        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">1</span><span style="font-size:14px;line-height:20px;font-weight:500;color:#14171C">Colors</span><svg role="img" aria-label="Reviewed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007A30" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><path d="M20 6 9 17l-5-5"></path></svg></span>
-        <span style="font-size:12px;line-height:16px;color:#50545A">Brand</span>
+      <a class="tile" href="Editor.dc.html" style="grid-column:span 2;grid-row:span 2;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;text-align:left;color:#171717;overflow:hidden;text-decoration:none;cursor:pointer">
+        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E5E5E5;font-size:12px;line-height:16px;font-weight:500;color:#404040">1</span><span style="font-size:14px;line-height:20px;font-weight:500;color:#171717">Colors</span><svg role="img" aria-label="Reviewed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#171717" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><path d="M20 6 9 17l-5-5"></path></svg></span>
+        <span style="font-size:12px;line-height:16px;color:#525252">Brand</span>
         <span aria-hidden="true" style="display:flex;gap:4px"><span style="flex:1;height:32px;border-radius:5px;background:#F4F6FF;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.06)"></span><span style="flex:1;height:32px;border-radius:5px;background:#E1E6FF;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.06)"></span><span style="flex:1;height:32px;border-radius:5px;background:#CAD2FF"></span><span style="flex:1;height:32px;border-radius:5px;background:#A9B4FF"></span><span style="flex:1;height:32px;border-radius:5px;background:#828DFF"></span><span style="flex:1;height:32px;border-radius:5px;background:#6466FB"></span><span style="flex:1;height:32px;border-radius:5px;background:#4F46E5;outline:2px solid #14171C;outline-offset:1px"></span><span style="flex:1;height:32px;border-radius:5px;background:#3830BF"></span><span style="flex:1;height:32px;border-radius:5px;background:#262091"></span><span style="flex:1;height:32px;border-radius:5px;background:#171262"></span></span>
-        <span style="font-size:12px;line-height:16px;color:#50545A">Neutral</span>
+        <span style="font-size:12px;line-height:16px;color:#525252">Neutral</span>
         <span aria-hidden="true" style="display:flex;gap:4px"><span style="flex:1;height:32px;border-radius:5px;background:#F7FAFF;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.06)"></span><span style="flex:1;height:32px;border-radius:5px;background:#EFF5FC;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.06)"></span><span style="flex:1;height:32px;border-radius:5px;background:#E0E6ED"></span><span style="flex:1;height:32px;border-radius:5px;background:#CFD5DC"></span><span style="flex:1;height:32px;border-radius:5px;background:#9CA1A8"></span><span style="flex:1;height:32px;border-radius:5px;background:#6F747A"></span><span style="flex:1;height:32px;border-radius:5px;background:#50545A"></span><span style="flex:1;height:32px;border-radius:5px;background:#3C4046"></span><span style="flex:1;height:32px;border-radius:5px;background:#23272C"></span><span style="flex:1;height:32px;border-radius:5px;background:#14171C"></span></span>
-        <span style="display:flex;align-items:center;gap:12px;font-size:12px;line-height:16px;color:#50545A"><span style="display:inline-flex;align-items:center;gap:4px"><span aria-hidden="true" style="width:12px;height:12px;border-radius:9999px;background:#16A34A"></span>Success</span><span style="display:inline-flex;align-items:center;gap:4px"><span aria-hidden="true" style="width:12px;height:12px;border-radius:9999px;background:#D97706"></span>Warning</span><span style="display:inline-flex;align-items:center;gap:4px"><span aria-hidden="true" style="width:12px;height:12px;border-radius:9999px;background:#DC2626"></span>Error</span><span style="display:inline-flex;align-items:center;gap:4px"><span aria-hidden="true" style="width:12px;height:12px;border-radius:9999px;background:#2563EB"></span>Info</span></span>
+        <span style="display:flex;align-items:center;gap:12px;font-size:12px;line-height:16px;color:#525252"><span style="display:inline-flex;align-items:center;gap:4px"><span aria-hidden="true" style="width:12px;height:12px;border-radius:9999px;background:#16A34A"></span>Success</span><span style="display:inline-flex;align-items:center;gap:4px"><span aria-hidden="true" style="width:12px;height:12px;border-radius:9999px;background:#D97706"></span>Warning</span><span style="display:inline-flex;align-items:center;gap:4px"><span aria-hidden="true" style="width:12px;height:12px;border-radius:9999px;background:#DC2626"></span>Error</span><span style="display:inline-flex;align-items:center;gap:4px"><span aria-hidden="true" style="width:12px;height:12px;border-radius:9999px;background:#2563EB"></span>Info</span></span>
         <span style="display:inline-flex;align-items:center;gap:4px;align-self:flex-start;padding:2px 8px;border-radius:9999px;background:#F1FAF2;color:#007A30;font-size:12px;line-height:16px;font-weight:500"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>All text pairs pass AA</span>
       </a>
 
       <!-- 2 Typography -->
-      <button class="tile" type="button" style="grid-column:span 1;grid-row:span 2;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:16px;text-align:left;font-family:inherit;color:#14171C;overflow:hidden;cursor:pointer">
-        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">2</span><span style="font-size:14px;line-height:20px;font-weight:500">Typography</span></span>
+      <button class="tile" type="button" style="grid-column:span 1;grid-row:span 2;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;text-align:left;font-family:inherit;color:#171717;overflow:hidden;cursor:pointer">
+        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E5E5E5;font-size:12px;line-height:16px;font-weight:500;color:#404040">2</span><span style="font-size:14px;line-height:20px;font-weight:500">Typography</span></span>
         <span aria-hidden="true" style="font-size:56px;line-height:56px;font-weight:600;letter-spacing:-0.02em">Aa</span>
         <span style="font-size:14px;line-height:20px;font-weight:500">Inter + Inter</span>
-        <span style="font-size:12px;line-height:16px;color:#50545A">Scale 1.2, base 16px</span>
-        <span aria-hidden="true" style="display:flex;flex-direction:column;margin-top:auto"><span style="font-size:20px;line-height:28px;font-weight:600;letter-spacing:-0.005em">Title</span><span style="font-size:16px;line-height:24px">Body text</span><span style="font-size:12px;line-height:16px;color:#50545A">Caption</span></span>
+        <span style="font-size:12px;line-height:16px;color:#525252">Scale 1.2, base 16px</span>
+        <span aria-hidden="true" style="display:flex;flex-direction:column;margin-top:auto"><span style="font-size:20px;line-height:28px;font-weight:600;letter-spacing:-0.005em">Title</span><span style="font-size:16px;line-height:24px">Body text</span><span style="font-size:12px;line-height:16px;color:#525252">Caption</span></span>
       </button>
 
       <!-- 3 Radius -->
-      <button class="tile" type="button" style="display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:16px;text-align:left;font-family:inherit;color:#14171C;overflow:hidden;cursor:pointer">
-        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">3</span><span style="font-size:14px;line-height:20px;font-weight:500">Radius</span></span>
+      <button class="tile" type="button" style="display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;text-align:left;font-family:inherit;color:#171717;overflow:hidden;cursor:pointer">
+        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E5E5E5;font-size:12px;line-height:16px;font-weight:500;color:#404040">3</span><span style="font-size:14px;line-height:20px;font-weight:500">Radius</span></span>
         <span aria-hidden="true" style="display:flex;gap:8px"><span style="width:32px;height:32px;box-sizing:border-box;border-radius:5px;background:#E1E6FF;border:1px solid #A9B4FF"></span><span style="width:32px;height:32px;box-sizing:border-box;border-radius:10px;background:#E1E6FF;border:1px solid #A9B4FF"></span><span style="width:32px;height:32px;box-sizing:border-box;border-radius:16px;background:#E1E6FF;border:1px solid #A9B4FF"></span></span>
-        <span style="font-size:12px;line-height:16px;color:#50545A">5, 10 and 16px</span>
+        <span style="font-size:12px;line-height:16px;color:#525252">5, 10 and 16px</span>
       </button>
 
       <!-- 4 Spacing -->
-      <button class="tile" type="button" style="display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:16px;text-align:left;font-family:inherit;color:#14171C;overflow:hidden;cursor:pointer">
-        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">4</span><span style="font-size:14px;line-height:20px;font-weight:500">Spacing</span></span>
+      <button class="tile" type="button" style="display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;text-align:left;font-family:inherit;color:#171717;overflow:hidden;cursor:pointer">
+        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E5E5E5;font-size:12px;line-height:16px;font-weight:500;color:#404040">4</span><span style="font-size:14px;line-height:20px;font-weight:500">Spacing</span></span>
         <span aria-hidden="true" style="display:flex;align-items:flex-end;gap:6px;height:32px"><span style="width:8px;height:8px;border-radius:2px;background:#A9B4FF"></span><span style="width:12px;height:12px;border-radius:2px;background:#A9B4FF"></span><span style="width:16px;height:16px;border-radius:2px;background:#A9B4FF"></span><span style="width:24px;height:24px;border-radius:2px;background:#A9B4FF"></span><span style="width:32px;height:32px;border-radius:2px;background:#A9B4FF"></span></span>
-        <span style="font-size:12px;line-height:16px;color:#50545A">4px grid, comfortable</span>
+        <span style="font-size:12px;line-height:16px;color:#525252">4px grid, comfortable</span>
       </button>
 
       <!-- 5 Borders -->
-      <button class="tile" type="button" style="display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:16px;text-align:left;font-family:inherit;color:#14171C;overflow:hidden;cursor:pointer">
-        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">5</span><span style="font-size:14px;line-height:20px;font-weight:500">Borders</span></span>
+      <button class="tile" type="button" style="display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;text-align:left;font-family:inherit;color:#171717;overflow:hidden;cursor:pointer">
+        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E5E5E5;font-size:12px;line-height:16px;font-weight:500;color:#404040">5</span><span style="font-size:14px;line-height:20px;font-weight:500">Borders</span></span>
         <span aria-hidden="true" style="display:flex;gap:8px"><span style="width:32px;height:32px;box-sizing:border-box;border-radius:5px;background:#FFFFFF;border:1px solid #E0E6ED"></span><span style="width:32px;height:32px;box-sizing:border-box;border-radius:5px;background:#FFFFFF;border:1px solid #CFD5DC"></span><span style="width:32px;height:32px;box-sizing:border-box;border-radius:5px;background:#FFFFFF;border:1px solid #898E95"></span></span>
-        <span style="font-size:12px;line-height:16px;color:#50545A">1px, inputs 3:1</span>
+        <span style="font-size:12px;line-height:16px;color:#525252">1px, inputs 3:1</span>
       </button>
 
       <!-- 6 Shadows -->
-      <button class="tile" type="button" style="display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:16px;text-align:left;font-family:inherit;color:#14171C;overflow:hidden;cursor:pointer">
-        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">6</span><span style="font-size:14px;line-height:20px;font-weight:500">Shadows</span></span>
+      <button class="tile" type="button" style="display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;text-align:left;font-family:inherit;color:#171717;overflow:hidden;cursor:pointer">
+        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E5E5E5;font-size:12px;line-height:16px;font-weight:500;color:#404040">6</span><span style="font-size:14px;line-height:20px;font-weight:500">Shadows</span></span>
         <span aria-hidden="true" style="display:flex;gap:12px"><span style="width:32px;height:24px;border-radius:5px;background:#FFFFFF;box-shadow:0px 1px 2px 0px rgb(20 23 28 / 0.06),0px 2px 4px 0px rgb(20 23 28 / 0.04)"></span><span style="width:32px;height:24px;border-radius:5px;background:#FFFFFF;box-shadow:0px 1px 3px 0px rgb(20 23 28 / 0.07),0px 4px 8px -1px rgb(20 23 28 / 0.06)"></span><span style="width:32px;height:24px;border-radius:5px;background:#FFFFFF;box-shadow:0px 2px 6px 0px rgb(20 23 28 / 0.08),0px 8px 16px -2px rgb(20 23 28 / 0.08)"></span></span>
-        <span style="font-size:12px;line-height:16px;color:#50545A">5 levels, soft</span>
+        <span style="font-size:12px;line-height:16px;color:#525252">5 levels, soft</span>
       </button>
 
       <!-- 7 Buttons and inputs -->
-      <button class="tile" type="button" style="grid-column:span 2;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:16px;text-align:left;font-family:inherit;color:#14171C;overflow:hidden;cursor:pointer">
-        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">7</span><span style="font-size:14px;line-height:20px;font-weight:500">Buttons and inputs</span></span>
+      <button class="tile" type="button" style="grid-column:span 2;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;text-align:left;font-family:inherit;color:#171717;overflow:hidden;cursor:pointer">
+        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E5E5E5;font-size:12px;line-height:16px;font-weight:500;color:#404040">7</span><span style="font-size:14px;line-height:20px;font-weight:500">Buttons and inputs</span></span>
         <span aria-hidden="true" style="display:flex;align-items:center;gap:8px"><span style="display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:10px;background:#4F46E5;color:#FFFFFF;font-size:14px;line-height:20px;font-weight:500">Primary</span><span style="display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:10px;background:#E0E6ED;color:#14171C;font-size:14px;line-height:20px;font-weight:500">Secondary</span><span style="display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:10px;color:#4F46E5;font-size:14px;line-height:20px;font-weight:500">Tertiary</span></span>
-        <span style="font-size:12px;line-height:16px;color:#50545A">4 variants, 6 states, 3 selection controls</span>
+        <span style="font-size:12px;line-height:16px;color:#525252">4 variants, 6 states, 3 selection controls</span>
       </button>
 
       <!-- 8 Signature details -->
-      <button class="tile" type="button" style="grid-column:span 2;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:16px;text-align:left;font-family:inherit;color:#14171C;overflow:hidden;cursor:pointer">
-        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">8</span><span style="font-size:14px;line-height:20px;font-weight:500">Signature details</span></span>
+      <button class="tile" type="button" style="grid-column:span 2;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;text-align:left;font-family:inherit;color:#171717;overflow:hidden;cursor:pointer">
+        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E5E5E5;font-size:12px;line-height:16px;font-weight:500;color:#404040">8</span><span style="font-size:14px;line-height:20px;font-weight:500">Signature details</span></span>
         <span aria-hidden="true" style="display:flex;align-items:center;gap:8px"><span style="width:56px;height:32px;box-sizing:border-box;border-radius:10px;background:#FFFFFF;border:2px solid #4F46E5"></span><span style="width:56px;height:32px;box-sizing:border-box;border-radius:10px;background:#F4F6FF;border:1px solid #CAD2FF"></span><span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;box-sizing:border-box;border-radius:10px;background:#FFFFFF;border:1px solid #E1E6FF;color:#3830BF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7L12 3z"></path></svg></span><span style="display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 12px;box-sizing:border-box;border-radius:10px;background:#4F46E5;box-shadow:inset 0 0 0 2px #6466FB;color:#FFFFFF;font-size:14px;line-height:20px;font-weight:500">Get started</span><span style="width:48px;height:32px;box-sizing:border-box;border-radius:10px;background:#FFFFFF;border:1px solid #898E95;outline:2px solid #6466FB;outline-offset:2px"></span></span>
-        <span style="font-size:12px;line-height:16px;color:#50545A">7 chosen moves</span>
+        <span style="font-size:12px;line-height:16px;color:#525252">7 chosen moves</span>
       </button>
 
       <!-- 9 Tone of voice -->
-      <button class="tile" type="button" style="display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#F4F6FF;border:1px solid #E1E6FF;border-radius:16px;text-align:left;font-family:inherit;color:#14171C;overflow:hidden;cursor:pointer">
-        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E1E6FF;font-size:12px;line-height:16px;font-weight:500;color:#3C4046">9</span><span style="font-size:14px;line-height:20px;font-weight:500">Tone of voice</span></span>
-        <span aria-hidden="true" style="display:flex;flex-direction:column;gap:8px"><span style="position:relative;display:block;height:4px;border-radius:9999px;background:#CAD2FF"><span style="position:absolute;left:72%;top:-4px;width:12px;height:12px;border-radius:9999px;background:#4F46E5"></span></span><span style="position:relative;display:block;height:4px;border-radius:9999px;background:#CAD2FF"><span style="position:absolute;left:28%;top:-4px;width:12px;height:12px;border-radius:9999px;background:#4F46E5"></span></span><span style="position:relative;display:block;height:4px;border-radius:9999px;background:#CAD2FF"><span style="position:absolute;left:20%;top:-4px;width:12px;height:12px;border-radius:9999px;background:#4F46E5"></span></span></span>
-        <span style="font-size:12px;line-height:16px;color:#50545A">Casual, calm, concise</span>
+      <button class="tile" type="button" style="display:flex;flex-direction:column;gap:8px;box-sizing:border-box;padding:16px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;text-align:left;font-family:inherit;color:#171717;overflow:hidden;cursor:pointer">
+        <span style="display:flex;align-items:center;gap:8px;min-height:24px"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;background:#FFFFFF;border:1px solid #E5E5E5;font-size:12px;line-height:16px;font-weight:500;color:#404040">9</span><span style="font-size:14px;line-height:20px;font-weight:500">Tone of voice</span></span>
+        <span aria-hidden="true" style="display:flex;flex-direction:column;gap:8px"><span style="position:relative;display:block;height:4px;border-radius:9999px;background:#D4D4D4"><span style="position:absolute;left:72%;top:-4px;width:12px;height:12px;border-radius:9999px;background:#171717"></span></span><span style="position:relative;display:block;height:4px;border-radius:9999px;background:#D4D4D4"><span style="position:absolute;left:28%;top:-4px;width:12px;height:12px;border-radius:9999px;background:#171717"></span></span><span style="position:relative;display:block;height:4px;border-radius:9999px;background:#D4D4D4"><span style="position:absolute;left:20%;top:-4px;width:12px;height:12px;border-radius:9999px;background:#171717"></span></span></span>
+        <span style="font-size:12px;line-height:16px;color:#525252">Casual, calm, concise</span>
       </button>
 
     </div>
 
     <!-- Live preview -->
-    <section aria-label="Live preview" style="flex:999 1 640px;min-width:0;display:flex;flex-direction:column;box-sizing:border-box;background:#FFFFFF;border:1px solid #E0E6ED;border-radius:16px;overflow:hidden">
-      <div style="display:flex;align-items:flex-end;gap:4px;padding:8px 16px 0;border-bottom:1px solid #E0E6ED;overflow-x:auto">
-        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid #4F46E5;background:none;color:#14171C;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Pricing</button>
-        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Buttons and states</button>
-        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Forms</button>
-        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Tables</button>
-        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Dashboard</button>
-        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#50545A;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Charts</button>
-        <span style="margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:8px;font-size:12px;line-height:16px;color:#50545A;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:9999px;background:#007A30"></span>Live preview</span>
+    <section aria-label="Live preview" style="flex:999 1 640px;min-width:0;display:flex;flex-direction:column;box-sizing:border-box;background:#FFFFFF;border:1px solid #E5E5E5;border-radius:16px;overflow:hidden">
+      <div style="display:flex;align-items:flex-end;gap:4px;padding:8px 16px 0;border-bottom:1px solid #E5E5E5;overflow-x:auto">
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid #171717;background:none;color:#171717;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Pricing</button>
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#525252;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Buttons and states</button>
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#525252;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Forms</button>
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#525252;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Tables</button>
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#525252;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Dashboard</button>
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#525252;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;cursor:pointer">Charts</button>
+        <span style="margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:8px;font-size:12px;line-height:16px;color:#525252;white-space:nowrap"><span aria-hidden="true" style="width:8px;height:8px;border-radius:9999px;background:#737373"></span>Live preview</span>
       </div>
 
-      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:16px;background:#F7FAFF">
-        <div style="display:flex;justify-content:space-between;gap:16px;font-size:12px;line-height:16px;color:#50545A"><span>Pricing page, sample content</span><span>Shown at 65%</span></div>
-        <div style="flex:1;min-height:0;overflow:hidden;background:#FFFFFF;border:1px solid #E0E6ED;border-radius:10px;box-shadow:0px 1px 3px 0px rgb(20 23 28 / 0.07),0px 4px 8px -1px rgb(20 23 28 / 0.06)">
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:16px;background:#F5F5F5">
+        <div style="display:flex;justify-content:space-between;gap:16px;font-size:12px;line-height:16px;color:#525252"><span>Pricing page, sample content</span><span>Shown at 65%</span></div>
+        <div style="flex:1;min-height:0;overflow:hidden;background:#FFFFFF;border:1px solid #E5E5E5;border-radius:10px;box-shadow:0px 1px 3px 0px rgb(20 23 28 / 0.07),0px 4px 8px -1px rgb(20 23 28 / 0.06)">
           <div style="width:1160px;transform:scale(0.65);transform-origin:top left">
             <div style="height:56px;display:flex;align-items:center;padding:0 32px;border-bottom:1px solid #E0E6ED"><span style="font-size:16px;line-height:24px;font-weight:600">Your product</span></div>
             <div style="padding:48px 32px 56px;display:flex;flex-direction:column;gap:40px;box-sizing:border-box">
@@ -200,13 +200,13 @@ a:focus-visible,button:focus-visible{outline:2px solid #6466FB;outline-offset:2p
         </div>
       </div>
 
-      <div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;border-top:1px solid #E0E6ED">
-        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">Inter</span>
-        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">Indigo #4F46E5</span>
-        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">Radius 10</span>
-        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">4px grid</span>
-        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">Soft shadows</span>
-        <span style="padding:2px 8px;border-radius:9999px;background:#EFF5FC;color:#50545A;font-size:12px;line-height:16px;font-weight:500">Border beam</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;border-top:1px solid #E5E5E5">
+        <span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Inter</span>
+        <span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Indigo #171717</span>
+        <span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Radius 10</span>
+        <span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">4px grid</span>
+        <span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Soft shadows</span>
+        <span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Border beam</span>
       </div>
     </section>
 
