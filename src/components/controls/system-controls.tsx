@@ -6,6 +6,7 @@
  * (Typography and Tone of voice have their own larger editors, see components/typography and components/voice.)
  */
 
+import type { ReactNode } from "react";
 import {
   SIGNATURE_CATALOG,
   suggestSecondaryColors,
@@ -60,12 +61,13 @@ function SecondaryColor() {
   );
 }
 
-export function ColorsControls() {
+export function ColorsControls({ afterBrand }: { afterBrand?: ReactNode }) {
   const { settings, update } = useDesignSystem();
   const { colors } = settings;
   return (
     <div className="space-y-4">
       <HexColorField label="Brand color" value={colors.brand} onCommit={(brand) => update({ colors: { brand } })} />
+      {afterBrand}
       <SecondaryColor />
       <Choice<NeutralTone>
         label="Neutral tone"

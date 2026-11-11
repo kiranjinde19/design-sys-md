@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Download, Menu, Moon, Sun, Upload } from "lucide-react";
+import { Download, Moon, Sun, Upload } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Segmented } from "@/components/controls/controls";
 import { PRESETS, PRESET_IDS, useDesignSystem, type PresetId } from "@/lib/design-system";
@@ -14,9 +14,14 @@ export function TopBar({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: 
   return (
     <header className="flex h-14 items-center gap-4 border-b border-border bg-background px-8">
       <div className="flex items-center gap-3">
-        {/* 32px rounded square, brand-50 fill, 1px brand-100 border, three line mark */}
+        {/* 32px rounded square, brand-50 fill, 1px brand-100 border, three bar mark */}
         <span aria-hidden className="flex size-8 items-center justify-center rounded-[10px] border border-[var(--card-border)] bg-card text-[var(--t-brand-600)]">
-          <Menu className="size-4" strokeWidth={2} />
+          {/* Three horizontal bars of different lengths: long, short, medium. Stroke only, 1.5px. */}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M2 4h12" />
+            <path d="M2 8h6" />
+            <path d="M2 12h9" />
+          </svg>
         </span>
         <span className="text-sm font-semibold">Design Sys.md</span>
       </div>

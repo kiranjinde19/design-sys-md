@@ -149,6 +149,7 @@ Stage 5 builds the tool's own interface. Decisions (locked):
 - **Reviewed:** a tile counts as reviewed when the user opened it and clicked Next, or changed a value. Reviewed status is saved with the autosave (not in the exported file).
 - **Content and effects:** preview sample content is generic and labeled sample content. No glow effects anywhere. The border beam appears only on the preview's recommended button, never on the tool's own buttons.
 - **Visual match rule:** for every UI step, compare the live screen against `design/reference` at 1440px wide (board state and Colors editor state) and list the remaining differences before reporting done. The mockups are the specification; where they and component library defaults disagree, the mockups win.
+- **Preview tabs from the skill file:** Buttons and states, Forms and Tables are drawn with the plain HTML/CSS stack's own generated CSS, scoped to `.pv-skill` (`src/components/app/skill-preview/`), so the preview shows what an AI would build from the file. Hover, pressed and focus are shown with `.is-hover`, `.is-pressed` and `.is-focus` copies of those rules. Known gaps: the skill's HTML stack has no CSS for the loading spinner ring (the preview adds one), and tone of voice and icon settings do not change the preview content yet.
 - **Shared code:** controls live in `src/components/controls/` (used by `/debug` and `/app`); do not duplicate logic.
 
 ## Pricing page reference scenario (the success test)

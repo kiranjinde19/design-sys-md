@@ -17,11 +17,47 @@ import {
 import { TypographyEditor } from "@/components/typography/typography-editor";
 import { VoiceEditor } from "@/components/voice/voice-editor";
 
+/** The 10 step brand scale with its step labels (600 is the exact brand color), and the generated status colors. */
+function ColorScales() {
+  const { tokens } = useDesignSystem();
+  const { brand, semantic } = tokens.colors;
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <div className="text-sm font-medium text-muted-foreground">Brand scale</div>
+        <div className="grid grid-cols-10 gap-0.5">
+          {Object.entries(brand).map(([step, hex]) => (
+            <div key={step} className="flex flex-col items-center gap-1" title={`${step} ${hex}`}>
+              <div
+                className="h-8 w-full rounded"
+                style={{ background: hex, border: "1px solid var(--border)", ...(step === "600" ? { outline: "2px solid var(--foreground)", outlineOffset: -2 } : {}) }}
+              />
+              <span className={cn("text-xs leading-4", step === "600" ? "font-semibold text-foreground" : "text-muted-foreground")}>{step}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs leading-4 text-muted-foreground">Step 600 is your exact brand color.</p>
+      </div>
+      <div className="space-y-1.5">
+        <div className="text-sm font-medium text-muted-foreground">Status colors</div>
+        <div className="grid grid-cols-4 gap-2">
+          {(["success", "warning", "error", "info"] as const).map((name) => (
+            <div key={name} className="flex flex-col gap-1">
+              <div className="h-8 rounded" style={{ background: semantic[name][600], border: "1px solid var(--border)" }} />
+              <span className="text-xs leading-4 text-muted-foreground">{name[0].toUpperCase() + name.slice(1)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** The controls for one system. Every one of these is shared with /debug. */
 function EditorBody({ id }: { id: SystemId }) {
   switch (id) {
     case "colors":
-      return <ColorsControls />;
+      return <ColorsControls afterBrand={<ColorScales />} />;
     case "typography":
       return (
         <div className="space-y-6">

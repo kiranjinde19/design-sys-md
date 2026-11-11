@@ -185,7 +185,7 @@ function ButtonsSample() {
   const { tokens } = useDesignSystem();
   const { buttons, inputs } = tokens.controls;
   const style = (name: "primary" | "secondary" | "tertiary"): CSSProperties => ({
-    height: 28,
+    height: 32,
     padding: "0 12px",
     borderRadius: buttons.radius,
     background: buttons.variants[name].default.background,
@@ -209,9 +209,9 @@ function ButtonsSample() {
         <span
           style={{
             flex: 1,
-            height: 28,
+            height: 32,
             minWidth: 0,
-            borderRadius: inputs.radius,
+            borderRadius: 10,
             border: `${inputs.borderWidth}px solid ${inputs.states.default.borderColor}`,
             background: inputs.states.default.background,
             color: inputs.placeholderColor,
@@ -235,17 +235,36 @@ function ButtonsSample() {
 
 function SignatureSample() {
   const { tokens } = useDesignSystem();
-  const { signature, radius, colors, controls } = tokens;
+  const { signature, colors, controls } = tokens;
+  const cta = signature.primaryCta;
+  const box: CSSProperties = { height: 32, flexShrink: 0 };
   return (
     <Stack>
-      <div className="flex items-center gap-3">
-        {/* The featured highlight on a card. The border beam is only ever shown in the preview. */}
-        <div style={{ width: 64, height: 28, borderRadius: radius.lg, ...asStyle(signature.cardStyle.css), ...asStyle(signature.featuredHighlight.css) }} />
-        <div style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", ...asStyle(signature.iconContainer.css), fontSize: 14 }}>★</div>
-        <div style={{ flex: 1 }}>
-          <div style={asStyle(signature.divider.css)} />
-        </div>
-        <div style={{ width: 28, height: 28, borderRadius: controls.buttons.radius, background: colors.roles.background, border: `1px solid ${colors.roles.border}`, ...asStyle(signature.focusRing.css) }} />
+      {/* One row, 8px gaps, left aligned, using the chosen options. The border beam itself is only shown in the preview. */}
+      <div className="flex items-center gap-2">
+        <div style={{ ...box, width: 56, ...asStyle(signature.cardStyle.css), ...asStyle(signature.featuredHighlight.css), borderRadius: 10, padding: 0 }} />
+        <div style={{ ...box, width: 56, ...asStyle(signature.cardStyle.css), borderRadius: 10, padding: 0 }} />
+        <div style={{ ...box, ...asStyle(signature.iconContainer.css), width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>★</div>
+        <span
+          style={{
+            ...box,
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "0 12px",
+            borderRadius: 10,
+            fontSize: 12,
+            lineHeight: "16px",
+            fontWeight: controls.buttons.fontWeight,
+            fontFamily: tokens.typography.body.previewStack,
+            background: controls.buttons.variants.primary.default.background,
+            color: controls.buttons.variants.primary.default.color,
+            // The beam is drawn as a static 2px inset ring here.
+            ...(cta.className ? { boxShadow: `inset 0 0 0 2px ${colors.brand[400]}` } : asStyle(cta.css)),
+          }}
+        >
+          Get started
+        </span>
+        <div style={{ ...box, width: 48, borderRadius: 10, background: colors.roles.background, border: `1px solid ${colors.roles.border}`, ...asStyle(signature.focusRing.css) }} />
       </div>
       <Caption>
         {signature.featuredHighlight.label}, {signature.primaryCta.label}, {signature.hover.label}

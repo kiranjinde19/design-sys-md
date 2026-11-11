@@ -1,6 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { ButtonsTab } from "./skill-preview/buttons-tab";
+import { FormsTab } from "./skill-preview/forms-tab";
+import { ScaledStage } from "./scaled-stage";
+import { SkillScope } from "./skill-preview/skill-scope";
+import { TablesTab } from "./skill-preview/tables-tab";
 import { cn } from "@/lib/utils";
 import { useDesignSystem } from "@/lib/design-system";
 import { PricingPreview } from "./pricing-preview";
@@ -8,12 +13,31 @@ import { previewVars } from "./preview-vars";
 import "./preview.css";
 
 const SCALE = 0.65;
+const TAB_KEY = "design-sys-md:preview-tab";
 const TABS = ["Pricing", "Buttons and states", "Forms", "Tables", "Dashboard", "Charts"] as const;
+
+function readTab(): (typeof TABS)[number] {
+  try {
+    const saved = window.localStorage.getItem(TAB_KEY);
+    return TABS.find((name) => name === saved) ?? "Pricing";
+  } catch {
+    return "Pricing";
+  }
+}
 
 /** The live preview tile: tabs, a framed stage at 65% scale, and a footer of small token chips. */
 export function Preview() {
   const { tokens } = useDesignSystem();
-  const [tab, setTab] = useState<(typeof TABS)[number]>("Pricing");
+  // The selected tab is remembered while editing (and between visits).
+  const [tab, setTabState] = useState<(typeof TABS)[number]>(readTab);
+  const setTab = (next: (typeof TABS)[number]) => {
+    setTabState(next);
+    try {
+      window.localStorage.setItem(TAB_KEY, next);
+    } catch {
+      // Storage blocked: the tab still switches.
+    }
+  };
   const { colors, typography, radius, spacing, elevation } = tokens;
 
   const chips: { label: string; swatch?: string }[] = [
@@ -42,19 +66,20 @@ export function Preview() {
             {name}
           </button>
         ))}
+        <span className="ml-auto flex shrink-0 items-center self-center rounded-full bg-muted px-2.5 py-0.5 text-xs leading-4 text-muted-foreground">Sample content</span>
       </div>
 
       <div className="relative min-h-0 flex-1 p-3">
-        <span className="absolute bottom-6 right-6 z-10 rounded-full bg-background/90 px-2 py-0.5 text-xs text-muted-foreground ring-1 ring-border">
-          Sample content
-        </span>
         {/* The frame. The page inside is a normal desktop page, shown at 65% scale. Light only. */}
-        <div role="tabpanel" className="h-full overflow-hidden rounded-[var(--t-radius-md)] border border-border" style={previewVars(tokens)}>
-          {tab === "Pricing" ? (
-            // 65% scale with a transform (not zoom), so a 2px border stays 2px before scaling and cards line up.
-            <div style={{ width: `${100 / SCALE}%`, height: `${100 / SCALE}%`, transform: `scale(${SCALE})`, transformOrigin: "top left" }}>
-              <PricingPreview />
-            </div>
+        <div role="tabpanel" className="h-full overflow-y-auto overflow-x-hidden rounded-[var(--t-radius-md)] border border-border" style={{ ...previewVars(tokens), background: "var(--pv-background)" }}>
+          {tab === "Pricing" || tab === "Buttons and states" || tab === "Forms" || tab === "Tables" ? (
+            <ScaledStage scale={SCALE}>
+              {tab === "Pricing" ? (
+                <PricingPreview />
+              ) : (
+                <SkillScope>{tab === "Buttons and states" ? <ButtonsTab /> : tab === "Forms" ? <FormsTab /> : <TablesTab />}</SkillScope>
+              )}
+            </ScaledStage>
           ) : (
             <div className="flex h-full items-center justify-center bg-background text-sm text-muted-foreground">Coming next</div>
           )}

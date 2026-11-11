@@ -48,6 +48,25 @@ export interface DesignSystemContextValue {
 
 const DesignSystemContext = createContext<DesignSystemContextValue | null>(null);
 
+/**
+ * True when two settings hold the same design values. The product name, description and stack are facts
+ * about the product, not part of a preset, so they never count as an edit. Key order does not matter.
+ */
+function sameDesign(a: DesignSystemSettings, b: DesignSystemSettings): boolean {
+  const strip = (settings: DesignSystemSettings) => {
+    const { project, ...design } = settings;
+    void project;
+    return design;
+  };
+  const equal = (x: unknown, y: unknown): boolean => {
+    if (typeof x !== "object" || x === null || typeof y !== "object" || y === null) return x === y;
+    const kx = Object.keys(x);
+    const ky = Object.keys(y);
+    return kx.length === ky.length && kx.every((key) => equal((x as Record<string, unknown>)[key], (y as Record<string, unknown>)[key]));
+  };
+  return equal(strip(a), strip(b));
+}
+
 const subscribeNever = () => () => {};
 const readyOnClient = () => true;
 const readyOnServer = () => false;
@@ -61,7 +80,7 @@ export function DesignSystemProvider({ children }: { children: ReactNode }) {
     return {
       presetId,
       ready,
-      isModified: JSON.stringify(settings) !== JSON.stringify(PRESETS[presetId].settings),
+      isModified: !sameDesign(settings, PRESETS[presetId].settings),
       settings,
       tokens: generateTokens(settings),
       update: updateSettings,

@@ -62,3 +62,4 @@ export { parseSkillFile } from "./skill/data-block";
 export { STACK_LABELS, skillSlug } from "./skill/context";
 export { SYSTEMS, isSystemId, type SystemId } from "./systems";
 export { featuredHoverFix } from "./skill/signature";
+export { SELECTION_RULES } from "./controls";
