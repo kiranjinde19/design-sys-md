@@ -24,7 +24,7 @@ export function dosAndDontsSection(ctx: SkillContext): string[] {
   ];
 
   if (ctx.t.colors.brandReport.uiStep !== 600) {
-    rows.push(["Step 600 as a border or outline on this light brand.", `${code(ctx.tailwind ? `border-brand-${ctx.t.colors.brandReport.uiStep}` : `var(--brand-${ctx.t.colors.brandReport.uiStep})`)} (3:1); 600 stays the fill.`]);
+    rows.push(["Step 600 as a border on this light brand.", `${code(ctx.tailwind ? `border-brand-${ctx.t.colors.brandReport.uiStep}` : `var(--brand-${ctx.t.colors.brandReport.uiStep})`)} ; 600 is the fill.`]);
   }
   if (ctx.t.controls.buttons.destructiveStyle === "tinted") {
     rows.push(["A solid red destructive button outside a confirmation dialog.", "Tinted destructive and a trash icon; solid red only in the dialog."]);

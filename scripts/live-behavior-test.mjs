@@ -449,3 +449,18 @@ test("the Pricing tab is drawn with the skill file's classes", async () => {
   const info = await ev(`(()=>{const q=s=>${PANEL}.querySelectorAll(s).length;return {plans:q(".plans > .card.card-hover.plan"),featured:q(".card-featured"),cta:q(".btn--primary.cta"),tiles:q(".icon-tile"),dividers:q(".divider"),border:getComputedStyle(${PANEL}.querySelector(".card-featured")).borderTopWidth}})()`);
   assert.deepEqual({ ...info }, { plans: 3, featured: 1, cta: 1, tiles: 3, dividers: 3, border: "2px" });
 });
+
+test("the Buttons and inputs, Signature and Shadows tile samples sit on an inset panel (also in dark mode)", async () => {
+  await fresh();
+  const check = () => ev(`(()=>{const out={};for(const name of ["Buttons and inputs","Signature details","Shadows"]){const t=document.querySelector('button[aria-label^="'+name+'"]');const p=t.querySelector(".tool-sample-outline");const r=p.getBoundingClientRect(),tr=t.getBoundingClientRect();out[name]={radius:getComputedStyle(p).borderRadius,pad:getComputedStyle(p).padding,inset:r.width<tr.width-32,fits:r.bottom<=tr.bottom-16+0.5}}return out})()`);
+  for (const dark of [false, true]) {
+    if (dark) await click(`document.querySelector("button[aria-label*='mode']")`);
+    const result = await check();
+    for (const [name, v] of Object.entries(result)) {
+      assert.equal(v.radius, "10px", `${name} panel radius`);
+      assert.equal(v.pad, "8px", `${name} panel padding`);
+      assert.ok(v.fits, `${name} panel stays inside the tile`);
+    }
+  }
+  await ev(`localStorage.removeItem("design-sys-md:tool-theme")`);
+});

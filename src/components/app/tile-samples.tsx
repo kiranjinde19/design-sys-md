@@ -184,39 +184,40 @@ function ButtonsSample() {
   const { tokens } = useDesignSystem();
   const { buttons, inputs } = tokens.controls;
   const style = (name: "primary" | "secondary" | "tertiary"): CSSProperties => ({
-    height: 32,
-    padding: "0 12px",
-    borderRadius: buttons.radius,
+    height: 24,
+    padding: "0 8px",
+    borderRadius: Math.min(buttons.radius, 8),
     background: buttons.variants[name].default.background,
     color: buttons.variants[name].default.color,
     border: `${buttons.borderWidth}px solid ${buttons.variants[name].default.borderColor}`,
     fontWeight: buttons.fontWeight,
-    fontSize: 14,
-    lineHeight: "20px",
+    fontSize: 12,
+    lineHeight: "16px",
     fontFamily: tokens.typography.body.previewStack,
     display: "inline-flex",
     alignItems: "center",
   });
   return (
-    <Stack>
-      <div className="flex items-center gap-1.5">
+    <div className="flex flex-col gap-1.5">
+      {/* On the same inset panel as the Signature and Shadows tiles, so a brand colored sample never disappears on a dark tile. */}
+      <Panel>
         {(["primary", "secondary", "tertiary"] as const).map((name) => (
-          <span key={name} style={style(name)}>
+          <span key={name} className={name === "tertiary" ? undefined : "tool-sample-outline"} style={style(name)}>
             {name === "primary" ? "Save" : name === "secondary" ? "Cancel" : "Skip"}
           </span>
         ))}
         <span
           style={{
-            flex: 1,
-            height: 32,
-            minWidth: 0,
-            borderRadius: 10,
+            width: 96,
+            height: 24,
+            boxSizing: "border-box",
+            borderRadius: Math.min(buttons.radius, 8),
             border: `${inputs.borderWidth}px solid ${inputs.states.default.borderColor}`,
             background: inputs.states.default.background,
             color: inputs.placeholderColor,
-            fontSize: 14,
-            lineHeight: "20px",
-            padding: "0 10px",
+            fontSize: 12,
+            lineHeight: "16px",
+            padding: "0 8px",
             display: "flex",
             alignItems: "center",
             fontFamily: tokens.typography.body.previewStack,
@@ -224,11 +225,11 @@ function ButtonsSample() {
         >
           Email
         </span>
-      </div>
+      </Panel>
       <Caption>
         Height {buttons.height.md}px, radius {buttons.radius}px, secondary {tokens.controls.secondaryStyle}
       </Caption>
-    </Stack>
+    </div>
   );
 }
 

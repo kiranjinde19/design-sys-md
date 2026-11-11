@@ -18,8 +18,8 @@ const SPAN: Record<SystemId, string> = {
   voice: "",
 };
 
-/** The two tiles whose samples sit on an inset panel are tighter, so the panel and its caption fit the 120px row. */
-const COMPACT = new Set<SystemId>(["signature", "shadows"]);
+/** The tiles whose samples sit on an inset panel are tighter, so the panel and its caption fit the 120px row. */
+const COMPACT = new Set<SystemId>(["signature", "shadows", "buttons"]);
 
 function Tile({ id, index, label, done, onOpen }: { id: SystemId; index: number; label: string; done: boolean; onOpen: (id: SystemId) => void }) {
   const compact = COMPACT.has(id);

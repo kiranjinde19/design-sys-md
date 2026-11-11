@@ -42,7 +42,6 @@ export const EXTRA_CSS = `
 .pvx-pricing__head h1 { margin: 0; font: 600 var(--text-4xl) / var(--leading-4xl) var(--font-heading); letter-spacing: var(--tracking-heading); }
 .pvx-pricing__head p { margin: 0; color: var(--muted-foreground); max-width: 520px; }
 .pvx-logo { display: inline-flex; align-items: center; gap: var(--gap-inline); font-family: var(--font-heading); font-size: var(--text-lg); }
-.pvx-pricing .plan { gap: var(--gap-stack); }
 .pvx-pricing .plan h3 { margin: 0; font: 600 var(--text-xl) / var(--leading-xl) var(--font-heading); letter-spacing: var(--tracking-heading-xs); }
 .pvx-pricing .plan p { margin: 0; }
 .pvx-plan__title { display: flex; align-items: baseline; justify-content: space-between; gap: var(--gap-inline); }
