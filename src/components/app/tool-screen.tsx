@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
 import { PRESETS, SYSTEMS, useDesignSystem, type SystemId } from "@/lib/design-system";
 import { useSelectedFonts } from "@/components/typography/google-fonts";
 import { cn } from "@/lib/utils";
@@ -25,38 +25,41 @@ export function ToolScreen() {
     <div className={cn("tool min-h-screen bg-background text-foreground", dark && "dark")} style={toolVars(dark)}>
       <TopBar dark={dark} onToggleTheme={toggle} />
 
-      <main className="mx-auto max-w-[1440px] px-8 pb-12 pt-6">
-        <div className="mb-5 flex items-end justify-between gap-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Your design system</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Open a tile to edit it. The preview updates as you go.</p>
-          </div>
-          <div className="flex flex-col items-end" role="status">
-            <div className="flex items-center gap-3 text-sm">
+      <main className={cn("mx-auto flex max-w-[1440px] flex-col px-8 py-8", openId ? "gap-4" : "gap-6")}>
+        {openId ? (
+          <button type="button" onClick={() => setOpenId(null)} className="tool-link inline-flex items-center gap-1 self-start text-sm leading-5">
+            <ChevronLeft aria-hidden className="size-4" />
+            Back to board
+          </button>
+        ) : (
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em]">Your design system</h1>
+              <p className="text-base leading-6 text-muted-foreground">Open a tile to edit it. The preview updates as you go.</p>
+            </div>
+            <div className="flex w-[200px] flex-col gap-2" role="status">
               {isModified ? (
-                <span className="flex items-center gap-1 text-muted-foreground">
+                <span className="flex items-center gap-1 text-xs leading-4 text-muted-foreground">
                   {PRESETS[presetId].name}, edited.
-                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={reset}>
+                  <button type="button" onClick={reset} className="tool-link text-xs leading-4">
                     Reset
-                  </Button>
+                  </button>
                 </span>
               ) : null}
-              <span className="font-medium">
+              <span className="text-sm font-medium leading-5">
                 {reviewed.length} of {SYSTEMS.length} reviewed
               </span>
-            </div>
-            <div className="mt-2 flex gap-1" aria-hidden>
-              {SYSTEMS.map((system) => (
-                <span key={system.id} className={cn("h-1.5 w-6 rounded-full", reviewed.includes(system.id) ? "bg-primary" : "bg-border")} />
-              ))}
+              <span aria-hidden className="block h-2 rounded-full bg-secondary">
+                <span className="block h-2 rounded-full bg-primary" style={{ width: `${(reviewed.length / SYSTEMS.length) * 100}%` }} />
+              </span>
             </div>
           </div>
-        </div>
+        )}
 
         {ready ? (
-          <div className="grid gap-6 min-[1280px]:grid-cols-[auto_minmax(0,1fr)]">
-            <div>{openId ? <Editor openId={openId} onOpen={setOpenId} onClose={() => setOpenId(null)} /> : <Board onOpen={setOpenId} />}</div>
-            <Preview />
+          <div className="flex flex-wrap items-stretch gap-6">
+            {openId ? <Editor openId={openId} onOpen={setOpenId} onClose={() => setOpenId(null)} /> : <Board onOpen={setOpenId} />}
+            <Preview height={openId ? 810 : 648} />
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">Loading your saved work…</p>

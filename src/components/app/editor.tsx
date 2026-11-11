@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowLeft, Check, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Check, ChevronRight } from "lucide-react";
 import { PRESETS, SYSTEMS, useDesignSystem, type SystemId } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
 import {
@@ -25,12 +24,12 @@ function ColorScales() {
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <div className="text-sm font-medium text-muted-foreground">Brand scale</div>
-        <div className="grid grid-cols-10 gap-0.5">
+        <div className="text-sm font-medium leading-5">Brand scale</div>
+        <div className="grid grid-cols-10 gap-1">
           {Object.entries(brand).map(([step, hex]) => (
             <div key={step} className="flex flex-col items-center gap-1" title={`${step} ${hex}`}>
               <div
-                className="h-8 w-full rounded"
+                className="h-8 w-full rounded-[5px]"
                 style={{ background: hex, border: "1px solid var(--border)", ...(step === "600" ? { outline: "2px solid var(--foreground)", outlineOffset: -2 } : {}) }}
               />
               <span className={cn("text-xs leading-4", step === "600" ? "font-semibold text-foreground" : "text-muted-foreground")}>{step}</span>
@@ -42,7 +41,7 @@ function ColorScales() {
         </p>
       </div>
       <div className="space-y-1.5">
-        <div className="text-sm font-medium text-muted-foreground">Status colors</div>
+        <div className="text-sm font-medium leading-5">Status colors</div>
         <div className="grid grid-cols-4 gap-2">
           {(["success", "warning", "error", "info"] as const).map((name) => (
             <div key={name} className="flex flex-col gap-1">
@@ -109,69 +108,59 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
   };
 
   return (
-    <div className="flex gap-3" style={{ height: 648 }}>
+    <div className="flex min-w-0 flex-[0_0_auto] gap-6" style={{ height: 810 }}>
       <nav aria-label="Design systems" className="flex w-56 shrink-0 flex-col gap-2">
-        <Button variant="ghost" size="lg" className="h-10 justify-start gap-2 px-2" onClick={onClose}>
-          <ArrowLeft aria-hidden className="size-4" />
-          Back to board
-        </Button>
         {SYSTEMS.map((item, itemIndex) => {
           const done = reviewed.includes(item.id);
           return (
-            <button
-              key={item.id}
-              type="button"
-              aria-current={item.id === openId}
-              onClick={() => onOpen(item.id)}
-              className="tool-item flex items-center gap-2 text-left text-sm"
-            >
+            <button key={item.id} type="button" aria-current={item.id === openId} onClick={() => onOpen(item.id)} className="tool-item flex items-center gap-2 text-left text-sm font-medium leading-5">
               <span className="tool-num" aria-hidden>
                 {itemIndex + 1}
               </span>
-              <span className={cn("min-w-0 flex-1 truncate font-medium", item.id !== openId && "text-muted-foreground")}>{item.label}</span>
-              {done ? <Check aria-label="Reviewed" className="size-4 shrink-0 text-[var(--t-success-700)]" strokeWidth={2.5} /> : null}
+              <span className="min-w-0 flex-1 truncate">{item.label}</span>
+              {done ? <Check aria-label="Reviewed" className="size-4 shrink-0 text-[var(--t-success-700)]" strokeWidth={1.5} /> : null}
             </button>
           );
         })}
         {isModified ? (
-          <div className="mt-auto flex flex-wrap items-center gap-x-1 text-sm text-muted-foreground">
-            {PRESETS[presetId].name}, edited.
-            <Button variant="ghost" size="sm" className="h-7 px-2" onClick={reset}>
-              Reset
-            </Button>
+          <div className="mt-2 flex flex-col gap-1">
+            <span className="text-xs leading-4 text-muted-foreground">{PRESETS[presetId].name}, edited</span>
+            <button type="button" onClick={reset} className="tool-link h-8 self-start rounded-[10px] px-3 text-sm leading-5">
+              Reset to {PRESETS[presetId].name}
+            </button>
           </div>
         ) : null}
       </nav>
 
-      <section aria-labelledby="editor-title" className="tool-panel flex w-[400px] shrink-0 flex-col p-6">
-        <header className="flex items-start justify-between gap-3 pb-4">
+      <section aria-labelledby="editor-title" className="tool-panel flex w-[400px] shrink-0 flex-col gap-4 p-6">
+        <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 id="editor-title" className="text-2xl font-semibold leading-8">
+            <h2 id="editor-title" className="text-2xl font-semibold leading-8 tracking-[-0.01em]">
               {system.label}
             </h2>
-            <p className="text-sm leading-5 text-muted-foreground">{system.description}</p>
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">{system.description}</p>
           </div>
-          <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs leading-4 text-muted-foreground">
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-xs font-medium leading-4 text-muted-foreground">
             {index + 1} of {SYSTEMS.length}
           </span>
         </header>
         <div className="@container min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable]">
           <EditorBody id={openId} />
         </div>
-        <footer className="flex items-center justify-between gap-2 pt-4">
-          <Button variant="ghost" size="lg" className="h-10 px-3" onClick={onClose}>
+        <footer className="flex items-center justify-between gap-3 pt-2">
+          <button type="button" onClick={onClose} className="tool-link inline-flex h-10 items-center rounded-[10px] px-4 text-base leading-6">
             Back to board
-          </Button>
+          </button>
           <div className="flex gap-2">
             {previous ? (
-              <Button variant="ghost" size="lg" className="h-10 px-3" onClick={() => onOpen(previous.id)}>
+              <button type="button" onClick={() => onOpen(previous.id)} className="tool-link inline-flex h-10 items-center rounded-[10px] px-4 text-base leading-6">
                 Previous
-              </Button>
+              </button>
             ) : null}
-            <Button variant="secondary" size="lg" className="h-10 gap-1 px-3" onClick={goNext}>
+            <button type="button" onClick={goNext} className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-transparent bg-secondary px-4 text-base font-medium leading-6 text-secondary-foreground">
               {next ? `Next: ${next.label}` : "Finish"}
               <ChevronRight aria-hidden className="size-4" />
-            </Button>
+            </button>
           </div>
         </footer>
       </section>

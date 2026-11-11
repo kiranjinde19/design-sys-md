@@ -18,6 +18,7 @@ const shared = {
   "--t-radius-md": `${own.radius.md}px`,
   "--t-radius-lg": `${own.radius.lg}px`,
   "--t-shadow-xs": shadow(1),
+  "--t-shadow-sm": shadow(2),
   "--t-shadow-md": shadow(3),
 } as const;
 
@@ -42,6 +43,7 @@ const LIGHT: Record<string, string> = {
   "--border": roles.border,
   "--input": roles.input,
   "--ring": roles.ring,
+  "--t-surface": neutral[50],
   "--t-brand-600": brand[600],
   "--t-brand-700": brand[700],
   "--t-success-50": semantic.success[50],
@@ -72,6 +74,7 @@ const DARK: Record<string, string> = {
   "--border": neutral[700],
   "--input": neutral[500],
   "--ring": brand[400],
+  "--t-surface": neutral[800],
   "--t-brand-600": brand[400],
   "--t-brand-700": brand[300],
   "--t-success-50": neutral[800],

@@ -45,6 +45,7 @@
   border: 1px solid var(--card-border);
   border-radius: var(--t-radius-md);
   padding: 0 12px;
+  color: var(--foreground);
   transition: transform 150ms, box-shadow 150ms;
 }
 .tool-item:hover {
@@ -56,7 +57,7 @@
   padding: 0 11px;
 }
 
-/* A small number chip for tiles and list items. */
+/* A small number chip for tiles and list items: a white circle with a 1px brand-100 border. */
 .tool-num {
   display: inline-flex;
   width: 20px;
@@ -64,12 +65,26 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  background: var(--card-border);
-  color: var(--t-brand-700);
+  border-radius: 9999px;
+  background: var(--background);
+  border: 1px solid var(--card-border);
+  color: var(--foreground);
   font-size: 12px;
   line-height: 16px;
   font-weight: 500;
+}
+
+/* Link style buttons (Back to board, Reset): brand colored, 500 weight. */
+.tool-link {
+  color: var(--t-brand-600);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+.tool-link:hover {
+  color: var(--t-brand-700);
 }
 
 /* Tab strips scroll only when they must, and never show a scrollbar. */

@@ -22,7 +22,7 @@ export function Group({ title, children }: { title: string; children: ReactNode 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <div className="text-sm font-medium text-muted-foreground">{label}</div>
+      <div className="text-sm font-medium leading-5">{label}</div>
       {children}
     </div>
   );
@@ -81,7 +81,7 @@ export function Segmented<T extends string | number>({
   label: string;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex max-w-full flex-wrap gap-0.5 rounded-[10px] bg-muted p-1">
+    <div role="group" aria-label={label} className="inline-flex max-w-full flex-wrap gap-1 rounded-[10px] bg-muted p-1">
       {options.map((option) => {
         const selected = option === value;
         return (
@@ -108,7 +108,7 @@ export function Choice<T extends string | number>({
   value,
   options,
   onChange,
-  labelFor = String,
+  labelFor = (option: T) => (typeof option === "string" ? option[0].toUpperCase() + option.slice(1) : String(option)),
   segmented = true,
 }: {
   label: string;
@@ -150,14 +150,14 @@ export function HexColorField({ label, value, onCommit }: { label: string; value
         <input
           type="color"
           aria-label={`Pick ${label.toLowerCase()}`}
-          className="h-9 w-12 cursor-pointer rounded-md border border-border bg-transparent p-1"
+          className="size-10 cursor-pointer rounded-[10px] border border-input bg-transparent p-1"
           value={value.toLowerCase()}
           onChange={(event) => onCommit(event.target.value)}
         />
         <input
           type="text"
           aria-label={`${label} hex code`}
-          className="h-9 w-28 rounded-md border border-border bg-background px-3 font-mono text-sm"
+          className="h-10 w-[140px] rounded-[10px] border border-input bg-background px-3 text-base tabular-nums"
           value={draft ?? value}
           onChange={(event) => {
             setDraft(event.target.value);

@@ -7,6 +7,7 @@
  */
 
 import type { CSSProperties, ReactNode } from "react";
+import { Check } from "lucide-react";
 import { VOICE_AXES, voiceLevelLabel, useDesignSystem, type SystemId } from "@/lib/design-system";
 import { asStyle } from "@/components/preview/preview-stage";
 
@@ -19,7 +20,7 @@ const Stack = ({ children }: { children: ReactNode }) => (
 
 function Swatches({ scale, height, mark }: { scale: Record<number, string>; height: number; mark?: number }) {
   return (
-    <div className="flex gap-0.5">
+    <div className="flex gap-1">
       {Object.entries(scale).map(([step, hex]) => (
         <div
           key={step}
@@ -28,10 +29,11 @@ function Swatches({ scale, height, mark }: { scale: Record<number, string>; heig
             flex: 1,
             height,
             background: hex,
-            borderRadius: 4,
-            border: "1px solid var(--border)",
+            borderRadius: 5,
+            // The lightest steps get a faint inner edge so they stay visible on the tinted tile.
+            ...(Number(step) <= 100 ? { boxShadow: "inset 0 0 0 1px rgb(20 23 28 / 0.06)" } : {}),
             // Step 600 is the exact brand color. A dark outline marks it.
-            ...(mark !== undefined && Number(step) === mark ? { outline: "2px solid var(--foreground)", outlineOffset: -2 } : {}),
+            ...(mark !== undefined && Number(step) === mark ? { outline: "2px solid var(--foreground)", outlineOffset: 1 } : {}),
           }}
         />
       ))}
@@ -50,21 +52,22 @@ function ColorsSample() {
         <Caption>Brand, step 600 is {brand[600]}</Caption>
       </div>
       <div className="flex flex-col gap-1">
-        <Swatches scale={neutral} height={28} />
+        <Swatches scale={neutral} height={32} />
         <Caption>Neutral, {tokens.colors.neutral[500]} at the middle</Caption>
       </div>
-      <div className="flex justify-between">
+      <div className="flex items-center gap-3">
         {(["success", "warning", "error", "info"] as const).map((name) => (
-          <span key={name} className="flex items-center gap-1.5 text-xs leading-4 text-muted-foreground">
-            <span style={{ width: 8, height: 8, borderRadius: 4, background: semantic[name][600] }} />
+          <span key={name} className="flex items-center gap-1 text-xs leading-4 text-muted-foreground">
+            <span style={{ width: 12, height: 12, borderRadius: 9999, background: semantic[name][600] }} />
             {name[0].toUpperCase() + name.slice(1)}
           </span>
         ))}
       </div>
       <span
-        className="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium leading-4"
-        style={{ background: failing ? "var(--t-warning-50)" : "var(--t-success-50)", color: failing ? "var(--t-warning-700)" : "var(--t-success-700)", border: "1px solid color-mix(in srgb, currentColor 25%, transparent)" }}
+        className="inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium leading-4"
+        style={{ background: failing ? "var(--t-warning-50)" : "var(--t-success-50)", color: failing ? "var(--t-warning-700)" : "var(--t-success-700)" }}
       >
+        <Check aria-hidden width={12} height={12} strokeWidth={2} />
         {failing ? `${failing} text pair${failing === 1 ? "" : "s"} below AA` : "All text pairs pass AA"}
       </span>
     </Stack>
@@ -109,7 +112,7 @@ function RadiusSample() {
     <Stack>
       <div className="flex gap-2">
         {([radius.sm, radius.md, radius.lg, radius.full] as const).map((r, index) => (
-          <div key={index} style={{ width: 28, height: 28, background: colors.brand[100], border: `2px solid ${colors.brand[600]}`, borderRadius: Math.min(r, 14) }} />
+          <div key={index} style={{ width: 32, height: 32, boxSizing: "border-box", background: colors.brand[100], border: `1px solid ${colors.brand[300]}`, borderRadius: Math.min(r, 16) }} />
         ))}
       </div>
       <Caption>
@@ -167,9 +170,9 @@ function ShadowsSample() {
   const all = shadows.slice(1);
   return (
     <div aria-hidden className="flex flex-col gap-2">
-      <div className="flex gap-2 px-0.5 pt-0.5">
+      <div className="flex gap-3 px-0.5 pt-0.5">
         {all.length ? (
-          all.map((shadow) => <div key={shadow.level} style={{ width: 20, height: 20, borderRadius: 6, background: tokens.colors.roles.background, boxShadow: shadow.css }} />)
+          all.map((shadow) => <div key={shadow.level} style={{ width: 32, height: 24, borderRadius: 5, background: tokens.colors.roles.background, boxShadow: shadow.css }} />)
         ) : (
           <div style={{ width: 20, height: 20, borderRadius: 6, background: tokens.colors.roles.background, border: "1px solid var(--border)" }} />
         )}
@@ -241,7 +244,7 @@ function SignatureSample() {
   return (
     <Stack>
       {/* One row, 8px gaps, left aligned, using the chosen options. The border beam itself is only shown in the preview. */}
-      <div className="flex items-center gap-2 rounded-[10px] p-2" style={{ background: colors.roles.background, border: "1px solid var(--card-border)", width: "fit-content", maxWidth: "100%" }}>
+      <div className="flex items-center gap-2 rounded-[10px] px-2" style={{ background: colors.roles.background, width: "fit-content", maxWidth: "100%" }}>
         <div style={{ ...box, width: 56, ...asStyle(signature.cardStyle.css), ...asStyle(signature.featuredHighlight.css), borderRadius: 10, padding: 0 }} />
         <div style={{ ...box, width: 56, ...asStyle(signature.cardStyle.css), borderRadius: 10, padding: 0 }} />
         <div style={{ ...box, ...asStyle(signature.iconContainer.css), width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>★</div>

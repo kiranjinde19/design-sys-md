@@ -155,7 +155,7 @@ export function ButtonsTab() {
 function Row({ variant, tinted }: { variant: (typeof VARIANTS)[number]; tinted: boolean }) {
   return (
     <>
-      <span className="pvx-label">{cap(variant)}</span>
+      <span className="pvx-rowlabel">{cap(variant)}</span>
       {STATES.map((state) => (
         <span key={state.id}>
           {/* Only the primary default button is the one border beam on this screen. */}

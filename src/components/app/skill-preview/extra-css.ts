@@ -8,8 +8,9 @@ export const EXTRA_CSS = `
 .pvx-head p, .pvx-note { margin: 0; font-size: var(--text-sm); line-height: var(--leading-sm); color: var(--muted-foreground); }
 .pvx-section { display: grid; gap: var(--gap-stack); }
 .pvx-section > h2 { margin: 0; font: 600 var(--text-lg) / var(--leading-lg) var(--font-heading); letter-spacing: var(--tracking-heading-xs); }
-.pvx-matrix { display: grid; grid-template-columns: 120px repeat(5, 1fr); gap: var(--gap-stack) var(--gap-inline); align-items: center; }
+.pvx-matrix { display: grid; grid-template-columns: 88px repeat(5, minmax(0, 1fr)); gap: var(--gap-stack) var(--gap-inline); align-items: center; }
 .pvx-label { font-size: var(--text-xs); line-height: var(--leading-xs); color: var(--muted-foreground); }
+.pvx-rowlabel { font-size: var(--text-sm); line-height: var(--leading-sm); font-weight: 500; }
 .pvx-row { display: flex; flex-wrap: wrap; gap: var(--gap-stack); align-items: center; }
 .pvx-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap-stack); align-items: start; }
 .pvx-box { display: grid; gap: var(--gap-stack); padding: var(--pad-card); border: var(--border-w) solid var(--border); border-radius: var(--radius-lg); }
