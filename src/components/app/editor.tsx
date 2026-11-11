@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, ChevronRight } from "lucide-react";
-import { PRESETS, SYSTEMS, useDesignSystem, type SystemId } from "@/lib/design-system";
+import { PRESETS, SYSTEMS, sentenceCase, swatchGroups, useDesignSystem, type SystemId } from "@/lib/design-system";
 import {
   BordersControls,
   ButtonControls,
@@ -14,13 +14,16 @@ import {
 } from "@/components/controls/system-controls";
 import { BrandNotice } from "./brand-notice";
 import { BrandScale } from "./brand-scale";
+import { DragSwatch, RolesDnd } from "./roles-dnd";
+import { RolesSection } from "./roles-section";
 import { TypographyEditor } from "@/components/typography/typography-editor";
 import { VoiceEditor } from "@/components/voice/voice-editor";
 
 /** The 10 step brand scale with its step labels (600 is the exact brand color), and the generated status colors. */
 function ColorScales() {
   const { tokens } = useDesignSystem();
-  const { semantic, brandReport: report } = tokens.colors;
+  const { brandReport: report } = tokens.colors;
+  const status = swatchGroups(tokens).find((group) => group.id === "status")!.items;
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
@@ -33,10 +36,10 @@ function ColorScales() {
       <div className="space-y-1.5">
         <div className="text-sm font-medium leading-5">Status colors</div>
         <div className="grid grid-cols-4 gap-2">
-          {(["success", "warning", "error", "info"] as const).map((name) => (
-            <div key={name} className="flex flex-col gap-1">
-              <div className="tool-sample h-8 rounded-[5px]" style={{ background: semantic[name][600] }} />
-              <span className="text-xs leading-4 text-muted-foreground">{name[0].toUpperCase() + name.slice(1)}</span>
+          {status.map((source) => (
+            <div key={source.id} className="flex flex-col gap-1">
+              <DragSwatch source={source} className="tool-swatch tool-swatch--plain" style={{ background: source.hex }} aria-label={`${sentenceCase(source.label)}, ${source.hex}`} />
+              <span className="text-xs leading-4 text-muted-foreground">{sentenceCase(source.label.split(" ")[0])}</span>
             </div>
           ))}
         </div>
@@ -50,14 +53,17 @@ function EditorBody({ id }: { id: SystemId }) {
   switch (id) {
     case "colors":
       return (
-        <ColorsControls
-          afterBrand={
-            <>
-              <BrandNotice />
-              <ColorScales />
-            </>
-          }
-        />
+        <RolesDnd>
+          <ColorsControls
+            afterBrand={
+              <>
+                <BrandNotice />
+                <ColorScales />
+              </>
+            }
+            after={<RolesSection />}
+          />
+        </RolesDnd>
       );
     case "typography":
       return (
@@ -134,7 +140,7 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
             {index + 1} of {SYSTEMS.length}
           </span>
         </header>
-        <div className="@container min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable]">
+        <div data-role-scroll className="@container relative min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable]">
           <EditorBody id={openId} />
         </div>
         <footer className="flex items-center justify-between gap-3 pt-2">

@@ -15,6 +15,7 @@ export function checklistSection(ctx: SkillContext): string[] {
     "- [ ] App screens use the shell; public pages use the public layout. Icons are lucide at the listed sizes, icon-only buttons have an `aria-label`.",
     "- [ ] Every input has a visible label, state is never color alone, text pairs are verified.",
     "- [ ] All copy, titles and meta descriptions included, follows rule 12: placeholders in one data file, every placeholder and inert link or button listed in the report.",
+    ...(ctx.s.colors.roleOverrides && Object.keys(ctx.s.colors.roleOverrides).length ? ["- [ ] Custom roles unchanged."] : []),
     "",
   );
 }

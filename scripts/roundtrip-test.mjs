@@ -53,6 +53,7 @@ const CASES = [
   ["yellow brand", "saas-clean", saas, { colors: { brand: "#FACC15" } }],
   ["near black brand", "saas-clean", saas, { colors: { brand: "#111827" } }],
   ["light indigo brand, adjusted", "saas-clean", saas, { colors: { brand: "#A5B4FC", brandMode: "adjusted" } }],
+  ["role overrides", "saas-clean", saas, { colors: { secondary: "#9243CD", roleOverrides: { primary: { scale: "brand", step: 700 }, foreground: { scale: "neutral", step: 800 }, card: { scale: "white" }, input: { scale: "neutral", step: 500 }, ring: { scale: "secondary", step: 600 }, border: { scale: "neutral", step: 300 } } } }],
   ["everything at once", "blank-slate", blank, { colors: { brand: "#2563EB", secondary: "#F59E0B" }, radius: { base: 16 }, voice: { formality: 2, energy: 3, detail: 4 }, project: { name: "Northwind 2025", description: "Inventory tools." } }],
 ];
 
@@ -303,4 +304,42 @@ test("light brands use the first 3:1 brand step for the featured border and sele
     const file = generateSkillFile(yellow, { stack, presetId: "saas-clean" }).skill;
     assert.match(file, /3:1/);
   }
+});
+
+test("role overrides: saved in the data block (format 3), restored, shown in the file, and old files still import", () => {
+  const overrides = { primary: { scale: "brand", step: 700 }, "muted-foreground": { scale: "neutral", step: 700 }, background: { scale: "neutral", step: 50 } };
+  const settings = applyPatch(saas, { colors: { roleOverrides: overrides } });
+  assert.deepEqual(settings.colors.roleOverrides, overrides);
+  for (const stack of STACKS) {
+    const file = generateSkillFile(createDesignSystem(settings), { stack, presetId: "saas-clean" }).skill;
+    assert.match(file, /"version":3/);
+    assert.match(file, /Custom roles \(never change them\): primary brand 700/);
+    assert.match(file, /Custom roles unchanged/);
+    const back = parseSkillFile(file);
+    assert.ok(back.ok);
+    assert.deepEqual(back.settings.colors.roleOverrides, overrides);
+    const again = generateSkillFile(createDesignSystem(back.settings), { stack, presetId: "saas-clean" }).skill;
+    assert.equal(again, file, `${stack}: export, import, export is identical`);
+  }
+  // A default file has no override text and no override key.
+  const plain = generateSkillFile(createDesignSystem(saas), { stack: "html-css", presetId: "saas-clean" }).skill;
+  assert.doesNotMatch(plain, /Custom roles \(never/);
+  assert.doesNotMatch(plain, /roleOverrides/);
+  // The overrides change the real tokens, and brand changes still flow through roles that were not overridden.
+  const tokens = createDesignSystem(settings).tokens.colors;
+  assert.equal(tokens.roles.primary, tokens.brand[700]);
+  const teal = createDesignSystem(applyPatch(settings, { colors: { brand: "#0F766E" } })).tokens.colors;
+  assert.equal(teal.roles.primary, teal.brand[700], "an override follows its scale when the brand changes");
+  const tealAuto = createDesignSystem(applyPatch(saas, { colors: { brand: "#0F766E" } })).tokens.colors;
+  assert.equal(teal.roles.ring, tealAuto.roles.ring, "a role that was not overridden stays automatic");
+  // A version 2 file (no overrides) still imports.
+  const v2 = '# Old\n\n```json\n{"format":"design-sys-md","version":2,"preset":"saas-clean","presetVersion":4,"settings":{"colors":{"brand":"#0F766E"}}}\n```\n';
+  const old = parseSkillFile(v2);
+  assert.ok(old.ok);
+  assert.equal(old.settings.colors.roleOverrides, undefined);
+  // Junk in a file is dropped, not applied.
+  const junk = '# X\n\n```json\n{"format":"design-sys-md","version":3,"preset":"saas-clean","presetVersion":4,"settings":{"colors":{"roleOverrides":{"primary":{"scale":"nope","step":600},"ring":{"scale":"brand","step":500},"bogus":{"scale":"brand","step":500}}}}}\n```\n';
+  const parsed = parseSkillFile(junk);
+  assert.ok(parsed.ok);
+  assert.deepEqual(parsed.settings.colors.roleOverrides, { ring: { scale: "brand", step: 500 } });
 });

@@ -61,7 +61,7 @@ function SecondaryColor() {
   );
 }
 
-export function ColorsControls({ afterBrand }: { afterBrand?: ReactNode }) {
+export function ColorsControls({ afterBrand, after }: { afterBrand?: ReactNode; after?: ReactNode }) {
   const { settings, update } = useDesignSystem();
   const { colors } = settings;
   return (
@@ -75,6 +75,7 @@ export function ColorsControls({ afterBrand }: { afterBrand?: ReactNode }) {
         options={["cool", "warm", "pure", "brand"]}
         onChange={(neutralTone) => update({ colors: { neutralTone } })}
       />
+      {after}
     </div>
   );
 }

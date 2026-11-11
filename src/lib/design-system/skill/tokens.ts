@@ -1,6 +1,7 @@
 import { SYSTEM_STACKS, nearestWeight } from "../fonts";
 import { selectedFontsUrl } from "../font-loading";
-import { SCALE_STEPS, type ColorScale, type FontToken, type SemanticName } from "../types";
+import { refLabel } from "../roles";
+import { SCALE_STEPS, type ColorRef, type ColorScale, type FontToken, type SemanticName } from "../types";
 import { compactCss, fence, lines, recipeLines, remOf, shadowClass, spaceVar, tightCss, unit, type SkillContext } from "./context";
 
 /** Semantic scale steps written out. Enough for status text, badges and alerts. */
@@ -251,6 +252,14 @@ function plainCss(ctx: SkillContext): string[] {
 // The whole Tokens section
 // ─────────────────────────────────────────────────────────────
 
+/** One line, only when the user assigned roles by hand. Never in a default file, so sizes stay as they are. */
+function customRolesLine(ctx: SkillContext): string[] {
+  const overrides = Object.entries(ctx.s.colors.roleOverrides ?? {});
+  if (overrides.length === 0) return [];
+  const label = (key: string, ref: ColorRef) => `${key} ${refLabel(ref)}`;
+  return [`Custom roles (never change them): ${overrides.map(([key, ref]) => label(key, ref as ColorRef)).join(", ")}.`, ""];
+}
+
 export function tokensSection(ctx: SkillContext): string[] {
   const { typography: ty, radius, spacing, borders, elevation } = ctx.t;
   const tw = ctx.tailwind;
@@ -267,6 +276,8 @@ export function tokensSection(ctx: SkillContext): string[] {
     "",
     fence("css", tightCss(tw ? tailwindCss(ctx) : plainCss(ctx))),
     "",
+    // Role assignments made by hand are part of the system: the file says which ones, and not to change them.
+    ...customRolesLine(ctx),
     fontLoading(ctx),
     "### Type, radius, spacing, borders, shadows",
     "",

@@ -11,6 +11,9 @@ import { getFont, nearestWeight, offeredWeights, sanitizeFontName } from "./font
 import { SIGNATURE_CATALOG } from "./signature";
 import {
   COLOR_ROLE_NAMES,
+  OVERRIDABLE_ROLES,
+  type OverridableRole,
+  type ScaleStep,
   SCALE_STEPS,
   SETTINGS_SCHEMA_VERSION,
   type BorderSettings,
@@ -86,9 +89,22 @@ function oneLine(value: unknown, fallback: string, max: number): string {
   return value.replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
-const SCALE_NAMES: readonly ScaleName[] = ["brand", "neutral", "success", "warning", "error", "info"];
+const SCALE_NAMES: readonly ScaleName[] = ["brand", "neutral", "secondary", "success", "warning", "error", "info"];
+
+/** A compact text form, used in the data block: "white", "black", "brand-700". */
+export function colorRefFromText(text: unknown): ColorRef | null {
+  if (typeof text !== "string") return null;
+  if (text === "white" || text === "black") return { scale: text };
+  const match = /^([a-z]+)-(\d+)$/.exec(text);
+  if (!match || !(SCALE_NAMES as readonly string[]).includes(match[1])) return null;
+  const step = Number(match[2]);
+  return (SCALE_STEPS as readonly number[]).includes(step) ? { scale: match[1] as ScaleName, step: step as ScaleStep } : null;
+}
+export const colorRefToText = (ref: ColorRef): string => ("step" in ref ? `${ref.scale}-${ref.step}` : ref.scale);
 
 function normalizeColorRef(value: unknown, fallback: ColorRef): ColorRef {
+  const fromText = colorRefFromText(value);
+  if (fromText) return fromText;
   const v = asRecord(value);
   if (v.scale === "white" || v.scale === "black") return { scale: v.scale };
   if (typeof v.scale === "string" && (SCALE_NAMES as readonly string[]).includes(v.scale)) {
@@ -142,6 +158,18 @@ export function normalizeSettings(input: unknown, base: DesignSystemSettings): D
     roles[name] = normalizeColorRef(rolesIn[name], base.colors.roles[name]);
   }
 
+  // Roles the user assigned by hand. Absent means nothing was changed (the key is left out, so presets stay as they are).
+  const overridesIn = colors.roleOverrides === undefined ? base.colors.roleOverrides : asRecord(colors.roleOverrides);
+  const roleOverrides: Partial<Record<OverridableRole, ColorRef>> = {};
+  for (const key of OVERRIDABLE_ROLES) {
+    const raw = (overridesIn as UnknownRecord | undefined)?.[key];
+    if (raw === undefined || raw === null) continue;
+    const ref = normalizeColorRef(raw, { scale: "white" });
+    // normalizeColorRef falls back to white for junk; only keep references that were really valid.
+    if (colorRefFromText(raw)) roleOverrides[key] = ref;
+    else if (isRecord(raw) && (raw.scale === "white" || raw.scale === "black" || (typeof raw.scale === "string" && (SCALE_NAMES as readonly string[]).includes(raw.scale)))) roleOverrides[key] = ref;
+  }
+
   const signatureOut = {} as Record<keyof SignatureSettings, string>;
   for (const key of Object.keys(SIGNATURE_CATALOG) as (keyof SignatureSettings)[]) {
     const ids = SIGNATURE_CATALOG[key].options.map((option) => option.id as string);
@@ -157,6 +185,7 @@ export function normalizeSettings(input: unknown, base: DesignSystemSettings): D
       secondary: colors.secondary === null ? null : (normalizeHex(colors.secondary) ?? base.colors.secondary),
       neutralTone: oneOf(colors.neutralTone, ["cool", "warm", "pure", "brand"] as const, base.colors.neutralTone),
       roles,
+      ...(Object.keys(roleOverrides).length ? { roleOverrides } : {}),
     },
     typography: (() => {
       const headingFont = normalizeFontChoice(typography.headingFont, base.typography.headingFont);

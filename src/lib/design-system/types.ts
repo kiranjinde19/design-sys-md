@@ -21,7 +21,7 @@ export const BRAND_STEP: ScaleStep = 600;
 
 export type NeutralTone = "cool" | "warm" | "pure" | "brand";
 export type SemanticName = "success" | "warning" | "error" | "info";
-export type ScaleName = "brand" | "neutral" | SemanticName;
+export type ScaleName = "brand" | "neutral" | "secondary" | SemanticName;
 
 /** Points at one color: a fixed white/black, or one step of one scale. */
 export type ColorRef =
@@ -124,6 +124,10 @@ export type DividerStyle = "hairline" | "dotted" | "spacing-only" | "gradient-fa
 // Layer 1: settings (what the user chooses, and what is saved)
 // ─────────────────────────────────────────────────────────────
 
+/** The roles a user can assign by hand in the Colors editor. */
+export const OVERRIDABLE_ROLES = ["primary", "background", "card", "foreground", "muted-foreground", "border", "input", "ring"] as const;
+export type OverridableRole = (typeof OVERRIDABLE_ROLES)[number];
+
 export interface ColorSettings {
   /** One hex color, e.g. "#4F46E5". Placed at step 600 of the brand scale. */
   brand: string;
@@ -136,8 +140,13 @@ export interface ColorSettings {
    * when white text already passes.
    */
   brandMode: "exact" | "adjusted";
-  /** Which swatch plays which role. Primary, surface and background are draggable later. */
+  /** The starting color of each role (set by the preset). */
   roles: Record<ColorRoleName, ColorRef>;
+  /**
+   * Roles the user assigned by hand (dragged a swatch onto, or picked one). A role that is not listed stays automatic,
+   * so brand color changes still flow through it. Missing when nothing was changed.
+   */
+  roleOverrides?: Partial<Record<OverridableRole, ColorRef>>;
 }
 
 export interface TypographySettings {

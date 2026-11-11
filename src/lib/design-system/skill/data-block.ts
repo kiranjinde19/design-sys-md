@@ -1,16 +1,17 @@
-import { legacyChoiceNotices, normalizeSettings } from "../normalize";
+import { colorRefToText, legacyChoiceNotices, normalizeSettings } from "../normalize";
 import { presetBase } from "../preset-history";
 import { DEFAULT_PRESET_ID, PRESETS, isPresetId, type PresetId } from "../presets";
-import { type DesignSystemSettings } from "../types";
+import { type ColorRef, type DesignSystemSettings } from "../types";
 import { fence, lines } from "./context";
 
 export const DATA_FORMAT = "design-sys-md";
 
 /**
  * The version of the data block itself. Version 2 added the brand color mode (exact or adjusted) next to the typed
- * color. Files with version 1 (or none) still import: the mode defaults to exact.
+ * color. Version 3 added role overrides (colors the user assigned to roles by hand). Files with an older version (or
+ * none) still import: the mode defaults to exact and no role is overridden.
  */
-export const DATA_FORMAT_VERSION = 2;
+export const DATA_FORMAT_VERSION = 3;
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
@@ -35,7 +36,13 @@ function diff(base: Json, current: Json): Json | undefined {
  * file never changes when a preset is later updated. Tokens above are generated from these settings.
  */
 export function dataBlock(settings: DesignSystemSettings, presetId: PresetId): string[] {
-  const changes = diff(PRESETS[presetId].settings as unknown as Json, settings as unknown as Json) ?? {};
+  const changes = (diff(PRESETS[presetId].settings as unknown as Json, settings as unknown as Json) ?? {}) as Record<string, Json>;
+  // Role overrides are written in a compact text form ("brand-700") to keep the file small. Importing reads both forms.
+  const colorChanges = changes.colors;
+  if (isObject(colorChanges as Json) && isObject((colorChanges as Record<string, Json>).roleOverrides)) {
+    const overrides = (colorChanges as Record<string, Json>).roleOverrides as Record<string, Json>;
+    (colorChanges as Record<string, Json>).roleOverrides = Object.fromEntries(Object.entries(overrides).map(([key, ref]) => [key, colorRefToText(ref as unknown as ColorRef)]));
+  }
   const presetVersion = PRESETS[presetId].version;
   return lines(
     "## Design system data",

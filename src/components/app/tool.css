@@ -204,3 +204,50 @@
   pointer-events: none;
   font-variant-numeric: tabular-nums;
 }
+
+/* Swatches are drag handles: touch must not scroll the panel while one is being dragged. */
+.tool-swatch,
+[data-swatch] {
+  touch-action: none;
+}
+.tool-swatch--plain {
+  height: 32px;
+}
+
+/* The row a swatch is over: a dashed drop target (an outline, so the list does not shift). */
+.tool-row-over {
+  outline: 2px dashed var(--foreground);
+  outline-offset: -2px;
+  background: var(--card);
+}
+
+/* The floating copy of a swatch that follows the pointer. */
+.tool-float {
+  position: fixed;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border-radius: var(--t-radius-md);
+  background: var(--background);
+  border: 1px solid var(--border);
+  box-shadow: var(--t-shadow-md);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  pointer-events: none;
+  transform: rotate(-3deg);
+  animation: tool-float-in 120ms ease-out;
+}
+@keyframes tool-float-in {
+  from {
+    transform: rotate(-3deg) scale(0.9);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tool-float {
+    animation: none;
+  }
+}

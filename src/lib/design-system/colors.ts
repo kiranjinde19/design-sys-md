@@ -28,7 +28,7 @@ import {
   type ScaleReport,
   type ScaleStep,
   type NeutralTone,
-  type ScaleName,
+  type OverridableRole,
   type SemanticName,
 } from "./types";
 import { clamp } from "./units";
@@ -228,15 +228,21 @@ export function generateSemanticScales(): Record<SemanticName, ColorScale> {
   };
 }
 
-type Scales = Record<Exclude<ScaleName, SemanticName>, ColorScale> & {
+interface Scales {
+  brand: ColorScale;
+  neutral: ColorScale;
+  /** Only when the user added a secondary color. */
+  secondary?: ColorScale | null;
   semantic: Record<SemanticName, ColorScale>;
-};
+}
 
 /** Turns a pointer like { scale: "neutral", step: 200 } into an actual hex color. */
 export function resolveColorRef(ref: ColorRef, scales: Scales): string {
   if (!("step" in ref)) return ref.scale === "white" ? WHITE : BLACK;
   if (ref.scale === "brand") return scales.brand[ref.step];
   if (ref.scale === "neutral") return scales.neutral[ref.step];
+  // A secondary reference without a secondary color falls back to the brand scale (the engine ignores such overrides).
+  if (ref.scale === "secondary") return (scales.secondary ?? scales.brand)[ref.step];
   return scales.semantic[ref.scale][ref.step];
 }
 
@@ -406,18 +412,23 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
   const brand = generateBrandScale(effective);
   const neutral = generateNeutralScale(settings.neutralTone, settings.brand);
   const semantic = generateSemanticScales();
-  const scales: Scales = { brand, neutral, semantic };
+  const secondary = settings.secondary ? generateScale(settings.secondary) : null;
+  const scales: Scales = { brand, neutral, secondary, semantic };
 
   const resolve = (ref: ColorRef) => resolveColorRef(ref, scales);
-
-  const secondary = settings.secondary ? generateScale(settings.secondary) : null;
+  // A role the user assigned by hand. Null means automatic (also when the override points at a secondary color that is gone).
+  const override = (key: OverridableRole): string | null => {
+    const ref = settings.roleOverrides?.[key];
+    if (!ref || (ref.scale === "secondary" && !secondary)) return null;
+    return resolve(ref);
+  };
   const ink = neutral[900];
   const readable = (bg: string) => pickReadableText(bg, WHITE, ink);
   const r = settings.roles;
 
-  const background = resolve(r.background);
-  const foreground = resolve(r.foreground);
-  const primary = resolve(r.primary);
+  const background = override("background") ?? resolve(r.background);
+  const foreground = override("foreground") ?? resolve(r.foreground);
+  const primary = override("primary") ?? resolve(r.primary);
   const muted = resolve(r.muted);
   const destructive = resolve(r.destructive);
 
@@ -425,8 +436,10 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
   // border, so bg-card gives the same result as the signature card.
   const tinted = options.cardStyle === "tinted-bento-tile";
   const plainCard = resolve(r.card);
-  const card = tinted ? brand[50] : plainCard;
-  const cardBorder = tinted ? brand[100] : resolve(r.border);
+  const cardOverride = override("card");
+  const borderColor = override("border") ?? resolve(r.border);
+  const card = cardOverride ?? (tinted ? brand[50] : plainCard);
+  const cardBorder = cardOverride ? borderColor : tinted ? brand[100] : borderColor;
 
   // Secondary and accent use the secondary color's scale when one was added, and the neutral
   // scale when not. Never anything else, so they can not drift toward a status color.
@@ -439,7 +452,7 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
   // a card, a muted area, an accent area and the tinted bento tile.
   const tile = brand[50];
   const inputSurfaces = [background, card, muted, accentFill, tile, neutral[50]];
-  const input = lightestShadeReachingAll(neutral, inputSurfaces, 3);
+  const input = override("input") ?? lightestShadeReachingAll(neutral, inputSurfaces, 3);
   // Placeholder text is text, so it needs 4.5:1.
   const placeholder = lightestShadeReaching(neutral, background, 4.5);
 
@@ -461,7 +474,8 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
   const nearError = brandOklch.c > 0.06 && hueDistance(brandOklch.h, errorHue) < ERROR_CLASH_DEGREES;
   // A brand close to the error red would make a focused field look like an error field, so focus is the
   // neutral dark foreground color then.
-  const focus = nearError || focusStep === undefined ? foreground : brand[focusStep];
+  const ringOverride = override("ring");
+  const focus = ringOverride ?? (nearError || focusStep === undefined ? foreground : brand[focusStep]);
   const UI_STEPS = [600, 700, 800, 900] as const;
   const uiStep = UI_STEPS.find((step) => focusSurfaces.every((surface) => contrastRatio(brand[step], surface) >= 3)) ?? null;
   const ui = uiStep === null ? foreground : brand[uiStep];
@@ -499,14 +513,14 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     secondary: secondaryFill,
     "secondary-foreground": onQuiet(secondaryFill),
     muted,
-    "muted-foreground": resolve(r["muted-foreground"]),
+    "muted-foreground": override("muted-foreground") ?? resolve(r["muted-foreground"]),
     accent: accentFill,
     "accent-foreground": onQuiet(accentFill),
     destructive,
     "destructive-foreground": readable(destructive),
-    border: resolve(r.border),
+    border: borderColor,
     input,
-    ring: !nearError && contrastRatio(resolve(r.ring), background) >= 3 && contrastRatio(resolve(r.ring), card) >= 3 ? resolve(r.ring) : focus,
+    ring: ringOverride ?? (!nearError && contrastRatio(resolve(r.ring), background) >= 3 && contrastRatio(resolve(r.ring), card) >= 3 ? resolve(r.ring) : focus),
     "chart-1": charts[0],
     "chart-2": charts[1],
     "chart-3": charts[2],
@@ -519,8 +533,8 @@ export function generateColors(settings: ColorSettings, options: { cardStyle: Ca
     "sidebar-primary-foreground": readable(primary),
     "sidebar-accent": accentFill,
     "sidebar-accent-foreground": onQuiet(accentFill),
-    "sidebar-border": resolve(r.border),
-    "sidebar-ring": !nearError && contrastRatio(resolve(r.ring), background) >= 3 ? resolve(r.ring) : focus,
+    "sidebar-border": borderColor,
+    "sidebar-ring": ringOverride ?? (!nearError && contrastRatio(resolve(r.ring), background) >= 3 ? resolve(r.ring) : focus),
   };
 
   type Surface = ColorRoleTokenName | { name: "tinted-tile"; hex: string };

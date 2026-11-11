@@ -63,3 +63,22 @@ export { STACK_LABELS, skillSlug } from "./skill/context";
 export { SYSTEMS, isSystemId, type SystemId } from "./systems";
 export { featuredHoverFix } from "./skill/signature";
 export { SELECTION_RULES } from "./controls";
+export {
+  ROLE_ROWS,
+  PILL_MEANING,
+  allSwatches,
+  assignRole,
+  checkAssignment,
+  describeRole,
+  hasOverride,
+  overrideCount,
+  refLabel,
+  resetRoles,
+  rolePill,
+  sentenceCase,
+  swatchGroups,
+  type RoleCheck,
+  type RolePill,
+  type SwatchGroup,
+  type SwatchSource,
+} from "./roles";

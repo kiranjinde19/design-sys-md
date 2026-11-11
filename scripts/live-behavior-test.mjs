@@ -464,3 +464,268 @@ test("the Buttons and inputs, Signature and Shadows tile samples sit on an inset
   }
   await ev(`localStorage.removeItem("design-sys-md:tool-theme")`);
 });
+
+// ---------------------------------------------------------------------------------------------- roles (drag and drop)
+
+const EDITOR = `document.querySelector("section[aria-labelledby=editor-title]")`;
+const swatch = (id) => `${EDITOR}.querySelector('[data-swatch="${id}"]')`;
+const roleRow = (key) => `${EDITOR}.querySelector('[data-role-row="${key}"]')`;
+const centerOf = (selector) => `(()=>{const e=${selector};const b=e.getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2}})()`;
+const rolesView = async () => {
+  await ev(`document.getElementById("roles-title").scrollIntoView({block:"start"})`);
+  await sleep(250);
+};
+const mouse = (type, x, y) => send("Input.dispatchMouseEvent", { type, x, y, button: type === "mouseMoved" ? "none" : "left", buttons: type === "mouseReleased" ? 0 : 1, clickCount: 1 });
+
+/**
+ * Presses on a source and drags to a role row the way a person would: if the row is below the visible part of the panel
+ * the pointer rests near the bottom edge (auto scroll) until the row comes into view. Returns the state over the row.
+ */
+async function dragSwatch(sourceId, roleKey, { release = true } = {}) {
+  await rolesView();
+  const from = await ev(centerOf(swatch(sourceId)));
+  const area = await ev(`(()=>{const b=${EDITOR}.querySelector("[data-role-scroll]").getBoundingClientRect();return {top:b.top,bottom:b.bottom,x:b.x+b.width/2}})()`);
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: from.x, y: from.y });
+  await mouse("mousePressed", from.x, from.y);
+  const moveTo = async (x, y) => send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y, buttons: 1 });
+  const inView = async () => ev(`(()=>{const r=${roleRow(roleKey)}.getBoundingClientRect();return r.top>${area.top}+8&&r.bottom<${area.bottom}-2})()`);
+  let x = from.x;
+  for (let i = 1; i <= 4; i++) await moveTo(from.x + (area.x - from.x) * (i / 4), from.y + 6 * i);
+  x = area.x;
+  for (let guard = 0; guard < 40 && !(await inView()); guard++) {
+    const row = await ev(`(()=>{const r=${roleRow(roleKey)}.getBoundingClientRect();return {top:r.top,bottom:r.bottom}})()`);
+    // Rest near the bottom edge to scroll down, near the top edge to scroll up.
+    await moveTo(x, row.bottom > area.bottom - 2 ? area.bottom - 20 : area.top + 20);
+    await sleep(120);
+  }
+  // Leave the edge zone so the scrolling stops, then aim at where the row really is.
+  await moveTo(x, (area.top + area.bottom) / 2);
+  await sleep(200);
+  const to = await ev(centerOf(roleRow(roleKey)));
+  const mid0 = (area.top + area.bottom) / 2;
+  for (let i = 1; i <= 6; i++) await moveTo(x + ((to.x - x) * i) / 6, mid0 + ((to.y - mid0) * i) / 6);
+  await sleep(150);
+  const mid = await ev(`(()=>{const r=${roleRow(roleKey)};const f=document.querySelector(".tool-float");return {over:r.dataset.over,text:r.innerText,float:f?f.innerText:null}})()`);
+  if (release) {
+    await mouse("mouseReleased", to.x, to.y);
+    await sleep(350);
+  }
+  return mid;
+}
+const findButton = (rowKey, text) => `[...${roleRow(rowKey)}.querySelectorAll("button")].find(b=>b.textContent.trim()==="${text}")`;
+const roleText = (key) => ev(`${roleRow(key)}.innerText`);
+const toolColors = () =>
+  ev(`(()=>{const t=document.querySelector(".tool");const c=getComputedStyle(t);const exp=[...document.querySelectorAll("header a")].find(a=>a.textContent.includes("Export"));return JSON.stringify(["--primary","--card","--border","--foreground","--ring","--muted","--secondary"].map(v=>c.getPropertyValue(v).trim()).concat(getComputedStyle(exp).backgroundColor,getComputedStyle(document.querySelector("header")).backgroundColor))})()`);
+
+test("roles: a pointer drop applies, shows the drop target and the floating swatch, and the tool's own colors do not change", async () => {
+  await fresh();
+  await openEditor();
+  const before = await toolColors();
+  await rolesView();
+  const mid = await dragSwatch("neutral-700", "muted-foreground");
+  assert.equal(mid.over, "true", "the row is the drop target " + JSON.stringify(mid));
+  assert.match(mid.text, /Drop to use neutral 700/);
+  assert.equal(mid.float, "neutral 700", "a floating copy follows the pointer");
+  const text = await roleText("muted-foreground");
+  assert.match(text, /Custom/);
+  assert.match(text, /neutral 700, #3C4046/);
+  assert.match(text, /passes/);
+  assert.equal(await ev(`${roleRow("muted-foreground")}.dataset.over`), undefined, "the drop target clears");
+  // The preview follows.
+  await goTab("Forms");
+  const muted = await ev(`getComputedStyle(${PANEL}.querySelector(".field__help:not(.field__help--error)")).color`);
+  assert.equal(muted, "rgb(60, 64, 70)", "the preview uses the new muted text color");
+  assert.equal(await toolColors(), before, "the tool's own colors are identical");
+  // Changing a role counts as reviewing Colors.
+  await click(byText("button", "Back to board"));
+  assert.ok((await ev(`document.body.innerText`)).includes("1 of 9 reviewed"), "a role change counts as reviewing Colors");
+});
+
+test("roles: a drop that breaks a rule is rejected with the numbers and a suggestion, and the suggestion applies", async () => {
+  await fresh();
+  await openEditor();
+  await rolesView();
+  // Brand 300 as Text is far below AA. Dragged from the neutral bank's neighbour, brand scale, via the picker flow below;
+  // here a neutral 300 swatch is dropped on Text.
+  const before = await roleText("foreground");
+  await dragSwatch("neutral-300", "foreground");
+  const after = await roleText("foreground");
+  assert.match(after, /Neutral 300 on white is 1\.\d\d:1, below AA \(4\.5:1\)\. Closest passing step: neutral 600\./);
+  assert.match(after, /neutral 900, #14171C/, "the old value is kept");
+  assert.ok(!/Custom/.test(after), "nothing was applied");
+  assert.ok(before.includes("neutral 900"));
+  assert.equal(await ev(`${roleRow("foreground")}.querySelector("[role=alert], #role-msg-foreground")!==null`), true);
+  // The preview is untouched too.
+  // "Use neutral 600" applies the closest passing step.
+  await click(findButton("foreground", "Use neutral 600"));
+  const applied = await roleText("foreground");
+  assert.match(applied, /Custom/);
+  assert.match(applied, /neutral 600/);
+  assert.ok(!/below AA/.test(applied), "the message is gone");
+});
+
+test("roles: Primary needs readable button text, Input border and Focus ring need 3:1", async () => {
+  await fresh();
+  await openEditor();
+  await rolesView();
+  await dragSwatch("neutral-200", "input");
+  assert.match(await roleText("input"), /Neutral 200 on white is [\d.]+:1, below the 3:1 minimum\. Closest passing step: neutral 500\./);
+  await dragSwatch("neutral-300", "ring");
+  assert.match(await roleText("ring"), /below the 3:1 minimum/);
+  // A mid gray fails for button text in one of the two directions only if neither white nor dark reaches 4.5; an accepted one stays accepted.
+  await dragSwatch("neutral-900", "primary");
+  assert.match(await roleText("primary"), /Custom/);
+});
+
+test("roles: the keyboard picker (Change) chooses with arrows and Enter, closes with Escape, and returns focus", async () => {
+  await fresh();
+  await openEditor();
+  await rolesView();
+  const change = `${roleRow("primary")}.querySelector('button[aria-label="Change Primary"]')`;
+  const key = async (k, code = k) => {
+    await send("Input.dispatchKeyEvent", { type: "keyDown", key: k, code, text: k === "Enter" ? "\r" : undefined, windowsVirtualKeyCode: { Enter: 13, Escape: 27, ArrowRight: 39, ArrowLeft: 37, ArrowDown: 40, ArrowUp: 38, " ": 32 }[k] ?? 0 });
+    await send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code, windowsVirtualKeyCode: { Enter: 13, Escape: 27, ArrowRight: 39, ArrowLeft: 37, ArrowDown: 40, ArrowUp: 38, " ": 32 }[k] ?? 0 });
+    await sleep(120);
+  };
+  await ev(`${change}.focus()`);
+  await key("Enter");
+  assert.equal(await ev(`!!${roleRow("primary")}.querySelector("[role=dialog]")`), true, "the picker opens");
+  assert.equal(await ev(`document.activeElement.getAttribute("aria-label")`), "Brand 600, #4F46E5", "focus starts on the current color");
+  await key("ArrowRight");
+  assert.equal(await ev(`document.activeElement.getAttribute("aria-label")`), "Brand 700, #3830BF");
+  await key("ArrowDown");
+  assert.match(await ev(`document.activeElement.getAttribute("aria-label")`), /^Neutral 700/);
+  await key("ArrowUp");
+  await key("Enter");
+  assert.equal(await ev(`!!${roleRow("primary")}.querySelector("[role=dialog]")`), false, "choosing closes the picker");
+  assert.equal(await ev(`document.activeElement===${change}`), true, "focus returns to the Change button");
+  assert.match(await roleText("primary"), /brand 700, #3830BF/);
+  // Escape closes without changing anything.
+  await key("Enter");
+  await key("ArrowRight");
+  await key("Escape");
+  assert.equal(await ev(`!!${roleRow("primary")}.querySelector("[role=dialog]")`), false);
+  assert.equal(await ev(`document.activeElement===${change}`), true, "focus returns after Escape");
+  assert.match(await roleText("primary"), /brand 700/, "Escape changed nothing");
+  // A rejected choice through the picker shows the message too.
+  const textChange = `${roleRow("foreground")}.querySelector('button[aria-label="Change Text"]')`;
+  await ev(`${textChange}.focus()`);
+  await key("Enter");
+  await ev(`${roleRow("foreground")}.querySelector('[aria-label^="Neutral 300"]').focus()`);
+  await key("Enter");
+  assert.match(await roleText("foreground"), /Closest passing step: neutral 600/);
+});
+
+test("roles: Space picks a swatch up, the arrows move it over a role, Space drops it, with live announcements; Escape cancels", async () => {
+  await fresh();
+  await openEditor();
+  await rolesView();
+  const live = () => ev(`[...document.querySelectorAll("[role=status]")].map(e=>e.textContent).join(" ")`);
+  const key = async (k) => {
+    const code = { " ": 32, ArrowDown: 40, ArrowUp: 38, Escape: 27 }[k];
+    await send("Input.dispatchKeyEvent", { type: "keyDown", key: k, code: k === " " ? "Space" : k, windowsVirtualKeyCode: code });
+    await send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code: k === " " ? "Space" : k, windowsVirtualKeyCode: code });
+    await sleep(150);
+  };
+  await ev(`${swatch("neutral-800")}.focus()`);
+  await key(" ");
+  assert.match(await live(), /Picked up neutral 800\./);
+  await key("ArrowDown");
+  assert.match(await live(), /Over Primary\./);
+  await key("ArrowDown");
+  await key("ArrowDown");
+  await key("ArrowDown");
+  assert.match(await live(), /Over Text\./);
+  assert.equal(await ev(`${roleRow("foreground")}.dataset.over`), "true", "the row shows the drop target");
+  await key(" ");
+  assert.match(await live(), /Dropped on Text\. Text now uses neutral 800\./);
+  assert.match(await roleText("foreground"), /Custom/);
+  assert.match(await roleText("foreground"), /neutral 800/);
+  // Cancel: pick up, move, Escape.
+  await ev(`${swatch("neutral-500")}.focus()`);
+  await key(" ");
+  await key("ArrowDown");
+  await key("Escape");
+  assert.match(await live(), /Cancelled\. Nothing changed\./);
+  assert.ok(!/Custom/.test(await roleText("primary")), "nothing changed");
+  // A rejected keyboard drop says so.
+  await ev(`${swatch("neutral-300")}.focus()`);
+  await key(" ");
+  for (let i = 0; i < 4; i++) await key("ArrowDown");
+  await key(" ");
+  assert.match(await live(), /Not applied to Text\./);
+});
+
+test("roles: Reset puts one role back to automatic; Reset all roles clears every override", async () => {
+  await fresh();
+  await openEditor();
+  await rolesView();
+  await dragSwatch("neutral-700", "muted-foreground");
+  await dragSwatch("neutral-500", "input");
+  await dragSwatch("neutral-100", "border");
+  assert.equal(await ev(`[...${EDITOR}.querySelectorAll("[data-role-row]")].filter(r=>/Custom/.test(r.innerText)).length`), 3);
+  await click(`${roleRow("input")}.querySelector('button[aria-label="Reset Input border"]')`);
+  assert.ok(!/Custom/.test(await roleText("input")), "one role is automatic again");
+  assert.match(await roleText("muted-foreground"), /Custom/, "the others stay");
+  await click(`[...${EDITOR}.querySelectorAll("button")].find(b=>b.textContent.trim()==="Reset all roles")`);
+  assert.equal(await ev(`[...${EDITOR}.querySelectorAll("[data-role-row]")].filter(r=>/Custom/.test(r.innerText)).length`), 0);
+  assert.equal(await ev(`!![...${EDITOR}.querySelectorAll("button")].find(b=>b.textContent.trim()==="Reset all roles")`), false, "the button goes away");
+  // Roles that were not overridden keep following the brand color.
+  await setBrand("#0F766E");
+  assert.match(await roleText("primary"), /brand 600, #0F766E/);
+});
+
+test("roles: a touch drag works, dragging near the panel edge scrolls it, and reduced motion removes the float animation", async () => {
+  await fresh();
+  await openEditor();
+  await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
+  try {
+    await rolesView();
+    const from = await ev(centerOf(swatch("neutral-700")));
+    const to = await ev(centerOf(roleRow("primary")));
+    const touch = (type, x, y) => send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y, id: 1 }] });
+    await touch("touchStart", from.x, from.y);
+    for (let i = 1; i <= 8; i++) await touch("touchMove", from.x + ((to.x - from.x) * i) / 8, from.y + ((to.y - from.y) * i) / 8);
+    await sleep(150);
+    assert.equal(await ev(`${roleRow("primary")}.dataset.over`), "true", "touch drag highlights the row");
+    await touch("touchEnd", to.x, to.y);
+    await sleep(400);
+    assert.match(await roleText("primary"), /neutral 700/, "touch drop applied");
+  } finally {
+    await send("Emulation.setTouchEmulationEnabled", { enabled: false });
+  }
+
+  // Auto scroll: a drag held at the bottom edge of the panel scrolls it.
+  await open("/app");
+  await openEditor();
+  await ev(`${EDITOR}.querySelector("[data-role-scroll]").scrollTop=0`);
+  const src = await ev(centerOf(swatch("brand-700")));
+  const box = await ev(`(()=>{const b=${EDITOR}.querySelector("[data-role-scroll]").getBoundingClientRect();return {x:b.x+b.width/2,bottom:b.bottom}})()`);
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: src.x, y: src.y });
+  await mouse("mousePressed", src.x, src.y);
+  for (let i = 1; i <= 6; i++) await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: src.x, y: src.y + ((box.bottom - 20 - src.y) * i) / 6, buttons: 1 });
+  await sleep(900);
+  const scrolled = await ev(`${EDITOR}.querySelector("[data-role-scroll]").scrollTop`);
+  await mouse("mouseReleased", src.x, box.bottom - 20);
+  assert.ok(scrolled > 100, `the panel scrolled while dragging (${scrolled})`);
+
+  // Reduced motion: no animation on the floating swatch.
+  await open("/app", { reduced: true });
+  await openEditor();
+  await rolesView();
+  const a = await ev(centerOf(swatch("neutral-700")));
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: a.x, y: a.y });
+  await mouse("mousePressed", a.x, a.y);
+  for (let i = 1; i <= 4; i++) await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: a.x + 20 * i, y: a.y + 30 * i, buttons: 1 });
+  const anim = await ev(`document.querySelector(".tool-float")&&getComputedStyle(document.querySelector(".tool-float")).animationName`);
+  await mouse("mouseReleased", a.x + 80, a.y + 120);
+  assert.equal(anim, "none", "no float animation under reduced motion");
+});
+
+test("the editor panel scrolls inside itself: the hidden live regions do not make the page taller", async () => {
+  await fresh();
+  await openEditor();
+  await rolesView();
+  const sizes = await ev(`({doc:document.documentElement.scrollHeight,tool:document.querySelector(".tool").getBoundingClientRect().height})`);
+  assert.ok(sizes.doc <= sizes.tool + 2, `the document (${sizes.doc}) is not taller than the tool (${sizes.tool})`);
+});
