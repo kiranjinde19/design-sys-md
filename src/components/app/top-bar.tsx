@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, Download, Moon, Sun, Upload } from "lucide-react";
@@ -15,12 +16,25 @@ export function TopBar({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: 
   const { presetId, applyPreset } = useDesignSystem();
   const { choose } = useImport();
   const onExport = usePathname() === "/app/export";
+  // On phones the bar stays at the top while the page scrolls; the Roles tray sticks just under it, so it needs the bar's height.
+  const bar = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const header = bar.current;
+    const root = header?.closest<HTMLElement>(".tool");
+    if (!header || !root) return;
+    const measure = () => root.style.setProperty("--topbar-h", `${header.getBoundingClientRect().height}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <header className="border-b border-border bg-background">
+    <header ref={bar} className="z-40 border-b border-border bg-background max-md:sticky max-md:top-0">
       {/* The inner container has the same max width and side padding as the page, so the logo lines up with the title and Export with the progress bar. */}
       <div className="mx-auto flex min-h-14 max-w-[1440px] flex-wrap items-center justify-between gap-x-2 gap-y-2 px-4 py-2 md:px-6 xl:gap-x-4 xl:px-8">
-        <div className="flex items-center gap-3">
+        {/* The mark and the name are one link to the tool. Below 480px the name is hidden but stays the link's accessible name. */}
+        <Link href="/app" className="flex items-center gap-3 rounded-[10px]">
           <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-[10px] border border-[var(--card-border)] bg-card text-foreground">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="4" y="4" width="16" height="4" rx="1" />
@@ -28,8 +42,8 @@ export function TopBar({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: 
               <rect x="4" y="16" width="13" height="4" rx="1" />
             </svg>
           </span>
-          <span className="max-[479px]:sr-only text-base font-semibold leading-6">Design Sys.md</span>
-        </div>
+          <span className="text-base font-semibold leading-6 max-[480px]:sr-only">Design Sys.md</span>
+        </Link>
 
         {/* 768 and up: the preset switch, Import and the theme toggle sit in the bar. Below 768 they move into the More menu. */}
         <div className="hidden md:block">

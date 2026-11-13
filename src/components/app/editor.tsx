@@ -158,7 +158,7 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
         ) : null}
       </nav>
 
-      <section aria-labelledby="editor-title" className="tool-panel flex h-[min(810px,85vh)] min-h-[520px] w-full shrink-0 flex-col gap-4 p-4 md:p-6 xl:h-auto xl:min-h-0 xl:w-[400px]">
+      <section aria-labelledby="editor-title" className="tool-panel flex h-[min(810px,85vh)] min-h-[520px] w-full shrink-0 flex-col gap-4 p-4 max-md:h-auto max-md:min-h-0 md:p-6 xl:h-auto xl:min-h-0 xl:w-[400px]">
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 id="editor-title" className="text-2xl font-semibold leading-8 tracking-[-0.01em]">
@@ -170,7 +170,7 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
             {index + 1} of {SYSTEMS.length}
           </span>
         </header>
-        <div data-role-scroll className="@container relative min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable]">
+        <div data-role-scroll className="@container relative min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable] max-md:overflow-visible max-md:pr-0">
           <EditorBody id={openId} />
         </div>
         <footer className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 pt-2">

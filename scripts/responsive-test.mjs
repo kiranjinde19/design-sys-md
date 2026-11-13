@@ -67,7 +67,7 @@ async function click(selector) {
   await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: p.x, y: p.y, button: "left", clickCount: 1 });
   await sleep(300);
 }
-const CODES = { Enter: 13, ArrowDown: 40, ArrowUp: 38, Home: 36, End: 35, Tab: 9, Escape: 27, " ": 32 };
+const CODES = { Enter: 13, ArrowRight: 39, ArrowDown: 40, ArrowUp: 38, Home: 36, End: 35, Tab: 9, Escape: 27, " ": 32 };
 async function key(k) {
   await send("Input.dispatchKeyEvent", { type: "keyDown", key: k, code: k === " " ? "Space" : k, windowsVirtualKeyCode: CODES[k], text: k === "Enter" ? "\r" : k === " " ? " " : undefined });
   await send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code: k === " " ? "Space" : k, windowsVirtualKeyCode: CODES[k] });
@@ -288,7 +288,7 @@ test("under the Download buttons both sizes show, and both come from the real ge
   const seen = new Set();
   for (const stack of ["next-tailwind-shadcn", "react-tailwind", "html-css"]) {
     const m = await read(stack);
-    assert.equal(m.line, `SKILL.md ${(m.skill / 1024).toFixed(1)} KiB. Claude Code has no size limit for skills.`, `${stack}: the SKILL.md line`);
+    assert.equal(m.line, `SKILL.md ${(m.skill / 1024).toFixed(1)} KiB. Claude Code has no hard size limit for skills. Shorter files work better.`, `${stack}: the SKILL.md line`);
     assert.equal(m.meter, `${(m.agents / 1024).toFixed(1)} of 32 KiB`, `${stack}: the Codex meter`);
     seen.add(m.line);
   }
@@ -371,8 +371,13 @@ test("1280 and wider keeps two columns; below 1280 the board, editor and Export 
       assert.ok(Math.abs(product.width - 480) < 2, `${width}: the left column is 480px (${product.width})`);
     } else {
       assert.ok(download.top >= product.bottom - 1 && imp.top >= download.bottom - 1 && file.top >= imp.bottom - 1 && install.top >= file.bottom - 1, `${width}: product, download, import, file, install in this order`);
-      const maxHeight = await ev(`document.querySelector("section[aria-label='File preview']").getBoundingClientRect().height <= innerHeight * 0.7 + 1 || document.querySelector("section[aria-label='File preview']").getBoundingClientRect().height <= 420`);
-      assert.equal(maxHeight, true, `${width}: the file preview is at most 70% of the window high`);
+      if (width >= 768) {
+        const maxHeight = await ev(`document.querySelector("section[aria-label='File preview']").getBoundingClientRect().height <= innerHeight * 0.7 + 1 || document.querySelector("section[aria-label='File preview']").getBoundingClientRect().height <= 420`);
+        assert.equal(maxHeight, true, `${width}: the file preview is at most 70% of the window high`);
+      } else {
+        const tall = await ev(`(()=>{const c=document.querySelector("section[aria-label='File preview']").getBoundingClientRect().height;return c>innerHeight*1.5})()`);
+        assert.equal(tall, true, `${width}: below 768 the file preview is as tall as the file, and the page scrolls`);
+      }
       assert.equal(await ev(`getComputedStyle(document.querySelector("#install-title").closest("section").querySelector(".grid")).gridTemplateColumns.split(" ").length`), 1, `${width}: install cards in one column`);
     }
   }
@@ -405,16 +410,16 @@ test("the top bar shows everything from 768 up and compacts below 768 to the log
   await fresh("/app");
   for (const width of [1920, 1440, 1280, 1024, 768]) {
     await setWidth(width);
-    assert.equal(await ev(`(()=>{const h=document.querySelector("header");const t=[...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim());return t.join("|")})()`), "SaaS Clean|Blank slate|Import file|Switch to dark mode|Export file", `${width}: logo, preset switch, Import, theme toggle and Export`);
+    assert.equal(await ev(`(()=>{const h=document.querySelector("header");const t=[...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim());return t.join("|")})()`), "Design Sys.md|SaaS Clean|Blank slate|Import file|Switch to dark mode|Export file", `${width}: logo, preset switch, Import, theme toggle and Export`);
     assert.equal(await ev(`(()=>{const r=document.querySelector("header > div").getBoundingClientRect();return r.height<=72})()`), true, `${width}: the bar is one row`);
   }
   await setWidth(390);
-  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Export file|More");
+  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Design Sys.md|Export file|More");
   assert.equal(await ev(`(()=>{const r=document.querySelector("header > div").getBoundingClientRect();return r.height<=72})()`), true, "390: the bar is one row");
   // On the Export screen the compact bar offers Back to editing instead.
   await fresh("/app/export");
   await setWidth(390);
-  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Back to editing|More");
+  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Design Sys.md|Back to editing|More");
 });
 
 test("the More menu opens by keyboard, moves with the arrows, closes on Escape and Tab, and returns focus", async () => {
@@ -532,17 +537,18 @@ const swatch = (id) => `${EDITOR}.querySelector('[data-tray] [data-swatch="${id}
 const roleRow = (key) => `${EDITOR}.querySelector('[data-role-row="${key}"]')`;
 const centerOf = (selector) => `(()=>{const e=${selector};const b=e.getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2}})()`;
 const roleText = (key) => ev(`${roleRow(key)}.innerText`);
-const rolesView = async () => {
-  await ev(`document.getElementById("roles-title").scrollIntoView({block:"start"})`);
+/** Phones: the page scrolls, the tray sticks under the top bar. Bring a role row to the middle of the window. */
+const phoneRolesView = async (key = "primary") => {
+  await ev(`${roleRow(key)}.scrollIntoView({block:"center"})`);
   await sleep(300);
 };
 
-test("Roles at 390: a touch drag applies a swatch to a role without scrolling the page, and tap to pick up works", async () => {
+test("Roles at 390: a touch drag applies a swatch to a role without scrolling anything, and tap to pick up works", async () => {
   await fresh("/app", { editor: "colors" });
   await setWidth(390, 844);
   await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
   try {
-    await rolesView();
+    await phoneRolesView();
     assert.equal(await ev(`getComputedStyle(${swatch("neutral-700")}).touchAction`), "none", "a swatch takes over touch, so the page does not scroll under the finger");
     const swatchSize = await ev(`(()=>{const r=${swatch("neutral-700")}.getBoundingClientRect();return {h:Math.round(r.height)}})()`);
     assert.ok(swatchSize.h >= 44, `a tray swatch is ${swatchSize.h}px high`);
@@ -550,22 +556,18 @@ test("Roles at 390: a touch drag applies a swatch to a role without scrolling th
     const from = await ev(centerOf(swatch("neutral-700")));
     const to = await ev(centerOf(roleRow("primary")));
     assert.ok(to.y < 844 && from.y < 844, `the swatch (${from.y}) and the Primary row (${to.y}) are both on screen`);
-    const scrollBefore = await ev(`({page:scrollY,panel:${EDITOR}.querySelector("[data-role-scroll]").scrollTop})`);
+    const scrollBefore = await ev(`scrollY`);
     await touch("touchStart", from.x, from.y);
     for (let i = 1; i <= 10; i++) await touch("touchMove", from.x + ((to.x - from.x) * i) / 10, from.y + ((to.y - from.y) * i) / 10);
     await sleep(150);
     assert.equal(await ev(`!!document.querySelector(".tool-float")`), true, "a floating copy follows the finger");
     assert.equal(await ev(`${roleRow("primary")}.dataset.over`), "true", "the row under the finger lights up");
-    const during = await ev(`({page:scrollY,panel:${EDITOR}.querySelector("[data-role-scroll]").scrollTop})`);
-    assert.equal(during.page, scrollBefore.page, "the page did not scroll while the finger dragged");
-    assert.ok(Math.abs(during.panel - scrollBefore.panel) < 40, "the panel did not scroll while the finger dragged");
+    assert.equal(await ev(`scrollY`), scrollBefore, "the page did not scroll while the finger dragged");
     await touch("touchEnd", to.x, to.y);
     await sleep(400);
     assert.match(await roleText("primary"), /neutral 700/, "the touch drop applied");
     // A second drag onto another role also works.
-    await rolesView();
-    await ev(`${roleRow("foreground")}.scrollIntoView({block:"center"})`);
-    await sleep(300);
+    await phoneRolesView("foreground");
     const from2 = await ev(centerOf(swatch("neutral-800")));
     const to2 = await ev(centerOf(roleRow("foreground")));
     await touch("touchStart", from2.x, from2.y);
@@ -575,9 +577,10 @@ test("Roles at 390: a touch drag applies a swatch to a role without scrolling th
     assert.match(await roleText("foreground"), /neutral 800/);
 
     // Tap to pick up: tap a swatch, then tap a role.
-    await rolesView();
+    await phoneRolesView("border");
     await tap(swatch("neutral-600"));
     assert.match(await ev(`document.querySelector("[data-tray-bar]").textContent`), /^Holding neutral 600\. Click a role to use it\./);
+    await phoneRolesView("border");
     await tap(`${roleRow("border")}.querySelector(".truncate")`);
     assert.match(await roleText("border"), /neutral 600/, "tap to pick up applied the swatch");
     assert.match(await ev(`document.querySelector("[data-tray-bar]").textContent`), /^Drag onto a role, or click then click a role/, "nothing is held any more");
@@ -587,27 +590,203 @@ test("Roles at 390: a touch drag applies a swatch to a role without scrolling th
   }
 });
 
-test("Roles at 390: dragging near the bottom edge of the panel scrolls the panel, not the page", async () => {
+test("Roles at 390: dragging near the bottom edge of the window scrolls the page, not the panel", async () => {
   await fresh("/app", { editor: "colors" });
   await setWidth(390, 844);
   await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 });
   try {
-    await rolesView();
+    await phoneRolesView("ring");
     const from = await ev(centerOf(swatch("brand-700")));
-    const box = await ev(`(()=>{const b=${EDITOR}.querySelector("[data-role-scroll]").getBoundingClientRect();return {bottom:Math.min(b.bottom,innerHeight)}})()`);
     const before = await ev(`({page:scrollY,panel:${EDITOR}.querySelector("[data-role-scroll]").scrollTop})`);
     await touch("touchStart", from.x, from.y);
-    for (let i = 1; i <= 8; i++) await touch("touchMove", from.x, from.y + ((box.bottom - 12 - from.y) * i) / 8);
+    for (let i = 1; i <= 8; i++) await touch("touchMove", from.x, from.y + ((844 - 12 - from.y) * i) / 8);
     await sleep(1000);
     const during = await ev(`({page:scrollY,panel:${EDITOR}.querySelector("[data-role-scroll]").scrollTop})`);
-    await touch("touchEnd", from.x, box.bottom - 12);
+    await touch("touchEnd", from.x, 832);
     await sleep(300);
-    assert.ok(during.panel - before.panel > 40, `the panel scrolled while dragging (${before.panel} to ${during.panel})`);
-    assert.equal(during.page, before.page, "the page itself did not scroll");
+    assert.ok(during.page - before.page > 40, `the page scrolled while dragging (${before.page} to ${during.page})`);
+    assert.equal(during.panel, 0, "the panel does not scroll inside itself");
+    assert.equal(await ev(`!!document.querySelector(".tool-float")`), false, "the drag ended");
   } finally {
     await send("Emulation.setTouchEmulationEnabled", { enabled: false });
     await setWidth(1440);
   }
+});
+
+// ---------------------------------------------------------------------------------------------- phones: no inner scroll, sticky bar and tray
+
+test("below 768 the editor panel and the file card do not scroll inside themselves; from 768 up they still do", async () => {
+  await fresh("/app", { editor: "colors" });
+  for (const width of [390, 640, 767]) {
+    await setWidth(width, 844);
+    const m = await ev(`(()=>{const s=${EDITOR}.querySelector("[data-role-scroll]");const cs=getComputedStyle(s);const panel=${EDITOR};return {overflow:cs.overflowY,scroll:s.scrollHeight,client:s.clientHeight,panelH:panel.getBoundingClientRect().height,win:innerHeight}})()`);
+    assert.equal(m.overflow, "visible", `${width}: the editor body does not scroll inside itself`);
+    assert.ok(m.scroll <= m.client + 1, `${width}: nothing is hidden inside the editor body`);
+    assert.ok(m.panelH > m.win, `${width}: the panel is as tall as its content (${m.panelH}px), so the page scrolls`);
+  }
+  for (const width of [768, 1024]) {
+    await setWidth(width, 844);
+    assert.equal(await ev(`getComputedStyle(${EDITOR}.querySelector("[data-role-scroll]")).overflowY`), "auto", `${width}: the editor body still scrolls inside the panel`);
+  }
+  await fresh("/app/export");
+  for (const width of [390, 640, 767]) {
+    await setWidth(width, 844);
+    for (const view of [0, 1]) {
+      await click(`document.querySelectorAll('[role=tablist][aria-label="File view"] [role=tab]')[${view}]`);
+      const m = await ev(`(()=>{const p=document.querySelector("[role=tabpanel]");const card=document.querySelector("section[aria-label='File preview']");return {overflow:getComputedStyle(p).overflowY,scroll:p.scrollHeight,client:p.clientHeight,card:card.getBoundingClientRect().height,fade:!!document.querySelector(".export-fade")&&getComputedStyle(document.querySelector(".export-fade")).display}})()`);
+      assert.equal(m.overflow, "visible", `${width} ${view ? "raw" : "rendered"}: the file card does not scroll inside itself`);
+      assert.ok(m.scroll <= m.client + 1, `${width}: nothing is hidden inside the file card`);
+      assert.ok(m.card > 3000, `${width}: the card is as tall as the file (${m.card}px)`);
+      assert.equal(m.fade, "none", `${width}: no bottom fade is needed when the card does not scroll`);
+    }
+  }
+  for (const width of [768, 1024]) {
+    await setWidth(width, 844);
+    await click(`document.querySelectorAll('[role=tablist][aria-label="File view"] [role=tab]')[0]`);
+    const m = await ev(`(()=>{const p=document.querySelector("[role=tabpanel]");return {overflow:getComputedStyle(p).overflowY,scrolls:p.scrollHeight>p.clientHeight+100}})()`);
+    assert.equal(m.overflow, "auto", `${width}: the file card scrolls inside itself`);
+    assert.equal(m.scrolls, true);
+  }
+});
+
+test("below 768 the top bar stays at the top while the page scrolls, and the Roles tray sticks just under it", async () => {
+  await fresh("/app", { editor: "colors" });
+  await setWidth(390, 844);
+  assert.equal(await ev(`getComputedStyle(document.querySelector("header")).position`), "sticky");
+  const barH = await ev(`Math.round(document.querySelector("header").getBoundingClientRect().height)`);
+  assert.equal(await ev(`parseFloat(getComputedStyle(document.querySelector(".tool")).getPropertyValue("--topbar-h"))`), barH, "the tray knows the bar's height");
+  let previousRow = null;
+  for (const key of ["primary", "border", "input", "ring"]) {
+    await phoneRolesView(key);
+    const m = await ev(`(()=>{const h=document.querySelector("header").getBoundingClientRect();const t=document.querySelector("[data-tray]").getBoundingClientRect();const r=${roleRow(key)}.getBoundingClientRect();return {headTop:h.top,headBottom:h.bottom,trayTop:t.top,trayBottom:t.bottom,rowTop:r.top,scrollY}})()`);
+    assert.equal(m.headTop, 0, `${key}: the top bar is at the top of the window`);
+    // The tray stays in its place while it is still on screen, and sticks right under the bar once the list scrolls past it.
+    if (key === "primary") assert.ok(m.trayTop >= m.headBottom - 1, `${key}: the tray is not above the bar`);
+    else assert.ok(Math.abs(m.trayTop - m.headBottom) <= 1, `${key}: the tray sits right under the bar (${m.trayTop} vs ${m.headBottom})`);
+    assert.ok(m.rowTop >= m.trayBottom - 1, `${key}: the role row is visible below the tray`);
+    if (previousRow !== null) assert.ok(m.scrollY > previousRow, "the roles list scrolled under the tray");
+    previousRow = m.scrollY;
+  }
+  // The tray fills the panel's width (not a sliver) and stays inside the window.
+  const w = await ev(`(()=>{const t=document.querySelector("[data-tray]").getBoundingClientRect();const p=${EDITOR}.getBoundingClientRect();return {tray:Math.round(t.width),panel:Math.round(p.width),left:Math.round(t.left),right:Math.round(t.right),win:innerWidth}})()`);
+  assert.ok(w.tray >= w.panel - 60 && w.left >= 0 && w.right <= w.win, `the tray is ${w.tray}px wide in a ${w.panel}px panel (${JSON.stringify(w)})`);
+  // From 768 up the bar does not stick.
+  await setWidth(768, 844);
+  assert.equal(await ev(`getComputedStyle(document.querySelector("header")).position`), "static");
+});
+
+// ---------------------------------------------------------------------------------------------- scaled previews: scale label, phone scroll
+
+const stageScale = `(()=>{const t=document.querySelector('[aria-label="Live preview"] [role=tabpanel] div[style*="scale"]');if(!t)return null;return new DOMMatrix(getComputedStyle(t).transform).a})()`;
+const previewTab = (name) => `[...document.querySelectorAll('[aria-label="Preview pages"] [role=tab]')].find(t=>t.textContent.trim()===${JSON.stringify(name)})`;
+const scaleLabel = () => ev(`(()=>{const m=document.querySelector('[aria-label="Live preview"]').innerText.match(/Shown at (\\d+)%/);return m?Number(m[1]):null})()`);
+
+test("the preview label shows the real scale at every width, for Pricing, Dashboard and Charts", async () => {
+  await fresh("/app");
+  for (const width of [1920, 1440, 1280, 1024, 768, 640, 390]) {
+    await setWidth(width, 900);
+    for (const tab of ["Pricing", "Dashboard", "Charts"]) {
+      await click(previewTab(tab));
+      const actual = await ev(stageScale);
+      assert.ok(actual > 0, `${width} ${tab}: a scaled stage exists`);
+      const label = await scaleLabel();
+      assert.equal(label, Math.round(actual * 100), `${width} ${tab}: the label (${label}%) is the real scale (${(actual * 100).toFixed(1)}%)`);
+    }
+  }
+  // 1440 keeps the usual 65%; a phone is 60%.
+  await setWidth(1440);
+  await click(previewTab("Pricing"));
+  assert.equal(await scaleLabel(), 65);
+  await setWidth(390);
+  assert.equal(await scaleLabel(), 60);
+  // Open editor at 1280: the preview frame is narrow, so it scales lower and says so.
+  await fresh("/app", { editor: "colors" });
+  await setWidth(1280, 900);
+  await click(previewTab("Pricing"));
+  const label = await scaleLabel();
+  assert.ok(label < 65 && label >= 45, `with an editor open at 1280 the label says ${label}%`);
+  assert.equal(label, Math.round((await ev(stageScale)) * 100));
+  // Tabs that are not scaled show no number.
+  await click(previewTab("Forms"));
+  assert.equal(await scaleLabel(), null);
+});
+
+test("on a phone the scaled previews scroll sideways inside their own frame: readable scale, a hint, keyboard reachable, and the page never scrolls sideways", async () => {
+  await fresh("/app");
+  await setWidth(390, 844);
+  for (const tab of ["Pricing", "Dashboard", "Charts"]) {
+    await click(previewTab(tab));
+    await ev(`window.scrollTo(0,0)`);
+    const region = `document.querySelector('[role=region][aria-label="Preview, scrolls sideways"]')`;
+    const m = await ev(`(()=>{const r=${region};if(!r)return null;const hint=document.getElementById(r.getAttribute("aria-describedby"));return {tab:r.tabIndex,scroll:r.scrollWidth,client:r.clientWidth,overflowX:getComputedStyle(r).overflowX,hint:hint&&hint.innerText,hintVisible:!!hint&&hint.getBoundingClientRect().height>0}})()`);
+    assert.ok(m, `${tab}: the scroll region exists`);
+    assert.equal(m.tab, 0, `${tab}: it is in the tab order`);
+    assert.equal(m.overflowX, "auto");
+    assert.ok(m.scroll > m.client + 100, `${tab}: the preview is wider than its frame (${m.scroll} > ${m.client})`);
+    assert.equal(m.hint, "Swipe sideways to see the full preview", `${tab}: the hint`);
+    assert.equal(m.hintVisible, true, `${tab}: the hint is visible`);
+    assert.equal(Math.round((await ev(stageScale)) * 100), 60, `${tab}: drawn at 60%`);
+    await assertNoSidewaysScroll(`phone ${tab} preview`);
+    // Keyboard: focus shows a ring and the arrow keys scroll the frame.
+    await ev(`${region}.focus({focusVisible:true})`);
+    const ring = await ev(`(()=>{const c=getComputedStyle(${region});return {style:c.outlineStyle,width:parseFloat(c.outlineWidth),offset:parseFloat(c.outlineOffset)}})()`);
+    assert.ok(ring.style !== "none" && ring.width >= 2, `${tab}: a visible focus ring`);
+    assert.ok(ring.offset <= 0, `${tab}: the ring is drawn inside the frame, so nothing cuts it off`);
+    assert.equal(await ev(`${region}.scrollLeft`), 0);
+    await key("ArrowRight");
+    await key("ArrowRight");
+    assert.ok((await ev(`${region}.scrollLeft`)) > 0, `${tab}: the arrow keys scroll the preview`);
+    await ev(`${region}.scrollLeft=${region}.scrollWidth`);
+    assert.ok((await ev(`${region}.scrollLeft`)) >= m.scroll - m.client - 2, `${tab}: the right edge of the preview can be reached`);
+    await assertNoSidewaysScroll(`phone ${tab} preview, scrolled`);
+  }
+  // Other tabs have no scroll region and no hint.
+  for (const tab of ["Buttons and states", "Forms", "Tables"]) {
+    await click(previewTab(tab));
+    assert.equal(await ev(`!!document.querySelector('[role=region][aria-label="Preview, scrolls sideways"]')`), false, `${tab}: no scroll region`);
+    assert.equal(await ev(`/Swipe sideways/.test(document.querySelector('[aria-label="Live preview"]').innerText)`), false, `${tab}: no hint`);
+  }
+  // Wider frames show neither.
+  await click(previewTab("Pricing"));
+  for (const width of [768, 1024, 1440]) {
+    await setWidth(width, 900);
+    assert.equal(await ev(`!!document.querySelector('[role=region][aria-label="Preview, scrolls sideways"]')`), false, `${width}: no scroll region`);
+  }
+});
+
+// ---------------------------------------------------------------------------------------------- phone top bar: the logo link
+
+test("below 480px the wordmark is hidden but the mark stays, and the logo is a link named Design Sys.md", async () => {
+  await fresh("/app");
+  const logo = `document.querySelector('header a[href="/app"]')`;
+  for (const width of [390, 479]) {
+    await setWidth(width);
+    const m = await ev(`(()=>{const a=${logo};const mark=a.querySelector("[aria-hidden]").getBoundingClientRect();const name=a.querySelector("span:not([aria-hidden])");const r=a.getBoundingClientRect();return {text:a.textContent.trim(),mark:Math.round(mark.width),pos:getComputedStyle(name).position,nameW:Math.round(name.getBoundingClientRect().width),w:Math.round(r.width),h:Math.round(r.height)}})()`);
+    assert.equal(m.text, "Design Sys.md", `${width}: the link's accessible name`);
+    assert.equal(m.mark, 32, `${width}: the mark stays`);
+    assert.equal(m.pos, "absolute", `${width}: the wordmark is visually hidden`);
+    assert.ok(m.nameW <= 1, `${width}: the wordmark takes no room`);
+    assert.ok(m.w >= 44 && m.h >= 44, `${width}: the link is at least 44px (${m.w}x${m.h})`);
+  }
+  for (const width of [480, 768, 1440]) {
+    await setWidth(width);
+    const name = await ev(`Math.round(${logo}.querySelector("span:not([aria-hidden])").getBoundingClientRect().width)`);
+    assert.ok(name > 60, `${width}: the wordmark shows (${name}px)`);
+  }
+  // It works as a link: from the Export view it goes to the tool.
+  await fresh("/app/export");
+  await setWidth(390);
+  await click(logo);
+  await sleep(900);
+  assert.equal(await ev(`location.pathname`), "/app");
+  await setWidth(1440);
+});
+
+test("the wording under the Download buttons is the new one, everywhere", async () => {
+  await fresh("/app/export");
+  const text = await ev(`document.body.innerText`);
+  assert.match(text, /Claude Code has no hard size limit for skills\. Shorter files work better\./);
+  assert.ok(!/has no size limit for skills/.test(text), "the old wording is gone");
 });
 
 test("the tool's own chrome colors stay identical across widths", async () => {

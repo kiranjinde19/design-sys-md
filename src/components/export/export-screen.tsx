@@ -159,7 +159,7 @@ export function ExportScreen() {
               {copied?.text}
             </p>
             <p className="text-sm leading-5" data-skill-size>
-              <span className="font-medium">SKILL.md</span> <span className="tabular-nums">{kib(skillBytes)} KiB</span>. Claude Code has no size limit for skills.
+              <span className="font-medium">SKILL.md</span> <span className="tabular-nums">{kib(skillBytes)} KiB</span>. Claude Code has no hard size limit for skills. Shorter files work better.
             </p>
             <SizeMeter bytes={generated.agentsBytes} />
           </Card>

@@ -241,7 +241,10 @@ export function RolesDnd({ children }: { children: ReactNode }) {
       let zoneSince = 0;
       const autoScroll = (now: number) => {
         if (!dragging || ended || !scroller) return;
-        const box = scroller.getBoundingClientRect();
+        // The panel scrolls inside itself on tablets and desktops. On phones it grows to full height and the page scrolls,
+        // so the edges are the window's (the sticky top bar and tray sit at the top).
+        const panelScrolls = scroller.scrollHeight > scroller.clientHeight + 1;
+        const box = panelScrolls ? scroller.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
         const tray = scroller.querySelector<HTMLElement>("[data-tray]")?.getBoundingClientRect();
         const top = Math.max(box.top, tray ? tray.bottom : box.top);
         // A narrow band under the tray (the first role row must not sit inside it), a wider one at the bottom edge.
@@ -250,7 +253,11 @@ export function RolesDnd({ children }: { children: ReactNode }) {
           zone = inZone;
           zoneSince = now;
         }
-        if (zone && now - zoneSince > 250) scroller.scrollTop += zone === "top" ? -10 : 10;
+        if (zone && now - zoneSince > 250) {
+          const step = zone === "top" ? -10 : 10;
+          if (panelScrolls) scroller.scrollTop += step;
+          else window.scrollBy(0, step);
+        }
         setHold((current) => (current ? { ...current, over: roleAt(pointer) } : current));
         scrollRaf.current = requestAnimationFrame(autoScroll);
       };

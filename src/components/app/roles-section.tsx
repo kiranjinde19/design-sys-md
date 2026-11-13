@@ -59,7 +59,7 @@ export function SwatchTray() {
         : `Holding ${refLabel(hold.source.ref)}. Click a role to use it. Esc to cancel.`;
 
   return (
-    <div ref={tray} data-tray className="sticky top-0 z-20 -mx-1 space-y-1 border-b border-border bg-background px-1 pb-2 pt-1">
+    <div ref={tray} data-tray className="sticky top-0 z-20 -mx-1 space-y-1 border-b border-border bg-background px-1 pb-2 pt-1 max-md:top-[var(--topbar-h,60px)]">
       <p data-tray-bar className={cn("flex h-9 items-center rounded-[10px] px-2 text-xs font-medium leading-4", hold ? "bg-foreground text-background" : "text-muted-foreground")}>
         {bar}
       </p>

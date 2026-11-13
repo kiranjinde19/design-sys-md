@@ -312,3 +312,15 @@ body.tool-dragging {
     min-height: 0;
   }
 }
+
+/* A scroll area inside a clipped frame: its focus ring is drawn inside, so the frame does not cut it off. */
+.tool .tool-inset-focus:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Below 768px the file card does not scroll inside itself, so it needs no bottom fade. */
+@media (max-width: 767px) {
+  .export-fade {
+    display: none;
+  }
+}
