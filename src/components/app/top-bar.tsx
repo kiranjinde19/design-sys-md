@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Download, Moon, Sun, Upload } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ChevronLeft, Download, Moon, Sun, Upload } from "lucide-react";
+import { useImport } from "./import-context";
 import { Segmented } from "@/components/controls/controls";
 import { PRESETS, PRESET_IDS, useDesignSystem, type PresetId } from "@/lib/design-system";
 
 const BUTTON = "inline-flex h-10 items-center gap-2 rounded-[10px] border border-transparent px-4 text-base font-medium leading-6";
 
-/** The top bar (56px minimum): logo and name left, the preset switch centered, Import file, the theme toggle and the one primary button right. */
+/** The top bar (56px minimum): logo and name left, the preset switch centered, Import file, the theme toggle and Export file (Back to editing on the Export screen) right. */
 export function TopBar({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: () => void }) {
   const { presetId, applyPreset } = useDesignSystem();
+  const { choose } = useImport();
+  const onExport = usePathname() === "/app/export";
 
   return (
     <header className="border-b border-border bg-background">
@@ -29,18 +33,24 @@ export function TopBar({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: 
       <Segmented<PresetId> label="Preset" options={PRESET_IDS} value={presetId} onChange={applyPreset} labelFor={(id) => PRESETS[id].name} />
 
       <div className="flex items-center gap-2">
-        {/* Import and Export live on /debug until their own screens are built. */}
-        <Link href="/debug#export" className={`${BUTTON} tool-link`}>
+        <button type="button" onClick={choose} className={`${BUTTON} tool-link`}>
           <Upload aria-hidden className="size-4" />
           Import file
-        </Link>
+        </button>
         <button type="button" aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} onClick={onToggleTheme} className="tool-btn tool-btn--secondary size-10">
           {dark ? <Moon aria-hidden className="size-4" /> : <Sun aria-hidden className="size-4" />}
         </button>
-        <Link href="/debug#export" className={`${BUTTON} tool-btn tool-btn--primary`}>
-          <Download aria-hidden className="size-4" />
-          Export file
-        </Link>
+        {onExport ? (
+          <Link href="/app" className={`${BUTTON} tool-btn tool-btn--secondary`}>
+            <ChevronLeft aria-hidden className="size-4" />
+            Back to editing
+          </Link>
+        ) : (
+          <Link href="/app/export" className={`${BUTTON} tool-btn tool-btn--primary`}>
+            <Download aria-hidden className="size-4" />
+            Export file
+          </Link>
+        )}
       </div>
       </div>
     </header>

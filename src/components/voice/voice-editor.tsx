@@ -9,7 +9,7 @@ import {
   type VoiceAxis,
   type VoiceSample,
 } from "@/lib/design-system";
-import { Section } from "@/components/debug/section";
+import { Section } from "@/components/controls/section";
 import { usePreviewStage } from "@/components/preview/preview-stage";
 
 function Slider({ axis }: { axis: (typeof VOICE_AXES)[number] }) {

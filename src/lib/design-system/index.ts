@@ -82,3 +82,4 @@ export {
   type SwatchGroup,
   type SwatchSource,
 } from "./roles";
+export { CODEX_LIMIT_BYTES, CODEX_NEAR_BYTES, fileSections, kib, sizeState, type SizeState } from "./skill/size";

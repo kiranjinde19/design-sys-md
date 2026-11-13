@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Design Sys.md: export screen, monochrome</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#171717}
+a{color:#171717}a:hover{color:#404040}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #171717;outline-offset:2px}
+input::placeholder{color:#737373;opacity:1}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:14px;line-height:20px;background:#F5F5F5;border-radius:5px;padding:0 4px}
+</style>
+</helmet>
+<div style="min-height:1500px;background:#FFFFFF;color:#171717;font-size:16px;line-height:24px">
+
+<header style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;box-sizing:border-box;min-height:56px;padding:8px 32px;background:#FFFFFF;border-bottom:1px solid #E5E5E5">
+  <div style="display:flex;align-items:center;gap:12px">
+    <span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;background:#FAFAFA;border:1px solid #E5E5E5;color:#171717"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="4" rx="1"></rect><rect x="4" y="10" width="10" height="4" rx="1"></rect><rect x="4" y="16" width="13" height="4" rx="1"></rect></svg></span>
+    <span style="font-size:16px;line-height:24px;font-weight:600">Design Sys.md</span>
+  </div>
+  <div role="group" aria-label="Preset" style="display:inline-flex;gap:4px;padding:4px;background:#F5F5F5;border-radius:10px">
+    <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:#FFFFFF;color:#171717;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;box-shadow:0px 1px 2px 0px rgb(20 23 28 / 0.06),0px 2px 4px 0px rgb(20 23 28 / 0.04);cursor:pointer">SaaS Clean</button>
+    <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:transparent;color:#525252;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;cursor:pointer">Blank slate</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:transparent;color:#171717;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m17 8-5-5-5 5"></path><path d="M12 3v12"></path></svg>Import file</button>
+    <button type="button" aria-label="Switch to dark mode" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid transparent;border-radius:10px;background:#E5E5E5;color:#171717;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg></button>
+    <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:#E5E5E5;color:#171717;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>Back to editing</button>
+  </div>
+</header>
+
+<main style="max-width:1440px;margin:0 auto;box-sizing:border-box;padding:32px;display:flex;flex-direction:column;gap:24px">
+
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <h1 style="margin:0;font-size:28px;line-height:36px;font-weight:600;letter-spacing:-0.02em">Export your design system</h1>
+    <p style="margin:0;font-size:16px;line-height:24px;color:#525252">One file your AI reads before it builds anything. Check it, then download.</p>
+  </div>
+
+  <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:stretch">
+
+    <!-- Left column: product, download, import -->
+    <div style="flex:0 1 480px;min-width:0;display:flex;flex-direction:column;gap:16px">
+
+      <section aria-label="Your product" style="box-sizing:border-box;padding:24px;background:#FFFFFF;border:1px solid #E5E5E5;border-radius:16px;display:flex;flex-direction:column;gap:16px">
+        <div>
+          <h2 style="margin:0;font-size:20px;line-height:28px;font-weight:600;letter-spacing:-0.005em">Your product</h2>
+          <p style="margin:4px 0 0;font-size:14px;line-height:20px;color:#525252">These appear in the file header and tell an AI when to use it.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label for="product-name" style="font-size:14px;line-height:20px;font-weight:500">Product name</label>
+          <input id="product-name" type="text" value="Acme Billing" placeholder="Acme Billing" style="height:40px;width:100%;box-sizing:border-box;padding:8px 12px;border:1px solid #8A8A8A;border-radius:10px;background:#FFFFFF;color:#171717;font-family:inherit;font-size:16px;line-height:24px">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label for="product-line" style="font-size:14px;line-height:20px;font-weight:500">One line about the product</label>
+          <input id="product-line" type="text" value="Billing software for small teams." placeholder="Billing software for small teams." style="height:40px;width:100%;box-sizing:border-box;padding:8px 12px;border:1px solid #8A8A8A;border-radius:10px;background:#FFFFFF;color:#171717;font-family:inherit;font-size:16px;line-height:24px">
+          <p style="margin:0;font-size:14px;line-height:20px;color:#525252">Optional. If you leave it empty, it is left out of the file.</p>
+        </div>
+        <fieldset style="margin:0;padding:0;border:0;display:flex;flex-direction:column;gap:8px">
+          <legend style="padding:0;margin-bottom:8px;font-size:14px;line-height:20px;font-weight:500">Stack the file is written for</legend>
+          <label style="display:flex;align-items:flex-start;gap:12px;box-sizing:border-box;padding:11px;border:2px solid #171717;border-radius:10px;cursor:pointer">
+            <input type="radio" name="stack" checked style="margin:4px 0 0;width:16px;height:16px;accent-color:#171717">
+            <span style="display:flex;flex-direction:column;flex:1"><span style="display:flex;align-items:center;gap:8px;font-size:14px;line-height:20px;font-weight:500">Next.js, Tailwind CSS and shadcn/ui<span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Recommended</span></span><span style="font-size:12px;line-height:16px;color:#525252">Tokens in globals.css, shadcn role names, component recipes with Tailwind classes.</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:12px;box-sizing:border-box;padding:12px;border:1px solid #E5E5E5;border-radius:10px;cursor:pointer">
+            <input type="radio" name="stack" style="margin:4px 0 0;width:16px;height:16px;accent-color:#171717">
+            <span style="display:flex;flex-direction:column"><span style="font-size:14px;line-height:20px;font-weight:500">React and Tailwind CSS</span><span style="font-size:12px;line-height:16px;color:#525252">Plain React components, no shadcn.</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:12px;box-sizing:border-box;padding:12px;border:1px solid #E5E5E5;border-radius:10px;cursor:pointer">
+            <input type="radio" name="stack" style="margin:4px 0 0;width:16px;height:16px;accent-color:#171717">
+            <span style="display:flex;flex-direction:column"><span style="font-size:14px;line-height:20px;font-weight:500">Plain HTML and CSS</span><span style="font-size:12px;line-height:16px;color:#525252">CSS variables and class names, no framework.</span></span>
+          </label>
+        </fieldset>
+      </section>
+
+      <section aria-label="Download" style="box-sizing:border-box;padding:24px;background:#FFFFFF;border:1px solid #E5E5E5;border-radius:16px;display:flex;flex-direction:column;gap:16px">
+        <h2 style="margin:0;font-size:20px;line-height:28px;font-weight:600;letter-spacing:-0.005em">Download</h2>
+        <div role="group" aria-label="File" style="display:inline-flex;align-self:flex-start;gap:4px;padding:4px;background:#F5F5F5;border-radius:10px">
+          <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:#FFFFFF;color:#171717;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;box-shadow:0px 1px 2px 0px rgb(20 23 28 / 0.06),0px 2px 4px 0px rgb(20 23 28 / 0.04);cursor:pointer">SKILL.md, Claude Code</button>
+          <button type="button" style="height:32px;padding:0 12px;border:0;border-radius:5px;background:transparent;color:#525252;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;cursor:pointer">AGENTS.md, Codex</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:#171717;color:#FFFFFF;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path><path d="M12 15V3"></path></svg>Download SKILL.md</button>
+          <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:#E5E5E5;color:#171717;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>Copy file</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;gap:8px;font-size:14px;line-height:20px"><span style="font-weight:500">AGENTS.md size for Codex</span><span style="color:#525252">27.6 of 32 KiB</span></div>
+          <span aria-hidden="true" style="display:block;height:8px;border-radius:9999px;background:#E5E5E5"><span style="display:block;width:86%;height:8px;border-radius:9999px;background:#171717"></span></span>
+          <p style="margin:0;font-size:14px;line-height:20px;color:#525252">It fits. Above 30 KiB we show a note, and above 32 KiB Codex would cut the file.</p>
+          <p style="margin:0;font-size:14px;line-height:20px;color:#525252">The file ends with a small data block, so you can import it again later.</p>
+        </div>
+      </section>
+
+      <section aria-label="Import a previous file" style="box-sizing:border-box;padding:24px;background:#FFFFFF;border:1px solid #E5E5E5;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+        <div>
+          <h2 style="margin:0;font-size:20px;line-height:28px;font-weight:600;letter-spacing:-0.005em">Import a previous file</h2>
+          <p style="margin:4px 0 0;font-size:14px;line-height:20px;color:#525252">Load a file you exported before and keep editing. Any .md file from this tool works.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:10px;background:#E5E5E5;color:#171717;font-family:inherit;font-size:16px;line-height:24px;font-weight:500;cursor:pointer">Choose file</button>
+          <span style="font-size:14px;line-height:20px;color:#525252">SKILL.md</span>
+        </div>
+        <p style="margin:0;display:flex;align-items:flex-start;gap:8px;padding:12px;border-radius:10px;background:#F1FAF2;color:#007A30;font-size:14px;line-height:20px;font-weight:500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M20 6 9 17l-5-5"></path></svg>Restored SaaS Clean with 7 changes. Product name Acme Billing.</p>
+      </section>
+    </div>
+
+    <!-- Right column: file preview -->
+    <section aria-label="File preview" style="flex:1 1 560px;min-width:0;display:flex;flex-direction:column;box-sizing:border-box;background:#FFFFFF;border:1px solid #E5E5E5;border-radius:16px;overflow:hidden">
+      <div style="display:flex;align-items:flex-end;gap:4px;padding:8px 16px 0;border-bottom:1px solid #E5E5E5">
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid #171717;background:none;color:#171717;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;cursor:pointer">Rendered</button>
+        <button type="button" style="height:40px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;color:#525252;font-family:inherit;font-size:14px;line-height:20px;font-weight:500;cursor:pointer">Raw</button>
+        <span style="margin-left:auto;align-self:center;font-size:14px;line-height:20px;color:#525252">SKILL.md, 381 lines, 27.6 KiB</span>
+      </div>
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 24px;border-bottom:1px solid #E5E5E5"><span style="font-size:12px;line-height:16px;color:#525252">What is inside</span><span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Hard rules</span><span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Tokens</span><span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Component recipes</span><span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Signature details</span><span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Tone of voice</span><span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Accessibility</span><span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Final checklist</span><span style="padding:2px 8px;border-radius:9999px;background:#F5F5F5;color:#525252;font-size:12px;line-height:16px;font-weight:500">Data block</span></div>
+      <div style="position:relative;flex:1;min-height:0;overflow:hidden;box-sizing:border-box;padding:24px;display:flex;flex-direction:column;gap:16px">
+        <div style="box-sizing:border-box;padding:16px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:10px">
+          <div style="font-size:12px;line-height:16px;color:#525252;margin-bottom:4px">Frontmatter</div>
+          <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:14px;line-height:20px">name: acme-billing-design-system<br>description: "Use for ANY UI work in Acme Billing: building or changing pages, components, forms, tables, dashboards, charts, pricing, empty states and interface copy. Billing software for small teams. Read it before writing UI code, and never invent colors, sizes or fonts."</div>
+        </div>
+        <h3 style="margin:0;font-size:28px;line-height:36px;font-weight:600;letter-spacing:-0.02em">Design system</h3>
+        <p style="margin:0;font-size:16px;line-height:24px;color:#525252">This file is the design system for Acme Billing. Stack: Next.js + Tailwind CSS + shadcn/ui. Read all of it before any UI work, copy the classes exactly, and run the Final checklist before saying a screen is done.</p>
+        <h4 style="margin:0;font-size:20px;line-height:28px;font-weight:600">Hard rules</h4>
+        <ol style="margin:0;padding-left:24px;display:flex;flex-direction:column;gap:4px;font-size:16px;line-height:24px">
+          <li>Use only the tokens in this file. Never hardcode hex colors, rgb() values or pixel values.</li>
+          <li>Never use arbitrary Tailwind values such as <code>bg-[#4F46E5]</code> or <code>p-[25px]</code>.</li>
+          <li>One primary button per view. Every other action is secondary or tertiary.</li>
+          <li>One accent color per screen: the brand color. Status colors only for status.</li>
+        </ol>
+        <h4 style="margin:0;font-size:20px;line-height:28px;font-weight:600">1. Tokens</h4>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px;font-size:14px;line-height:20px"><span aria-hidden="true" style="width:16px;height:16px;border-radius:5px;background:#4F46E5;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.12)"></span><span style="width:96px;font-weight:500">primary</span><code>#4F46E5</code><span style="color:#525252">brand 600, white text 6.28:1</span></div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:14px;line-height:20px"><span aria-hidden="true" style="width:16px;height:16px;border-radius:5px;background:#F4F6FF;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.12)"></span><span style="width:96px;font-weight:500">card</span><code>#F4F6FF</code><span style="color:#525252">brand 50, text 17.17:1</span></div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:14px;line-height:20px"><span aria-hidden="true" style="width:16px;height:16px;border-radius:5px;background:#14171C;box-shadow:inset 0 0 0 1px rgb(20 23 28 / 0.12)"></span><span style="width:96px;font-weight:500">foreground</span><code>#14171C</code><span style="color:#525252">neutral 900, 17.96:1</span></div>
+        </div>
+        <div style="box-sizing:border-box;padding:16px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:14px;line-height:20px">:root {<br>&nbsp;&nbsp;--background: #FFFFFF; --foreground: #14171C;<br>&nbsp;&nbsp;--card: #F4F6FF; --card-foreground: #14171C;<br>&nbsp;&nbsp;--primary: #4F46E5; --primary-foreground: #FFFFFF;<br>&nbsp;&nbsp;--border: #E0E6ED; --input: #898E95; --ring: #6466FB;<br>}</div>
+        <span aria-hidden="true" style="position:absolute;left:0;right:0;bottom:0;height:96px;background:linear-gradient(rgba(255,255,255,0),#FFFFFF)"></span>
+      </div>
+    </section>
+  </div>
+
+  <!-- Install steps -->
+  <section aria-label="How to install this file" style="display:flex;flex-direction:column;gap:16px">
+    <div>
+      <h2 style="margin:0;font-size:20px;line-height:28px;font-weight:600;letter-spacing:-0.005em">How to install this file</h2>
+      <p style="margin:4px 0 0;font-size:14px;line-height:20px;color:#525252">The tools read plain files. There is nothing to run.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+      <div style="box-sizing:border-box;padding:24px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+        <h3 style="margin:0;font-size:16px;line-height:24px;font-weight:600">Claude Code, SKILL.md</h3>
+        <ol style="margin:0;padding-left:24px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:20px">
+          <li>In your project, create the folder <code>.claude/skills/acme-billing-design-system/</code>.</li>
+          <li>Save the downloaded file inside it as <code>SKILL.md</code>.</li>
+          <li>Start Claude Code. It loads the skill when you ask for UI work, or type <code>/acme-billing-design-system</code>.</li>
+        </ol>
+      </div>
+      <div style="box-sizing:border-box;padding:24px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+        <h3 style="margin:0;font-size:16px;line-height:24px;font-weight:600">Codex, AGENTS.md</h3>
+        <ol style="margin:0;padding-left:24px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:20px">
+          <li>Save the downloaded file as <code>AGENTS.md</code> in the root of your repository.</li>
+          <li>Codex reads it at the start of each session. It is plain Markdown, so there is no frontmatter.</li>
+          <li>Codex reads 32 KiB by default. If you have other AGENTS.md files, check the total, or raise <code>project_doc_max_bytes</code>.</li>
+        </ol>
+      </div>
+      <div style="box-sizing:border-box;padding:24px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+        <h3 style="margin:0;font-size:16px;line-height:24px;font-weight:600">ChatGPT</h3>
+        <p style="margin:0;font-size:14px;line-height:20px">ChatGPT does not read these files on its own, so you give it the file.</p>
+        <ol style="margin:0;padding-left:24px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:20px">
+          <li>Best: create a ChatGPT Project and upload <code>AGENTS.md</code> to its files.</li>
+          <li>Quick: paste the whole file at the start of a single chat, then your request.</li>
+        </ol>
+        <p style="margin:0;font-size:12px;line-height:16px;color:#525252">What ChatGPT accepts changes over time. Check OpenAI's help page "Using Projects in ChatGPT" before relying on a size.</p>
+      </div>
+    </div>
+    <p style="margin:0;font-size:14px;line-height:20px;color:#525252"><span style="font-weight:500;color:#171717">Then:</span> replace or restyle the starter home page your framework creates, because it uses its own colors.</p>
+  </section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

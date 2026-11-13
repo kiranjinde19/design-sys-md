@@ -14,7 +14,7 @@ const lib = "src/lib/design-system";
 try {
   execFileSync(
     "npx",
-    ["tsc", ...["generate", "presets", "normalize", "skill/generate", "skill/data-block"].map((f) => `${lib}/${f}.ts`), "--outDir", out, "--module", "commonjs", "--moduleResolution", "node", "--target", "es2020", "--skipLibCheck", "--noEmitOnError", "false"],
+    ["tsc", ...["generate", "presets", "normalize", "skill/generate", "skill/data-block", "skill/size"].map((f) => `${lib}/${f}.ts`), "--outDir", out, "--module", "commonjs", "--moduleResolution", "node", "--target", "es2020", "--skipLibCheck", "--noEmitOnError", "false"],
     { stdio: "pipe" },
   );
 } catch (error) {
@@ -27,6 +27,7 @@ const { PRESETS } = require(join(out, "presets.js"));
 const { applyPatch } = require(join(out, "normalize.js"));
 const { generateSkillFile } = require(join(out, "skill/generate.js"));
 const { parseSkillFile } = require(join(out, "skill/data-block.js"));
+const { sizeState } = require(join(out, "skill/size.js"));
 
 const STACKS = ["next-tailwind-shadcn", "react-tailwind", "html-css"];
 const saas = PRESETS["saas-clean"].settings;
@@ -379,4 +380,15 @@ test("removing the secondary color sends roles that used it back to automatic, l
   const parsed = parseSkillFile(stale);
   assert.ok(parsed.ok);
   assert.deepEqual(parsed.settings.colors.roleOverrides, { ring: { scale: "brand", step: 800 } });
+});
+
+test("size meter thresholds: fits at 29 KiB, near at 30 and 30.5 KiB, over above 32 KiB", () => {
+  const KiB = 1024;
+  assert.equal(sizeState(29 * KiB), "fits");
+  assert.equal(sizeState(30 * KiB - 1), "fits");
+  assert.equal(sizeState(30 * KiB), "near");
+  assert.equal(sizeState(30.5 * KiB), "near");
+  assert.equal(sizeState(32 * KiB), "near");
+  assert.equal(sizeState(32 * KiB + 1), "over");
+  assert.equal(sizeState(32.5 * KiB), "over");
 });

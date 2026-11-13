@@ -271,3 +271,21 @@ body.tool-dragging {
   outline-offset: -2px;
   background: var(--card);
 }
+
+/* The rendered file is a document: a white sheet in both light and dark mode (its variables are the light ones). */
+.export-sheet {
+  box-sizing: border-box;
+  padding: 24px;
+  min-height: 100%;
+}
+.dark .export-sheet {
+  margin: 16px;
+  border-radius: var(--t-radius-md);
+  min-height: calc(100% - 32px);
+}
+.dark .export-fade {
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  border-radius: 0 0 var(--t-radius-md) var(--t-radius-md);
+}

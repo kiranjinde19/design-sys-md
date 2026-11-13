@@ -4,6 +4,7 @@ Put the two visual mockups here:
 
 - `Main.dc.html` (board overview)
 - `Editor.dc.html` (Colors editor open)
+- `ExportView.dc.html` and `ExportViewDark.dc.html` (the Export and Import screen at `/app/export`, light and dark)
 
 They are inline styled markup with the exact sizes, colors and spacing for the tool's own screen at `/app`.
 They are read as text only. They are not shipped, imported, linted or included in the production build.

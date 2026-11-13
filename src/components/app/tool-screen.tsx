@@ -1,30 +1,23 @@
 "use client";
 
-import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
-import { PRESETS, SYSTEMS, useDesignSystem, type SystemId } from "@/lib/design-system";
+import { PRESETS, SYSTEMS, useDesignSystem } from "@/lib/design-system";
 import { useSelectedFonts } from "@/components/typography/google-fonts";
 import { cn } from "@/lib/utils";
 import { Board } from "./board";
 import { Editor } from "./editor";
 import { Preview } from "./preview";
-import { TopBar } from "./top-bar";
-import { toolVars } from "./tool-theme";
-import { useToolTheme } from "./use-tool-theme";
-import "./tool.css";
+import { useOpenEditor } from "./open-editor";
 
 /** The tool's own screen. It wears the fixed SaaS Clean theme; the user's choices only appear inside the samples and the preview. */
 export function ToolScreen() {
   const { ready, reviewed, presetId, isModified, reset } = useDesignSystem();
-  const { dark, toggle } = useToolTheme();
-  const [openId, setOpenId] = useState<SystemId | null>(null);
+  const [openId, setOpenId] = useOpenEditor();
   // Load only the fonts currently selected, so the samples and the preview show the real fonts.
   useSelectedFonts();
 
   return (
-    <div className={cn("tool min-h-screen bg-background text-foreground", dark && "dark")} style={toolVars(dark)}>
-      <TopBar dark={dark} onToggleTheme={toggle} />
-
+    <>
       <main className={cn("mx-auto flex max-w-[1440px] flex-col px-8 py-8", openId ? "gap-4" : "gap-6")}>
         {openId ? (
           <button type="button" onClick={() => setOpenId(null)} className="tool-link inline-flex items-center gap-1 self-start text-sm leading-5">
@@ -65,6 +58,6 @@ export function ToolScreen() {
           <p className="text-sm text-muted-foreground">Loading your saved work…</p>
         )}
       </main>
-    </div>
+    </>
   );
 }

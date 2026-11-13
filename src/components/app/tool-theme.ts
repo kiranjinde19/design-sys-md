@@ -66,6 +66,8 @@ const LIGHT: Record<string, string> = {
   "--t-success-700": semantic.success[700],
   "--t-warning-50": semantic.warning[50],
   "--t-warning-700": semantic.warning[700],
+  "--t-error-50": semantic.error[50],
+  "--t-error-700": semantic.error[700],
 };
 
 /** Dark: the same gray scale, read from the dark end. */
@@ -102,10 +104,13 @@ const DARK: Record<string, string> = {
   "--t-secondary-pressed": neutral[500],
   "--t-brand-600": neutral[50],
   "--t-brand-700": neutral[200],
-  "--t-success-50": neutral[800],
-  "--t-success-700": semantic.success[600],
-  "--t-warning-50": neutral[800],
-  "--t-warning-700": semantic.warning[600],
+  // Status tints in dark mode: a deep tint with a light text step, so text keeps 4.5:1.
+  "--t-success-50": semantic.success[900],
+  "--t-success-700": semantic.success[200],
+  "--t-warning-50": semantic.warning[900],
+  "--t-warning-700": semantic.warning[200],
+  "--t-error-50": semantic.error[900],
+  "--t-error-700": semantic.error[200],
 };
 
 export const toolVars = (dark: boolean): CSSProperties => (dark ? DARK : LIGHT) as CSSProperties;

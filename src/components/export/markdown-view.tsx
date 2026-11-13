@@ -6,12 +6,17 @@ import type { ReactNode } from "react";
  * elements and never injects raw HTML.
  */
 
+const HEX = /^#[0-9A-Fa-f]{6}$/;
+
 function inline(text: string, keyPrefix: string): ReactNode[] {
   return text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g).map((part, i) => {
     if (part.startsWith("`") && part.endsWith("`") && part.length > 1) {
+      const code = part.slice(1, -1);
       return (
-        <code key={`${keyPrefix}${i}`} className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">
-          {part.slice(1, -1)}
+        <code key={`${keyPrefix}${i}`} className="break-words rounded bg-muted px-1 py-0.5 font-mono text-[0.875em]">
+          {/* A color token gets a small chip of the color it names (the user's own colors, shown only here). */}
+          {HEX.test(code) ? <span aria-hidden className="mr-1 inline-block size-3 translate-y-[1px] rounded-[3px] align-baseline" style={{ background: code, boxShadow: "inset 0 0 0 1px rgb(20 23 28 / 0.2)" }} /> : null}
+          {code}
         </code>
       );
     }
@@ -40,8 +45,8 @@ export function MarkdownView({ source }: { source: string }) {
     if (end > 0) {
       out.push(
         <div key={key++} className="rounded-lg border border-border bg-muted/50 p-3">
-          <div className="mb-1 text-xs font-medium text-muted-foreground">Frontmatter</div>
-          <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-xs">{lines.slice(1, end).join("\n")}</pre>
+          <div className="mb-1 text-xs leading-4 text-muted-foreground">Frontmatter</div>
+          <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-sm leading-5">{lines.slice(1, end).join("\n")}</pre>
         </div>,
       );
       i = end + 1;
@@ -57,7 +62,7 @@ export function MarkdownView({ source }: { source: string }) {
       while (i < lines.length && !lines[i].startsWith("```")) body.push(lines[i++]);
       i++;
       out.push(
-        <pre key={key++} className="overflow-x-auto rounded-lg border border-border bg-muted/50 p-3 font-mono text-xs leading-relaxed">
+        <pre key={key++} className="overflow-x-auto rounded-[10px] border border-border bg-card p-4 font-mono text-sm leading-5">
           {body.join("\n")}
         </pre>,
       );
@@ -67,7 +72,7 @@ export function MarkdownView({ source }: { source: string }) {
     const heading = line.match(/^(#{1,3}) (.*)$/);
     if (heading) {
       const level = heading[1].length;
-      const cls = level === 1 ? "text-2xl font-semibold tracking-tight" : level === 2 ? "pt-4 text-xl font-semibold tracking-tight" : "pt-2 text-base font-semibold";
+      const cls = level === 1 ? "text-[28px] font-semibold leading-9 tracking-[-0.02em]" : level === 2 ? "pt-4 text-xl font-semibold leading-7 tracking-[-0.005em]" : "pt-2 text-base font-semibold leading-6";
       out.push(
         <div key={key++} role="heading" aria-level={level} className={cls}>
           {inline(heading[2], `h${key}`)}
@@ -116,7 +121,7 @@ export function MarkdownView({ source }: { source: string }) {
       while (i < lines.length && /^(- |\d+\. )/.test(lines[i])) items.push(lines[i++].replace(/^(- |\d+\. )/, ""));
       const List = ordered ? "ol" : "ul";
       out.push(
-        <List key={key++} className={`space-y-1 pl-5 text-sm ${ordered ? "list-decimal" : "list-disc"}`}>
+        <List key={key++} className={`space-y-1 pl-6 text-base leading-6 ${ordered ? "list-decimal" : "list-disc"}`}>
           {items.map((item, n) => (
             <li key={n}>{inline(item.replace(/^\[ \] /, "☐ "), `li${key}${n}`)}</li>
           ))}
@@ -133,11 +138,11 @@ export function MarkdownView({ source }: { source: string }) {
     const para: string[] = [];
     while (i < lines.length && lines[i].trim() !== "" && !/^(#{1,3} |```|\||- |\d+\. )/.test(lines[i])) para.push(lines[i++]);
     out.push(
-      <p key={key++} className="text-sm leading-relaxed">
+      <p key={key++} className="break-words text-base leading-6">
         {inline(para.join(" "), `p${key}`)}
       </p>,
     );
   }
 
-  return <div className="space-y-3">{out}</div>;
+  return <div className="min-w-0 space-y-4">{out}</div>;
 }

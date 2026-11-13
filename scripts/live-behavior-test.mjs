@@ -62,7 +62,7 @@ async function open(path = "/app", { reduced = false } = {}) {
 async function fresh(options) {
   await send("Page.navigate", { url: baseUrl + "/favicon.ico" });
   await sleep(500);
-  await ev(`localStorage.clear()`);
+  await ev(`localStorage.clear();sessionStorage.clear()`);
   await open("/app", options);
 }
 
@@ -274,7 +274,7 @@ test("hover changes the computed style of a button, a tab, a tile, a list item a
   await check("preview tab", tabButton("Forms"), ["color"]);
   await check("theme toggle", `document.querySelector("button[aria-label*='mode']")`, ["backgroundColor", "opacity"]);
   await check("Export file", byText("a", "Export file"), ["backgroundColor", "opacity"]);
-  await check("Import file", byText("a", "Import file"), ["color", "backgroundColor"]);
+  await check("Import file", byText("button", "Import file"), ["color", "backgroundColor"]);
   await check("preset segment", `document.querySelector("[role=group][aria-label*=reset]").querySelectorAll("button")[1]`, ["color"]);
   await goTab("Forms");
   await check("Save changes button", `${PANEL}.querySelector("button[type=submit]")`, ["backgroundColor"]);
@@ -339,7 +339,7 @@ test("dark mode toggles, and Back, Next, Previous, reviewed ticks and Reset work
   assert.ok((await ev(`document.body.innerText`)).includes("edited"), "edited label appears");
   await click(byText("button", "Reset to"));
   assert.ok(!(await ev(`document.body.innerText`)).includes("edited"), "Reset clears the edit");
-  assert.equal(await ev(`${byText("a", "Import file")}.getAttribute("href")`), "/debug#export", "Import file link");
+  assert.equal(await ev(`!!${byText("button", "Import file")}`), true, "Import file is in the top bar");
 });
 
 // ---------------------------------------------------------------------------------------------- layout and samples
@@ -703,6 +703,7 @@ test("roles: a touch drag works, dragging near the panel edge scrolls it, and re
   }
 
   // Auto scroll: a drag held at the bottom edge of the panel scrolls it.
+  await ev(`sessionStorage.clear()`);
   await open("/app");
   await openEditor();
   await rolesView();
@@ -718,6 +719,7 @@ test("roles: a touch drag works, dragging near the panel edge scrolls it, and re
   assert.ok(scrolled - scrollBefore > 60, `the panel scrolled while dragging (${scrollBefore} to ${scrolled})`);
 
   // Reduced motion: no animation on the floating swatch.
+  await ev(`sessionStorage.clear()`);
   await open("/app", { reduced: true });
   await openEditor();
   await rolesView();
