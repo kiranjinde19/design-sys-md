@@ -15,7 +15,7 @@ function ImportBanner() {
   const { status, dismiss } = useImport();
   const onExport = usePathname() === "/app/export";
   return (
-    <div role="status" aria-live="polite" className="mx-auto max-w-[1440px] px-8 empty:hidden">
+    <div role="status" aria-live="polite" className="mx-auto max-w-[1440px] px-4 md:px-6 xl:px-8 empty:hidden">
       {status && !onExport ? (
         <div
           className={cn(
@@ -23,7 +23,7 @@ function ImportBanner() {
             status.ok ? "bg-[var(--t-success-50)] text-[var(--t-success-700)]" : "bg-[var(--t-error-50)] text-[var(--t-error-700)]",
           )}
         >
-          <p>
+          <p className="min-w-0 [overflow-wrap:anywhere]">
             <span className="font-medium">{status.fileName}.</span> {status.text}
           </p>
           <button type="button" onClick={dismiss} aria-label="Dismiss" className="tool-link inline-flex size-5 shrink-0 items-center justify-center rounded-[5px]">

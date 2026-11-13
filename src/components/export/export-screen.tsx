@@ -23,7 +23,7 @@ const BUTTON = "inline-flex h-10 items-center gap-2 rounded-[10px] border border
 const INPUT = "h-10 w-full rounded-[10px] border border-input bg-background px-3 text-base leading-6 placeholder:text-muted-foreground";
 
 const Card = ({ label, children, className, ...rest }: { label: string; children: ReactNode; className?: string } & React.HTMLAttributes<HTMLElement>) => (
-  <section aria-label={label} className={cn("tool-panel flex flex-col gap-4 p-6", className)} {...rest}>
+  <section aria-label={label} className={cn("tool-panel flex flex-col gap-4 p-4 md:p-6", className)} {...rest}>
     {children}
   </section>
 );
@@ -58,6 +58,8 @@ export function ExportScreen() {
   const generated = useMemo(() => generateSkillFile({ settings, tokens }, { presetId }), [settings, tokens, presetId]);
   const text = file === "skill" ? generated.skill : generated.agents;
   const bytes = new TextEncoder().encode(text).length;
+  // Both sizes come from the real generated files for the chosen stack and product.
+  const skillBytes = useMemo(() => new TextEncoder().encode(generated.skill).length, [generated.skill]);
   const lines = text.split("\n").length;
   const sections = useMemo(() => fileSections(text), [text]);
   const fileName = FILES[file].name;
@@ -77,21 +79,21 @@ export function ExportScreen() {
 
   if (!ready) {
     return (
-      <main className="mx-auto max-w-[1440px] px-8 py-8">
+      <main className="mx-auto max-w-[1440px] px-4 py-6 md:px-6 xl:px-8 xl:py-8">
         <p className="text-sm text-muted-foreground">Loading your saved work…</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex max-w-[1440px] flex-col gap-6 px-8 py-8">
+    <main className="mx-auto flex max-w-[1440px] flex-col gap-6 px-4 py-6 md:px-6 xl:px-8 xl:py-8">
       <div className="flex flex-col gap-1">
         <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em]">Export your design system</h1>
         <p className="text-base leading-6 text-muted-foreground">One file your AI reads before it builds anything. Check it, then download.</p>
       </div>
 
-      <div className="flex flex-wrap items-stretch gap-6">
-        <div className="flex min-w-0 flex-[0_1_480px] flex-col gap-4">
+      <div className="flex flex-col items-stretch gap-6 xl:flex-row">
+        <div className="flex w-full min-w-0 flex-col gap-4 xl:flex-[0_1_480px]">
           <Card label="Your product">
             <CardTitle title="Your product" text="These appear in the file header and tell an AI when to use it." />
             <div className="flex flex-col gap-1">
@@ -156,6 +158,9 @@ export function ExportScreen() {
             <p role="status" aria-live="polite" className={cn("text-sm leading-5 empty:hidden", copied && !copied.ok ? "text-[var(--t-error-700)]" : "text-muted-foreground")}>
               {copied?.text}
             </p>
+            <p className="text-sm leading-5" data-skill-size>
+              <span className="font-medium">SKILL.md</span> <span className="tabular-nums">{kib(skillBytes)} KiB</span>. Claude Code has no size limit for skills.
+            </p>
             <SizeMeter bytes={generated.agentsBytes} />
           </Card>
 
@@ -189,7 +194,7 @@ export function ExportScreen() {
               <button type="button" onClick={choose} className={`${BUTTON} tool-btn tool-btn--secondary`}>
                 Choose file
               </button>
-              <span className="text-sm leading-5 text-muted-foreground" data-import-file>
+              <span className="min-w-0 text-sm leading-5 [overflow-wrap:anywhere] text-muted-foreground" data-import-file>
                 {dragging ? "Drop the file to import it" : (status?.fileName ?? "SKILL.md, AGENTS.md or a renamed copy")}
               </span>
             </div>
@@ -199,7 +204,7 @@ export function ExportScreen() {
                   <span aria-hidden className="mt-0.5 shrink-0">
                     {status.ok ? "✓" : "!"}
                   </span>
-                  <span>
+                  <span className="min-w-0 [overflow-wrap:anywhere]">
                     <span className="sr-only">{status.ok ? "Imported " : "Could not import "}</span>
                     {status.text}
                   </span>

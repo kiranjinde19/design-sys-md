@@ -283,9 +283,32 @@ body.tool-dragging {
   border-radius: var(--t-radius-md);
   min-height: calc(100% - 32px);
 }
-.dark .export-fade {
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
+/* The bottom fade is the last child of the sheet (or of the raw text): sticky at the bottom of the scroll area, as wide as
+   its parent and fading to the parent's own background. The negative margin and the sheet padding keep it off the last lines. */
+.export-fade {
+  position: sticky;
+  bottom: 0;
+  display: block;
+  height: 80px;
+  margin: -80px -24px 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--background));
   border-radius: 0 0 var(--t-radius-md) var(--t-radius-md);
+}
+
+/* Below 768px: touch targets of at least 44px on everything the tool draws itself (not inside the user's preview). */
+@media (max-width: 767px) {
+  .tool :is(button, a[href], [role="tab"], [role="menuitem"], [role="menuitemradio"], summary, input[type="text"], input[type="file"], select):not([role="tabpanel"] *):not(.sr-only) {
+    min-height: 44px;
+  }
+  .tool :is(button, a[href]):not([role="tabpanel"] *):not(.tool-swatch):not([role="tab"]) {
+    min-width: 44px;
+  }
+  .tool-swatch {
+    height: 44px;
+  }
+  .tool input[type="radio"],
+  .tool input[type="checkbox"] {
+    min-height: 0;
+  }
 }

@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import type { StackId } from "@/lib/design-system";
 
-const Code = ({ children }: { children: ReactNode }) => <code className="break-words rounded-[5px] bg-muted px-1 font-mono text-sm leading-5">{children}</code>;
+const Code = ({ children }: { children: ReactNode }) => <code className="[overflow-wrap:anywhere] rounded-[5px] bg-muted px-1 font-mono text-sm leading-5">{children}</code>;
 
 const Card = ({ title, children }: { title: string; children: ReactNode }) => (
-  <div className="flex flex-col gap-3 rounded-[16px] border border-[var(--card-border)] bg-card p-6">
+  <div className="flex min-w-0 flex-col gap-3 [overflow-wrap:anywhere] rounded-[16px] border border-[var(--card-border)] bg-card p-4 md:p-6">
     <h3 className="text-base font-semibold leading-6">{title}</h3>
     {children}
   </div>
@@ -20,9 +20,9 @@ export function InstallSteps({ slug, stack }: { slug: string; stack: StackId }) 
         </h2>
         <p className="mt-1 text-sm leading-5 text-muted-foreground">The tools read plain files. There is nothing to run.</p>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 xl:grid-cols-3">
         <Card title="Claude Code, SKILL.md">
-          <ol className="list-decimal space-y-2 pl-6 text-sm leading-5">
+          <ol className="list-decimal space-y-2 pl-8 text-sm leading-5">
             <li>
               In your project, create the folder <Code>.claude/skills/{slug}/</Code>. To use it in every project, use <Code>~/.claude/skills/{slug}/</Code> instead.
             </li>
@@ -35,7 +35,7 @@ export function InstallSteps({ slug, stack }: { slug: string; stack: StackId }) 
           </ol>
         </Card>
         <Card title="Codex, AGENTS.md">
-          <ol className="list-decimal space-y-2 pl-6 text-sm leading-5">
+          <ol className="list-decimal space-y-2 pl-8 text-sm leading-5">
             <li>
               Save the downloaded file as <Code>AGENTS.md</Code> in the root of your repository. For every project, use <Code>~/.codex/AGENTS.md</Code>.
             </li>
@@ -47,7 +47,7 @@ export function InstallSteps({ slug, stack }: { slug: string; stack: StackId }) 
         </Card>
         <Card title="ChatGPT">
           <p className="text-sm leading-5">ChatGPT does not read SKILL.md or AGENTS.md on its own, so you give it the file.</p>
-          <ol className="list-decimal space-y-2 pl-6 text-sm leading-5">
+          <ol className="list-decimal space-y-2 pl-8 text-sm leading-5">
             <li>
               <span className="font-medium">Best:</span> create a ChatGPT Project and upload <Code>AGENTS.md</Code> to its files (or paste it into the Project instructions). Every chat in that Project can then use it. Start the first message with:
               &quot;Follow the design system file in this Project for all UI work, and run its Final checklist before you answer.&quot;

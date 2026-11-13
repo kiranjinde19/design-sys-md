@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Check, ChevronRight } from "lucide-react";
 import { PRESETS, SYSTEMS, sentenceCase, swatchGroups, useDesignSystem, type SystemId } from "@/lib/design-system";
 import {
@@ -118,6 +119,14 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
   const next = SYSTEMS[index + 1];
   const previous = SYSTEMS[index - 1];
 
+  // In the stacked layout the system list is a row of chips; keep the current one in view.
+  const list = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const row = list.current;
+    const current = row?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (row && current) row.scrollLeft = Math.max(0, current.offsetLeft - (row.clientWidth - current.offsetWidth) / 2);
+  }, [openId]);
+
   const goNext = () => {
     markReviewed(openId);
     if (next) onOpen(next.id);
@@ -125,12 +134,12 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
   };
 
   return (
-    <div className="flex min-w-0 flex-[0_0_auto] gap-6" style={{ height: 810 }}>
-      <nav aria-label="Design systems" className="flex w-56 shrink-0 flex-col gap-2">
+    <div className="flex w-full min-w-0 flex-col gap-4 xl:h-[810px] xl:w-auto xl:flex-[0_0_auto] xl:flex-row xl:gap-6">
+      <nav ref={list} aria-label="Design systems" className="tool-tabs relative -mx-1 flex shrink-0 gap-2 overflow-x-auto px-1 py-2 xl:mx-0 xl:w-56 xl:flex-col xl:overflow-visible xl:p-0">
         {SYSTEMS.map((item, itemIndex) => {
           const done = reviewed.includes(item.id);
           return (
-            <button key={item.id} type="button" aria-current={item.id === openId} onClick={() => onOpen(item.id)} className="tool-item flex items-center gap-2 text-left text-sm font-medium leading-5">
+            <button key={item.id} type="button" aria-current={item.id === openId} onClick={() => onOpen(item.id)} className="tool-item flex shrink-0 items-center gap-2 text-left text-sm font-medium leading-5 whitespace-nowrap max-xl:min-w-max">
               <span className="tool-num" aria-hidden>
                 {itemIndex + 1}
               </span>
@@ -140,7 +149,7 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
           );
         })}
         {isModified ? (
-          <div className="mt-2 flex flex-col gap-1">
+          <div className="flex shrink-0 flex-col gap-1 xl:mt-2">
             <span className="text-xs leading-4 text-muted-foreground">{PRESETS[presetId].name}, edited</span>
             <button type="button" onClick={reset} className="tool-link h-8 self-start rounded-[10px] px-3 text-sm leading-5">
               Reset to {PRESETS[presetId].name}
@@ -149,7 +158,7 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
         ) : null}
       </nav>
 
-      <section aria-labelledby="editor-title" className="tool-panel flex w-[400px] shrink-0 flex-col gap-4 p-6">
+      <section aria-labelledby="editor-title" className="tool-panel flex h-[min(810px,85vh)] min-h-[520px] w-full shrink-0 flex-col gap-4 p-4 md:p-6 xl:h-auto xl:min-h-0 xl:w-[400px]">
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 id="editor-title" className="text-2xl font-semibold leading-8 tracking-[-0.01em]">
@@ -164,8 +173,8 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
         <div data-role-scroll className="@container relative min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable]">
           <EditorBody id={openId} />
         </div>
-        <footer className="flex items-center justify-between gap-3 pt-2">
-          <button type="button" onClick={onClose} className="tool-link inline-flex h-10 items-center rounded-[10px] px-4 text-base leading-6">
+        <footer className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 pt-2">
+          <button type="button" onClick={onClose} className="tool-link inline-flex h-10 items-center rounded-[10px] px-4 text-base leading-6 whitespace-nowrap">
             Back to board
           </button>
           <div className="flex gap-2">
@@ -174,8 +183,14 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
                 Previous
               </button>
             ) : null}
-            <button type="button" onClick={goNext} className="tool-btn tool-btn--secondary h-10 px-4 text-base font-medium leading-6">
-              {next ? `Next: ${next.label}` : "Finish"}
+            <button type="button" onClick={goNext} className="tool-btn tool-btn--secondary h-10 px-4 text-base font-medium leading-6 whitespace-nowrap">
+              {next ? (
+                <span>
+                  Next<span className="max-md:sr-only">: {next.label}</span>
+                </span>
+              ) : (
+                "Finish"
+              )}
               <ChevronRight aria-hidden className="size-4" />
             </button>
           </div>

@@ -150,14 +150,14 @@ export function HexColorField({ label, value, onCommit }: { label: string; value
         <input
           type="color"
           aria-label={`Pick ${label.toLowerCase()}`}
-          className="size-10 cursor-pointer rounded-[10px] border border-input bg-transparent p-1"
+          className="size-10 cursor-pointer rounded-[10px] border border-input bg-transparent p-1 max-md:size-11"
           value={value.toLowerCase()}
           onChange={(event) => onCommit(event.target.value)}
         />
         <input
           type="text"
           aria-label={`${label} hex code`}
-          className="h-10 w-[140px] rounded-[10px] border border-input bg-background px-3 text-base tabular-nums"
+          className="h-10 w-[140px] rounded-[10px] border border-input bg-background px-3 text-base tabular-nums max-md:h-11"
           value={draft ?? value}
           onChange={(event) => {
             setDraft(event.target.value);

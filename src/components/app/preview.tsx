@@ -69,8 +69,8 @@ export function Preview({ height }: { height: number }) {
     );
 
   return (
-    <section aria-label="Live preview" className="tool-panel flex min-w-0 flex-[999_1_640px] flex-col overflow-hidden" style={{ height }}>
-      <div role="tablist" aria-label="Preview pages" className="tool-tabs flex items-end gap-1 overflow-x-auto border-b border-border px-4 pt-2">
+    <section aria-label="Live preview" className="tool-panel flex h-[560px] w-full min-w-0 flex-col overflow-hidden md:h-[640px] xl:h-[var(--preview-h)] xl:min-w-0 xl:flex-1" style={{ ["--preview-h" as string]: `${height}px` }}>
+      <div role="tablist" aria-label="Preview pages" className="tool-tabs flex items-end gap-1 overflow-x-auto border-b border-border px-2 pt-2 md:px-4">
         {TABS.map((name) => (
           <button
             key={name}
@@ -90,12 +90,21 @@ export function Preview({ height }: { height: number }) {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 bg-[var(--t-surface)] p-4">
-        <div className="flex justify-between gap-4 text-xs leading-4 text-muted-foreground">
+        <div className="flex flex-wrap justify-between gap-x-4 text-xs leading-4 text-muted-foreground">
           <span>{note[tab]}</span>
-          <span>{scaled ? "Shown at 65%" : "Changes as you edit"}</span>
+          <span>
+            {scaled ? (
+              <>
+                <span className="max-md:hidden">Shown at 65%</span>
+                <span className="md:hidden">Scaled to fit</span>
+              </>
+            ) : (
+              "Changes as you edit"
+            )}
+          </span>
         </div>
         {/* The stage. Light only; it receives the user's design system and nothing else. */}
-        <div role="tabpanel" className="tool-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-[10px] border border-border shadow-[var(--t-shadow-sm)]" style={{ ...previewVars(tokens), background: "var(--pv-background)" }}>
+        <div role="tabpanel" className="tool-scroll relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-[10px] border border-border shadow-[var(--t-shadow-sm)]" style={{ ...previewVars(tokens), background: "var(--pv-background)" }}>
           {scaled ? <ScaledStage scale={SCALE}>{page}</ScaledStage> : page}
         </div>
       </div>

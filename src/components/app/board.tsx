@@ -7,15 +7,15 @@ import { TileSample } from "./tile-samples";
 
 /** How many columns and rows each tile covers on the 3 column board. */
 const SPAN: Record<SystemId, string> = {
-  colors: "col-span-2 row-span-2",
-  typography: "row-span-2",
+  colors: "col-span-2 md:row-span-2",
+  typography: "md:row-span-2",
   radius: "",
   spacing: "",
   borders: "",
-  shadows: "",
+  shadows: "col-span-2 md:col-span-1",
   buttons: "col-span-2",
   signature: "col-span-2",
-  voice: "",
+  voice: "col-span-2 md:col-span-1",
 };
 
 /** The tiles whose samples sit on an inset panel are tighter, so the panel and its caption fit the 120px row. */
@@ -37,7 +37,7 @@ function Tile({ id, index, label, done, onOpen }: { id: SystemId; index: number;
       </span>
     </>
   );
-  const common = cn("tool-tile tool-hover min-h-0 overflow-hidden p-4 text-left", SPAN[id]);
+  const common = cn("tool-tile tool-hover min-h-[120px] overflow-hidden p-4 text-left md:min-h-0", SPAN[id]);
   const aria = `${label}${done ? ", reviewed" : ""}. Open the editor.`;
   // The Colors tile holds focusable swatches, so it can not be one button: a stretched button sits behind its content.
   if (id === "colors") {
@@ -60,7 +60,7 @@ export function Board({ onOpen }: { onOpen: (id: SystemId) => void }) {
   const { reviewed } = useDesignSystem();
 
   return (
-    <div className="grid min-w-0 flex-[0_1_560px] grid-cols-3 content-start gap-3" style={{ gridAutoRows: 120 }}>
+    <div className="grid w-full min-w-0 grid-cols-2 content-start gap-3 md:auto-rows-[120px] md:grid-cols-3 xl:w-[560px] xl:flex-none">
       {SYSTEMS.map((system, index) => {
         const done = reviewed.includes(system.id);
         return (

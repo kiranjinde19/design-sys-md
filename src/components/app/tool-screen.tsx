@@ -18,7 +18,7 @@ export function ToolScreen() {
 
   return (
     <>
-      <main className={cn("mx-auto flex max-w-[1440px] flex-col px-8 py-8", openId ? "gap-4" : "gap-6")}>
+      <main className={cn("mx-auto flex max-w-[1440px] flex-col px-4 py-6 md:px-6 xl:px-8 xl:py-8", openId ? "gap-4" : "gap-6")}>
         {openId ? (
           <button type="button" onClick={() => setOpenId(null)} className="tool-link inline-flex items-center gap-1 self-start text-sm leading-5">
             <ChevronLeft aria-hidden className="size-4" />
@@ -30,7 +30,7 @@ export function ToolScreen() {
               <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em]">Your design system</h1>
               <p className="text-base leading-6 text-muted-foreground">Open a tile to edit it. The preview updates as you go.</p>
             </div>
-            <div className="flex w-[200px] flex-col gap-2" role="status">
+            <div className="flex w-full flex-col gap-2 md:w-[200px]" role="status">
               {isModified ? (
                 <span className="flex items-center gap-1 text-xs leading-4 text-muted-foreground">
                   {PRESETS[presetId].name}, edited.
@@ -50,7 +50,7 @@ export function ToolScreen() {
         )}
 
         {ready ? (
-          <div className="flex flex-wrap items-stretch gap-6">
+          <div className="flex flex-col items-stretch gap-6 xl:flex-row">
             {openId ? <Editor openId={openId} onOpen={setOpenId} onClose={() => setOpenId(null)} /> : <Board onOpen={setOpenId} />}
             <Preview height={openId ? 810 : 648} />
           </div>

@@ -467,13 +467,13 @@ test("no sideways scrolling at 1280 and 1440, in either view, and the layout hol
       for (const view of ["rendered", "raw"]) {
         if (view === "raw") await rawText();
         else await renderedTab();
-        const m = await ev(`({doc:document.documentElement.scrollWidth,win:window.innerWidth,cols:[...document.querySelectorAll("main > div.flex-wrap > *")].map(e=>Math.round(e.getBoundingClientRect().width))})`);
+        const m = await ev(`({doc:document.documentElement.scrollWidth,win:window.innerWidth,cols:[...document.querySelectorAll("main > div[class*='xl:flex-row'] > *")].map(e=>Math.round(e.getBoundingClientRect().width))})`);
         assert.ok(m.doc <= m.win, `${width} ${view}: the page is ${m.doc}px wide in a ${m.win}px window`);
       }
     }
     await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
     await sleep(400);
-    const cols = await ev(`[...document.querySelectorAll("main > div.flex-wrap > *")].map(e=>Math.round(e.getBoundingClientRect().width))`);
+    const cols = await ev(`[...document.querySelectorAll("main > div[class*='xl:flex-row'] > *")].map(e=>Math.round(e.getBoundingClientRect().width))`);
     assert.equal(cols[0], 480, "the left column is 480px wide, as in the mockup");
   } finally {
     await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });

@@ -57,7 +57,7 @@ function BrandFontForm({ choice, onChange }: { choice: FontChoice; onChange: (ch
           value={name}
           maxLength={60}
           placeholder="e.g. Acme Sans"
-          className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+          className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm max-md:h-11"
           onChange={(event) => {
             setName(event.target.value);
             commit(event.target.value, fallback);
@@ -68,7 +68,7 @@ function BrandFontForm({ choice, onChange }: { choice: FontChoice; onChange: (ch
         <span className="text-xs font-medium text-muted-foreground">Fallback font from the list</span>
         <select
           value={fallback}
-          className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
+          className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm max-md:h-11"
           onChange={(event) => {
             setFallback(event.target.value);
             commit(name, event.target.value);
@@ -130,7 +130,7 @@ export function FontPicker({
             value={query}
             placeholder="Search fonts or tags"
             aria-label={`Search ${title.toLowerCase()} fonts`}
-            className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+            className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm max-md:h-11"
             onChange={(event) => setQuery(event.target.value)}
           />
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Category">

@@ -36,9 +36,9 @@ export function FilePreview({ text, fileName, lines, size, sections }: { text: s
   };
 
   return (
-    <section aria-label="File preview" className="relative min-h-[560px] min-w-0 flex-[1_1_560px]">
+    <section aria-label="File preview" className="relative h-[70vh] max-h-[720px] min-h-[420px] w-full min-w-0 xl:h-auto xl:max-h-none xl:min-h-[560px] xl:flex-[1_1_560px]">
       <div className="tool-panel absolute inset-0 flex min-w-0 flex-col overflow-hidden">
-        <div className="flex shrink-0 items-end gap-1 border-b border-border px-4 pt-2">
+        <div className="flex shrink-0 flex-wrap items-end gap-x-1 border-b border-border px-4 pt-2">
           <div role="tablist" aria-label="File view" onKeyDown={onKeyDown} className="flex gap-1">
             {VIEWS.map((v, index) => (
               <button
@@ -62,15 +62,15 @@ export function FilePreview({ text, fileName, lines, size, sections }: { text: s
               </button>
             ))}
           </div>
-          <span className="ml-auto self-center text-sm leading-5 text-muted-foreground" data-file-info>
+          <span className="ml-auto self-center py-1 text-sm leading-5 text-muted-foreground" data-file-info>
             {fileName}, {lines} lines, {size}
           </span>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-6 py-3" aria-label="What is inside">
-          <span className="text-xs leading-4 text-muted-foreground">What is inside</span>
+        <div className="tool-tabs flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border px-4 py-3 md:flex-wrap md:px-6" aria-label="What is inside">
+          <span className="shrink-0 text-xs leading-4 whitespace-nowrap text-muted-foreground">What is inside</span>
           {sections.map((section) => (
-            <span key={section} className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium leading-4 text-muted-foreground">
+            <span key={section} className="shrink-0 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-xs font-medium leading-4 text-muted-foreground">
               {section}
             </span>
           ))}
@@ -85,15 +85,20 @@ export function FilePreview({ text, fileName, lines, size, sections }: { text: s
             className="export-scroll absolute inset-0 overflow-y-auto overflow-x-hidden"
           >
             {view === "rendered" ? (
-              <div className="export-sheet text-foreground" style={{ ...toolVars(false), background: "var(--background)", color: "var(--foreground)" }}>
+              <div className="export-sheet text-foreground [overflow-wrap:anywhere]" style={{ ...toolVars(false), background: "var(--background)", color: "var(--foreground)" }}>
                 <MarkdownView source={text} />
+                {/* Room for the fade at the end of the scroll, so it never covers the last lines. */}
+                <span aria-hidden className="block h-20" />
+                {/* The fade lives inside the sheet (sticky at the bottom of the scroll area), so it is exactly as wide as the sheet and fades to the sheet's own white. */}
+                <span aria-hidden className="export-fade" />
               </div>
             ) : (
-              <pre className="whitespace-pre-wrap break-words p-6 font-mono text-sm leading-5 [overflow-wrap:anywhere]">{text}</pre>
+              <div>
+                <pre className="whitespace-pre-wrap break-words p-6 pb-24 font-mono text-sm leading-5 [overflow-wrap:anywhere]">{text}</pre>
+                <span aria-hidden className="export-fade" />
+              </div>
             )}
           </div>
-          {/* A fade at the bottom says there is more to scroll. */}
-          <span aria-hidden className="export-fade pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent" style={{ ["--tw-gradient-to" as string]: view === "rendered" ? "#FFFFFF" : "var(--background)" }} />
         </div>
       </div>
     </section>

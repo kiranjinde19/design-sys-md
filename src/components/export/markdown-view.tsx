@@ -121,7 +121,7 @@ export function MarkdownView({ source }: { source: string }) {
       while (i < lines.length && /^(- |\d+\. )/.test(lines[i])) items.push(lines[i++].replace(/^(- |\d+\. )/, ""));
       const List = ordered ? "ol" : "ul";
       out.push(
-        <List key={key++} className={`space-y-1 pl-6 text-base leading-6 ${ordered ? "list-decimal" : "list-disc"}`}>
+        <List key={key++} className={`space-y-1 text-base leading-6 ${ordered ? "list-decimal pl-10" : "list-disc pl-6"}`}>
           {items.map((item, n) => (
             <li key={n}>{inline(item.replace(/^\[ \] /, "☐ "), `li${key}${n}`)}</li>
           ))}
