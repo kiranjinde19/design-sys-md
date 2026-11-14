@@ -14,56 +14,33 @@
 
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { ev, navigate, send, settle, setWidth, sleep, start, state, stop, waitFor } from "./lib/cdp.mjs";
 
-const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const PORT = 9400 + Math.floor(Math.random() * 400);
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const baseUrl = () => state.baseUrl;
 
-let baseUrl = process.env.LIVE_URL ?? "http://localhost:3000";
-let server = null;
-let chrome = null;
-let ws = null;
-let nextId = 0;
-const pending = new Map();
-
-async function reachable(url) {
-  try {
-    return (await fetch(url, { signal: AbortSignal.timeout(2000) })).ok;
-  } catch {
-    return false;
-  }
-}
-
-const send = (method, params = {}) =>
-  new Promise((resolve) => {
-    const id = ++nextId;
-    pending.set(id, resolve);
-    ws.send(JSON.stringify({ id, method, params }));
-  });
-
-/** Runs an expression in the page and returns its value (errors become test failures). */
-async function ev(expression) {
-  const r = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
-  if (r.exceptionDetails) throw new Error(`Page error: ${r.exceptionDetails.exception?.description ?? r.exceptionDetails.text}\n${expression}`);
-  return r.result?.value;
-}
-
+/** Loads a page with motion allowed or (reduced) asked to be reduced. */
 async function open(path = "/app", { reduced = false } = {}) {
   await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: reduced ? "reduce" : "no-preference" }] });
-  await send("Page.navigate", { url: baseUrl + path });
-  await sleep(2600);
+  await navigate(baseUrl() + path);
 }
 
 /** Starts from a clean browser state (no saved work), then opens the app. */
 async function fresh(options) {
-  await send("Page.navigate", { url: baseUrl + "/favicon.ico" });
-  await sleep(500);
+  await navigate(baseUrl() + "/favicon.ico", null);
   await ev(`localStorage.clear();sessionStorage.clear()`);
   await open("/app", options);
+}
+
+/** Reads a value until two reads in a row agree, so a CSS transition has finished (never longer than 2 seconds). */
+async function readStable(expression) {
+  let last = JSON.stringify(await ev(expression));
+  for (let i = 0; i < 40; i++) {
+    await sleep(50);
+    const now = JSON.stringify(await ev(expression));
+    if (now === last) return JSON.parse(now);
+    last = now;
+  }
+  return JSON.parse(last);
 }
 
 const rect = (selector) => `(()=>{const e=${selector};if(!e)return null;e.scrollIntoView({block:"center",inline:"center"});const b=e.getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2,w:b.width,h:b.height}})()`;
@@ -75,7 +52,7 @@ async function click(selector) {
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
   await send("Input.dispatchMouseEvent", { type: "mousePressed", x: p.x, y: p.y, button: "left", clickCount: 1 });
   await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: p.x, y: p.y, button: "left", clickCount: 1 });
-  await sleep(350);
+  await settle();
 }
 
 /** Computed style before and after the pointer moves onto an element. */
@@ -84,11 +61,11 @@ async function hover(selector, props) {
   const p = await ev(rect(selector));
   assert.ok(p, `element not found: ${selector}`);
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 1, y: 1 });
-  await sleep(350);
-  const before = await ev(read);
+  const before = await readStable(read);
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
-  await sleep(450);
-  const after = await ev(read);
+  // The hover transition takes a moment: wait until the style has settled on its final value.
+  await settle();
+  const after = await readStable(read);
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 1, y: 1 });
   return { before, after, changed: JSON.stringify(before) !== JSON.stringify(after) };
 }
@@ -97,51 +74,15 @@ const byText = (css, text) => `[...document.querySelectorAll(${JSON.stringify(cs
 const tabButton = (name) => byText("[role=tab]", name);
 const goTab = async (name) => {
   await click(tabButton(name));
-  await sleep(500);
+  await settle();
 };
 const PANEL = `document.querySelector("[role=tabpanel]")`;
 
 before(async () => {
-  if (!process.env.LIVE_URL && !(await reachable(baseUrl))) {
-    baseUrl = "http://localhost:3123";
-    server = spawn("npx", ["next", "start", "-p", "3123"], { stdio: "ignore" });
-    for (let i = 0; i < 40 && !(await reachable(baseUrl + "/app")); i++) await sleep(500);
-  }
-  assert.ok(await reachable(baseUrl + "/app"), `no server at ${baseUrl}`);
-  chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${PORT}`, "--disable-gpu", "--window-size=1440,900", `--user-data-dir=${mkdtempSync(join(tmpdir(), "live-test-"))}`, "about:blank"], { stdio: "ignore" });
-  let target = null;
-  for (let i = 0; i < 30 && !target; i++) {
-    await sleep(300);
-    try {
-      target = (await (await fetch(`http://localhost:${PORT}/json`)).json()).find((t) => t.type === "page");
-    } catch {
-      // Chrome is still starting.
-    }
-  }
-  assert.ok(target, "Chrome did not start");
-  ws = new WebSocket(target.webSocketDebuggerUrl);
-  await new Promise((r) => (ws.onopen = r));
-  ws.onmessage = (event) => {
-    const m = JSON.parse(event.data);
-    if (m.id && pending.has(m.id)) {
-      pending.get(m.id)(m.result ?? m.error);
-      pending.delete(m.id);
-    }
-  };
-  await send("Page.enable");
-  await send("Runtime.enable");
-  await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await start({ width: 1440, height: 900 });
 });
 
-after(() => {
-  try {
-    ws?.close();
-  } catch {
-    // Already closed.
-  }
-  chrome?.kill();
-  server?.kill();
-});
+after(stop);
 
 // ---------------------------------------------------------------------------------------------- animation
 
@@ -152,6 +93,7 @@ test("loading spinners rotate (reduced motion off)", async () => {
   assert.equal(info.count, 4, "four loading buttons, four spinners");
   assert.equal(info.name, "pvx-spin", "the spinner has its rotation animation");
   const first = await ev(`getComputedStyle(document.querySelector(".pvx-spin")).transform`);
+  // Time based on purpose: this measures how far the spinner turns in a fixed time.
   await sleep(230);
   const second = await ev(`getComputedStyle(document.querySelector(".pvx-spin")).transform`);
   assert.notEqual(first, second, "the spinner turned between two moments");
@@ -174,6 +116,7 @@ test("the border beam animates, and has a steady fallback under reduced motion",
   assert.equal(on.name, "ds-beam");
   assert.equal(on.duration, "3.6s");
   const a1 = await ev(`getComputedStyle(document.querySelector("[role=tabpanel] .cta"),"::before").backgroundImage`);
+  // Time based on purpose: this measures how far the beam travels in a fixed time.
   await sleep(400);
   const a2 = await ev(`getComputedStyle(document.querySelector("[role=tabpanel] .cta"),"::before").backgroundImage`);
   assert.notEqual(a1, a2, "the light moved around the ring");
@@ -335,7 +278,7 @@ test("dark mode toggles, and Back, Next, Previous, reviewed ticks and Reset work
   await click(`${preset}.querySelectorAll("button")[0]`);
   await click(`document.querySelector('button[aria-label^="Colors"]')`);
   await ev(`(()=>{const i=document.querySelector("input[aria-label='Brand color hex code']");const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;set.call(i,"#0D9488");i.dispatchEvent(new Event("input",{bubbles:true}))})()`);
-  await sleep(500);
+  await settle();
   assert.ok((await ev(`document.body.innerText`)).includes("edited"), "edited label appears");
   await click(byText("button", "Reset to"));
   assert.ok(!(await ev(`document.body.innerText`)).includes("edited"), "Reset clears the edit");
@@ -346,7 +289,7 @@ test("dark mode toggles, and Back, Next, Previous, reviewed ticks and Reset work
 
 const setBrand = async (hex) => {
   await ev(`(()=>{const i=document.querySelector("input[aria-label='Brand color hex code']");const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;set.call(i,${JSON.stringify(hex)});i.dispatchEvent(new Event("input",{bubbles:true}))})()`);
-  await sleep(600);
+  await settle();
 };
 const openEditor = async (name = "Colors") => click(`document.querySelector('button[aria-label^="${name}"]')`);
 
@@ -367,7 +310,7 @@ test("the Buttons grid sizes to its content: no collisions with the red brand or
   assert.ok(m.focusRoom >= 4, `room for the 2px ring with its 2px offset (${m.focusRoom})`);
   // A long label: every column grows to fit it.
   await ev(`${PANEL}.querySelectorAll(".pvx-matrix .btn--destructive").forEach(b=>{b.lastChild.textContent="Delete everything permanently"})`);
-  await sleep(300);
+  await settle();
   m = await ev(measure);
   assert.equal(m.overlap, false, "no overlap with a long label");
   assert.ok(m.minGap >= 11.5, `gap kept with a long label (${m.minGap})`);
@@ -384,7 +327,7 @@ test("brand swatches are focusable buttons with labels, a tooltip row, copy, and
   // Keyboard focus shows the tooltip, in a reserved row that holds nothing else.
   await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Shift", code: "ShiftLeft", windowsVirtualKeyCode: 16 });
   await ev(`${swatches}[2].focus()`);
-  await sleep(200);
+  await settle();
   const tip = await ev(`(()=>{const t=document.querySelector(".tool-tip");return t?{text:t.textContent,onlyChild:t.parentElement.children.length===1,hidden:t.parentElement.getAttribute("aria-hidden")}:null})()`);
   assert.ok(tip, "tooltip shows on keyboard focus");
   assert.match(tip.text, /Click to copy #CAD2FF/);
@@ -408,14 +351,13 @@ test("the header lines up with the page at 1280, 1440 and 1920", async () => {
   await fresh();
   try {
     for (const width of [1280, 1440, 1920]) {
-      await send("Emulation.setDeviceMetricsOverride", { width, height: 900, deviceScaleFactor: 1, mobile: false });
-      await sleep(500);
+      await setWidth(width, 900);
       const m = await ev(`(()=>{const l=document.querySelector("header span[aria-hidden]").getBoundingClientRect().left;const h=document.querySelector("h1").getBoundingClientRect().left;const e=[...document.querySelectorAll("header a")].find(a=>a.textContent.includes("Export")).getBoundingClientRect().right;const p=document.querySelector("[role=status] span[aria-hidden]").getBoundingClientRect().right;return {l,h,e,p}})()`);
       assert.ok(Math.abs(m.l - m.h) < 1.5, `${width}: logo left ${m.l} vs title left ${m.h}`);
       assert.ok(Math.abs(m.e - m.p) < 1.5, `${width}: Export right ${m.e} vs progress right ${m.p}`);
     }
   } finally {
-    await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+    await setWidth(1440, 900);
   }
 });
 
@@ -473,7 +415,7 @@ const roleRow = (key) => `${EDITOR}.querySelector('[data-role-row="${key}"]')`;
 const centerOf = (selector) => `(()=>{const e=${selector};const b=e.getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2}})()`;
 const rolesView = async () => {
   await ev(`document.getElementById("roles-title").scrollIntoView({block:"start"})`);
-  await sleep(250);
+  await settle();
 };
 const mouse = (type, x, y) => send("Input.dispatchMouseEvent", { type, x, y, button: type === "mouseMoved" ? "none" : "left", buttons: type === "mouseReleased" ? 0 : 1, clickCount: 1 });
 
@@ -497,19 +439,19 @@ async function dragSwatch(sourceId, roleKey, { release = true } = {}) {
     // Rest near the bottom edge to scroll down, near the top edge to scroll up.
     const trayBottom = await ev(`document.querySelector("[data-tray]").getBoundingClientRect().bottom`);
     await moveTo(x, row.bottom > area.bottom - 2 ? area.bottom - 20 : Math.max(area.top, trayBottom) + 14);
-    await sleep(120);
+    await settle();
   }
   // Leave the edge zone so the scrolling stops, then aim at where the row really is.
   await moveTo(x, (area.top + area.bottom) / 2);
-  await sleep(200);
+  await settle();
   const to = await ev(centerOf(roleRow(roleKey)));
   const mid0 = (area.top + area.bottom) / 2;
   for (let i = 1; i <= 6; i++) await moveTo(x + ((to.x - x) * i) / 6, mid0 + ((to.y - mid0) * i) / 6);
-  await sleep(150);
+  await settle();
   const mid = await ev(`(()=>{const r=${roleRow(roleKey)};const f=document.querySelector(".tool-float");return {over:r.dataset.over,text:r.innerText,float:f?f.innerText:null}})()`);
   if (release) {
     await mouse("mouseReleased", to.x, to.y);
-    await sleep(350);
+    await settle();
   }
   return mid;
 }
@@ -517,7 +459,7 @@ const findButton = (rowKey, text) => `[...${roleRow(rowKey)}.querySelectorAll("b
 const hoverRow = async (key) => {
   const p = await ev(centerOf(roleRow(key)));
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
-  await sleep(250);
+  await settle();
   return ev(`({outline:getComputedStyle(${roleRow(key)}).outlineStyle})`);
 };
 const roleText = (key) => ev(`${roleRow(key)}.innerText`);
@@ -592,7 +534,7 @@ test("roles: the keyboard picker (Change) chooses with arrows and Enter, closes 
   const key = async (k, code = k) => {
     await send("Input.dispatchKeyEvent", { type: "keyDown", key: k, code, text: k === "Enter" ? "\r" : undefined, windowsVirtualKeyCode: { Enter: 13, Escape: 27, ArrowRight: 39, ArrowLeft: 37, ArrowDown: 40, ArrowUp: 38, " ": 32 }[k] ?? 0 });
     await send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code, windowsVirtualKeyCode: { Enter: 13, Escape: 27, ArrowRight: 39, ArrowLeft: 37, ArrowDown: 40, ArrowUp: 38, " ": 32 }[k] ?? 0 });
-    await sleep(120);
+    await settle();
   };
   await ev(`${change}.focus()`);
   await key("Enter");
@@ -632,7 +574,7 @@ test("roles: Space picks a swatch up, the arrows move it over a role, Space drop
     const code = { " ": 32, ArrowDown: 40, ArrowUp: 38, Escape: 27 }[k];
     await send("Input.dispatchKeyEvent", { type: "keyDown", key: k, code: k === " " ? "Space" : k, windowsVirtualKeyCode: code });
     await send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code: k === " " ? "Space" : k, windowsVirtualKeyCode: code });
-    await sleep(150);
+    await settle();
   };
   await ev(`${swatch("neutral-800")}.focus()`);
   await key(" ");
@@ -693,10 +635,10 @@ test("roles: a touch drag works, dragging near the panel edge scrolls it, and re
     const touch = (type, x, y) => send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y, id: 1 }] });
     await touch("touchStart", from.x, from.y);
     for (let i = 1; i <= 8; i++) await touch("touchMove", from.x + ((to.x - from.x) * i) / 8, from.y + ((to.y - from.y) * i) / 8);
-    await sleep(150);
+    await settle();
     assert.equal(await ev(`${roleRow("primary")}.dataset.over`), "true", "touch drag highlights the row " + JSON.stringify(await ev(`({from:${JSON.stringify(from)},to:${JSON.stringify(to)},hit:document.elementFromPoint(${to.x},${to.y}).outerHTML.slice(0,80),float:document.querySelector(".tool-float")?.getBoundingClientRect().toJSON(),st:${EDITOR}.querySelector("[data-role-scroll]").scrollTop,tray:document.querySelector("[data-tray]").getBoundingClientRect().toJSON()})`)));
     await touch("touchEnd", to.x, to.y);
-    await sleep(400);
+    await settle();
     assert.match(await roleText("primary"), /neutral 700/, "touch drop applied");
   } finally {
     await send("Emulation.setTouchEmulationEnabled", { enabled: false });
@@ -713,7 +655,7 @@ test("roles: a touch drag works, dragging near the panel edge scrolls it, and re
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: src.x, y: src.y });
   await mouse("mousePressed", src.x, src.y);
   for (let i = 1; i <= 6; i++) await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: src.x, y: src.y + ((box.bottom - 20 - src.y) * i) / 6, buttons: 1 });
-  await sleep(900);
+  await waitFor(`${EDITOR}.querySelector("[data-role-scroll]").scrollTop - ${scrollBefore} > 60`, { timeout: 5000, label: "the panel to scroll while the pointer rests at its bottom edge" }).catch(() => {});
   const scrolled = await ev(`${EDITOR}.querySelector("[data-role-scroll]").scrollTop`);
   await mouse("mouseReleased", src.x, box.bottom - 20);
   assert.ok(scrolled - scrollBefore > 60, `the panel scrolled while dragging (${scrollBefore} to ${scrolled})`);
@@ -746,7 +688,7 @@ const key = async (k) => {
   const code = { Escape: 27, " ": 32, Enter: 13 }[k];
   await send("Input.dispatchKeyEvent", { type: "keyDown", key: k, code: k === " " ? "Space" : k, text: k === "Enter" ? "\r" : undefined, windowsVirtualKeyCode: code });
   await send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code: k === " " ? "Space" : k, windowsVirtualKeyCode: code });
-  await sleep(200);
+  await settle();
 };
 const liveText = () => ev(`[...document.querySelectorAll("[role=status]")].map(e=>e.textContent).join(" ")`);
 const trayBar = () => ev(`document.querySelector("[data-tray-bar]").textContent`);
@@ -759,7 +701,7 @@ async function holdOver(sourceId, roleKey) {
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: from.x, y: from.y });
   await mouse("mousePressed", from.x, from.y);
   for (let i = 1; i <= 8; i++) await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: from.x + ((to.x - from.x) * i) / 8, y: from.y + ((to.y - from.y) * i) / 8, buttons: 1 });
-  await sleep(200);
+  await settle();
   return to;
 }
 
@@ -774,7 +716,7 @@ test("cancel: Escape mid drag removes the floating swatch, applies nothing even 
   assert.match(await liveText(), /Cancelled\. Nothing changed\./);
   assert.equal(await ev(`${roleRow("primary")}.dataset.over`), undefined, "no drop target left");
   await mouse("mouseReleased", to.x, to.y);
-  await sleep(300);
+  await settle();
   assert.deepEqual(await customRows(), [], "releasing over a role after Escape applies nothing");
   assert.equal(await ev(`window.getSelection().toString()`), "", "no text selected");
   // The next drag works normally.
@@ -789,10 +731,10 @@ test("cancel: a right click, and the browser cancelling the pointer, also cancel
   const to = await holdOver("neutral-700", "primary");
   await send("Input.dispatchMouseEvent", { type: "mousePressed", x: to.x, y: to.y, button: "right", buttons: 2, clickCount: 1 });
   await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: to.x, y: to.y, button: "right", buttons: 0, clickCount: 1 });
-  await sleep(250);
+  await settle();
   assert.equal(await ev(`!!document.querySelector(".tool-float")`), false, "the right click cancelled the drag");
   await mouse("mouseReleased", to.x, to.y);
-  await sleep(300);
+  await settle();
   assert.deepEqual(await customRows(), [], "nothing applied");
   assert.match(await liveText(), /Cancelled\. Nothing changed\./);
   // Touch: the browser cancelling the pointer (a system gesture) cancels the drag.
@@ -804,10 +746,10 @@ test("cancel: a right click, and the browser cancelling the pointer, also cancel
     const touch = (type, x, y) => send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" || type === "touchCancel" ? [] : [{ x, y, id: 1 }] });
     await touch("touchStart", from.x, from.y);
     for (let i = 1; i <= 6; i++) await touch("touchMove", from.x + ((row.x - from.x) * i) / 6, from.y + ((row.y - from.y) * i) / 6);
-    await sleep(150);
+    await settle();
     assert.equal(await ev(`!!document.querySelector(".tool-float")`), true, "a touch drag is running");
     await touch("touchCancel", row.x, row.y);
-    await sleep(300);
+    await settle();
     assert.equal(await ev(`!!document.querySelector(".tool-float")`), false, "touch cancel removed the floating copy");
     assert.deepEqual(await customRows(), [], "nothing applied");
   } finally {
@@ -822,10 +764,9 @@ test("cancel: the page losing focus cancels a drag and a held swatch", async () 
   // A second tab takes focus, so this page really loses it.
   const other = await send("Target.createTarget", { url: "about:blank" });
   await send("Target.activateTarget", { targetId: other.targetId });
-  await sleep(500);
-  const gone = await ev(`!document.querySelector(".tool-float")`);
+  const gone = await waitFor(`!document.querySelector(".tool-float")`, { timeout: 4000, label: "the drag to be cancelled when the page loses focus" }).catch(() => false);
   await send("Target.closeTarget", { targetId: other.targetId });
-  await sleep(300);
+  await settle();
   assert.equal(gone, true, "the drag was cancelled when the page lost focus");
 });
 
@@ -877,18 +818,19 @@ test("clicking a brand scale swatch copies and does not pick up; nothing is sele
   assert.match(await trayBar(), /^Drag onto a role/, "nothing was picked up");
   assert.equal(await ev(`!!document.querySelector("[data-holding=true]")`), false);
   // Its tooltip says what a click does.
+  // Time based on purpose: the swatch tooltip has its own show and hide timers, which must run out first.
   await sleep(1600);
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 1, y: 1 });
   const p = await ev(centerOf(display));
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
-  await sleep(400);
+  await settle();
   assert.match((await ev(`document.querySelector(".tool-tip")?.textContent`)) ?? "", /Click to copy #3830BF/);
   // No text is selected or draggable after a drag, and the page is not selectable while dragging.
   await dragSwatch("neutral-700", "primary", { release: false });
   assert.equal(await ev(`document.body.classList.contains("tool-dragging")&&getComputedStyle(document.body).userSelect`), "none");
   const to = await ev(centerOf(roleRow("primary")));
   await mouse("mouseReleased", to.x, to.y);
-  await sleep(300);
+  await settle();
   assert.equal(await ev(`window.getSelection().toString()`), "", "no text selected after the drag");
   assert.equal(await ev(`document.body.classList.contains("tool-dragging")`), false);
 });
@@ -898,7 +840,7 @@ test("the tray sticks to the top of the editor panel while the roles list scroll
   await openEditor();
   await rolesView();
   await ev(`${EDITOR}.querySelector("[data-role-scroll]").scrollTop=99999`);
-  await sleep(300);
+  await settle();
   const m = await ev(`(()=>{const t=document.querySelector("[data-tray]").getBoundingClientRect();const p=${EDITOR}.querySelector("[data-role-scroll]").getBoundingClientRect();return {trayTop:t.top,panelTop:p.top,trayH:t.height}})()`);
   assert.ok(Math.abs(m.trayTop - m.panelTop) < 1.5, `the tray is at the top of the panel (${m.trayTop} vs ${m.panelTop})`);
   assert.ok(m.trayH < 160, `the tray stays compact (${m.trayH}px)`);
@@ -943,7 +885,7 @@ test("removing the secondary color sends roles that used it back to automatic, w
   assert.match(await liveText(), /Secondary color was removed/);
   // Undo restores both.
   await click(findButton("card", "Undo"));
-  await sleep(300);
+  await settle();
   assert.equal(await ev(`${box}.checked`), true, "the secondary color is back");
   assert.match(await roleText("card"), /Custom[\s\S]*secondary 50/, "Surface uses the secondary swatch again");
   assert.ok(!/Secondary color was removed/.test(await roleText("card")), "the message is gone");

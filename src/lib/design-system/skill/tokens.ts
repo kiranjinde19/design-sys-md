@@ -239,6 +239,7 @@ function plainCss(ctx: SkillContext): string[] {
     `  --check-size: ${sel.size}px; --mark-size: ${sel.size - 4}px; --dot-size: ${Math.round(sel.size / 2.5 / 2) * 2}px; --switch-w: ${sel.switch.width}px; --switch-h: ${sel.switch.height}px; --switch-thumb: ${sel.switch.thumb}px; --switch-pad: ${switchPad}px; --switch-travel: ${switchTravel}px; --row-h: ${rowHeight}px;`,
     `  --header-h: ${ctx.t.layout.headerHeight}px; --sidebar-w: ${ctx.t.layout.sidebar.width}px; --content-max: ${ctx.t.layout.maxContentWidth}px; --dialog-w: ${ctx.t.layout.dialogWidth}px;`,
     "}",
+    "*, *::before, *::after { box-sizing: border-box; }",
     "body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: var(--text-base); line-height: var(--leading-base); }",
     "h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",
     // Automatic focus ring: the offset ring from the signature details, on every control and link.
@@ -270,7 +271,7 @@ export function tokensSection(ctx: SkillContext): string[] {
   return lines(
     "## Tokens",
     "",
-    tw ? `### ${ctx.shadcn ? "globals.css" : "src/index.css"} (Tailwind 4: tokens live in CSS, no tailwind.config)` : "### styles.css",
+    tw ? `### ${ctx.shadcn ? "globals.css" : "src/index.css"} (Tailwind 4: tokens live in CSS, no tailwind.config)` : "### styles.css (all CSS lives here: tokens, components, signature details)",
     "",
     fence("css", tightCss(tw ? tailwindCss(ctx) : plainCss(ctx))),
     "",

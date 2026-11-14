@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test:roundtrip": "node --test scripts/roundtrip-test.mjs",
-    "test:live": "node --test --test-concurrency=1 scripts/live-behavior-test.mjs scripts/export-test.mjs scripts/responsive-test.mjs"
+    "test:live": "node scripts/run-tests.mjs full",
+    "test:plain-html": "node --test --test-timeout=60000 scripts/plain-html-test.mjs",
+    "test:fast": "node scripts/run-tests.mjs fast",
+    "test:full": "node scripts/run-tests.mjs full"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

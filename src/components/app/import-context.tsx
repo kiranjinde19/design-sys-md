@@ -30,7 +30,13 @@ const MARKDOWN_NAME = /\.(md|markdown|txt)$/i;
 export function ImportProvider({ children }: { children: ReactNode }) {
   const { importSettings } = useDesignSystem();
   const input = useRef<HTMLInputElement>(null);
-  const [status, setStatus] = useState<ImportStatus | null>(null);
+  const [status, setStatusState] = useState<ImportStatus | null>(null);
+  // Counts finished imports (success or failure). The hidden input exposes it, so a test can wait for the real end of an import.
+  const [finished, setFinished] = useState(0);
+  const setStatus = useCallback((next: ImportStatus | null) => {
+    setStatusState(next);
+    if (next) setFinished((count) => count + 1);
+  }, []);
 
   const importFile = useCallback(
     async (file: File | undefined) => {
@@ -65,11 +71,11 @@ export function ImportProvider({ children }: { children: ReactNode }) {
         text: `Restored ${PRESETS[result.presetId].name} with ${changes}.${name ? ` Product name ${name}.` : ""}${result.notices.length ? ` ${result.notices.join(" ")}` : ""}`,
       });
     },
-    [importSettings],
+    [importSettings, setStatus],
   );
 
   const choose = useCallback(() => input.current?.click(), []);
-  const dismiss = useCallback(() => setStatus(null), []);
+  const dismiss = useCallback(() => setStatus(null), [setStatus]);
   const value = useMemo(() => ({ status, choose, importFile, dismiss }), [status, choose, importFile, dismiss]);
 
   return (
@@ -81,6 +87,7 @@ export function ImportProvider({ children }: { children: ReactNode }) {
         accept=".md,.markdown,.txt,text/markdown,text/plain"
         className="sr-only"
         tabIndex={-1}
+        data-imports={finished}
         onChange={(event) => void importFile(event.target.files?.[0])}
       />
       {children}

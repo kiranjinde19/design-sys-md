@@ -1,6 +1,7 @@
 "use client";
 
 import { Ellipsis, Inbox } from "lucide-react";
+import { ScrollFrame } from "../scroll-frame";
 import { PvIcon } from "../preview-icon";
 import { useVoiceCopy } from "../use-voice-copy";
 
@@ -30,7 +31,7 @@ export function TablesTab() {
           <h2>Team members</h2>
           <p className="pvx-note">Usage is requests this month.</p>
         </div>
-        <div className="pvx-table-wrap">
+        <ScrollFrame className="pvx-table-wrap">
           <table className="table">
             <thead>
               <tr>
@@ -65,7 +66,7 @@ export function TablesTab() {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollFrame>
         <div className="pvx-split" style={{ marginTop: "var(--gap-stack)" }}>
           <p className="pvx-note">Showing 1 to 5 of 12</p>
           <div className="pvx-actions">

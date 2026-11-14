@@ -3,12 +3,12 @@
  * CSS, through the variables that file defines, so it follows the user's choices.
  */
 export const EXTRA_CSS = `
-.pvx-page { padding: var(--pad-card); display: grid; gap: var(--gap-section); }
+.pvx-page { padding: var(--pad-card); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap-section); }
 .pvx-head h1, .pvx-head h2 { margin: 0; font: 600 var(--text-3xl) / var(--leading-3xl) var(--font-heading); letter-spacing: var(--tracking-heading); }
 .pvx-head p, .pvx-note { margin: 0; font-size: var(--text-sm); line-height: var(--leading-sm); color: var(--muted-foreground); }
 .pvx-section { display: grid; gap: var(--gap-stack); }
 .pvx-section > h2 { margin: 0; font: 600 var(--text-lg) / var(--leading-lg) var(--font-heading); letter-spacing: var(--tracking-heading-xs); }
-.pvx-matrix-wrap { overflow-x: auto; padding: 6px; margin: -6px; }
+.pvx-matrix-wrap { position: relative; overflow-x: auto; padding: 6px; margin: -6px; }
 .pvx-matrix { display: grid; grid-template-columns: 88px repeat(5, minmax(max-content, 1fr)); gap: var(--gap-stack) max(12px, var(--gap-inline)); align-items: center; width: max-content; min-width: 100%; }
 .pvx-matrix > span:not(.pvx-label):not(.pvx-rowlabel) { display: flex; }
 .pvx-matrix .btn { flex: 1; white-space: nowrap; }
@@ -31,12 +31,14 @@ export const EXTRA_CSS = `
 .pvx-fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--gap-inline); }
 .pvx-fieldset legend { padding: 0; font-size: var(--text-sm); font-weight: 500; margin-bottom: var(--space-1); }
 .pvx-switch-row { display: flex; align-items: center; justify-content: space-between; gap: var(--gap-stack); }
-.pvx-table-wrap { overflow: hidden; border-radius: var(--radius-md); border: var(--border-w) solid var(--border); }
+.pvx-table-wrap { position: relative; overflow-x: auto; border-radius: var(--radius-md); border: var(--border-w) solid var(--border); }
 .pvx-table-wrap .table { margin: 0; }
 .pvx-table-wrap .table tbody tr:first-child td { border-top: 0; }
 .pvx-person { display: grid; line-height: var(--leading-sm); }
 .pvx-person small { font-size: var(--text-xs); line-height: var(--leading-xs); color: var(--muted-foreground); }
 .pvx-select { appearance: auto; }
+/* A sideways frame draws its focus ring inside, so the frame around it does not cut it off. */
+.pvx-frame:focus-visible { outline-offset: -2px; }
 .pvx-pricing__page { display: grid; gap: var(--gap-section); padding: var(--gap-section) var(--page-pad); }
 .pvx-pricing__head { display: grid; justify-items: center; gap: var(--gap-inline); text-align: center; }
 .pvx-pricing__head h1 { margin: 0; font: 600 var(--text-4xl) / var(--leading-4xl) var(--font-heading); letter-spacing: var(--tracking-heading); }
@@ -108,4 +110,6 @@ export const EXTRA_CSS = `
 .btn.pvx-icon { color: var(--muted-foreground); }
 .btn.pvx-icon:hover, .btn.pvx-icon.is-hover { background: var(--accent); color: var(--accent-foreground); }
 .btn.pvx-icon:active, .btn.pvx-icon.is-pressed { background: var(--neutral-200); color: var(--accent-foreground); }
+/* Last, so it wins over the desktop rules above. */
+@media (max-width: 767px) { .pvx-cols, .pvx-layers { grid-template-columns: minmax(0, 1fr); } .pvx-toasts { grid-column: auto; } }
 `;

@@ -9,54 +9,17 @@
 
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { ev, fresh as freshPage, importFile, navigate, send, settle, setWidth, sleep, start, stop, waitFor } from "./lib/cdp.mjs";
 
-const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const PORT = 9900 + Math.floor(Math.random() * 90);
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const WIDTHS = [1920, 1440, 1280, 1024, 768, 390];
 const SYSTEM_IDS = ["colors", "typography", "radius", "spacing", "borders", "shadows", "buttons", "signature", "voice"];
-let baseUrl = process.env.LIVE_URL ?? "http://localhost:3000";
-let server = null;
-let chrome = null;
-let ws = null;
-let nextId = 0;
-const pending = new Map();
 const work = mkdtempSync(join(tmpdir(), "responsive-test-"));
-
-const reachable = async (url) => {
-  try {
-    return (await fetch(url, { signal: AbortSignal.timeout(2000) })).ok;
-  } catch {
-    return false;
-  }
-};
-const send = (method, params = {}) =>
-  new Promise((resolve) => {
-    const id = ++nextId;
-    pending.set(id, resolve);
-    ws.send(JSON.stringify({ id, method, params }));
-  });
-async function ev(expression) {
-  const r = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
-  if (r.exceptionDetails) throw new Error(`Page error: ${r.exceptionDetails.exception?.description ?? r.exceptionDetails.text}\n${expression}`);
-  return r.result?.value;
-}
-const setWidth = async (width, height = 900) => {
-  await send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: false });
-  await sleep(450);
-};
 /** Clean state, chosen theme, an optional open editor, then the page. */
-async function fresh(path, { theme = "light", editor = null } = {}) {
-  await send("Page.navigate", { url: baseUrl + "/favicon.ico" });
-  await sleep(400);
-  await ev(`localStorage.clear();sessionStorage.clear();localStorage.setItem("design-sys-md:tool-theme","${theme}");${editor ? `sessionStorage.setItem("design-sys-md:open-editor","${editor}")` : ""}`);
-  await send("Page.navigate", { url: baseUrl + path });
-  await sleep(2400);
-}
+const fresh = (path, options = {}) => freshPage(path, options);
+
 const asExpr = (s) => (/^(document\.|\[\.\.\.|\()/.test(s) ? s : `document.querySelector(${JSON.stringify(s)})`);
 const rectOf = (selector) => `(()=>{const e=${asExpr(selector)};if(!e)return null;e.scrollIntoView({block:"center",inline:"center"});const b=e.getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2}})()`;
 async function click(selector) {
@@ -65,13 +28,13 @@ async function click(selector) {
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
   await send("Input.dispatchMouseEvent", { type: "mousePressed", x: p.x, y: p.y, button: "left", clickCount: 1 });
   await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: p.x, y: p.y, button: "left", clickCount: 1 });
-  await sleep(300);
+  await settle();
 }
 const CODES = { Enter: 13, ArrowRight: 39, ArrowDown: 40, ArrowUp: 38, Home: 36, End: 35, Tab: 9, Escape: 27, " ": 32 };
 async function key(k) {
   await send("Input.dispatchKeyEvent", { type: "keyDown", key: k, code: k === " " ? "Space" : k, windowsVirtualKeyCode: CODES[k], text: k === "Enter" ? "\r" : k === " " ? " " : undefined });
   await send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code: k === " " ? "Space" : k, windowsVirtualKeyCode: CODES[k] });
-  await sleep(200);
+  await settle();
 }
 const touch = (type, x, y) => send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y, id: 1 }] });
 async function tap(selector) {
@@ -80,18 +43,14 @@ async function tap(selector) {
   await touch("touchStart", p.x, p.y);
   await sleep(60);
   await touch("touchEnd", p.x, p.y);
-  await sleep(300);
+  await settle();
 }
 const tmpFile = (name, content) => {
   const path = join(work, name);
   writeFileSync(path, content);
   return path;
 };
-async function importPath(path) {
-  const r = await send("Runtime.evaluate", { expression: `document.querySelector('input[type=file]')` });
-  await send("DOM.setFileInputFiles", { files: [path], objectId: r.result.objectId });
-  await sleep(700);
-}
+const importPath = importFile;
 const block = (settings) => "# X\n\n```json\n" + JSON.stringify({ format: "design-sys-md", version: 3, preset: "saas-clean", presetVersion: 4, settings }) + "\n```\n";
 
 /** Page level sideways scroll, plus any visible element that sticks out of the window without a scroll container of its own. */
@@ -115,48 +74,10 @@ async function assertNoSidewaysScroll(label) {
 }
 
 before(async () => {
-  if (!process.env.LIVE_URL && !(await reachable(baseUrl))) {
-    baseUrl = "http://localhost:3125";
-    server = spawn("npx", ["next", "start", "-p", "3125"], { stdio: "ignore" });
-    for (let i = 0; i < 40 && !(await reachable(baseUrl + "/app")); i++) await sleep(500);
-  }
-  assert.ok(await reachable(baseUrl + "/app/export"), `no server at ${baseUrl}`);
-  chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${PORT}`, "--disable-gpu", "--window-size=1440,1000", `--user-data-dir=${mkdtempSync(join(tmpdir(), "resp-chrome-"))}`, "about:blank"], { stdio: "ignore" });
-  let target = null;
-  for (let i = 0; i < 40 && !target; i++) {
-    await sleep(300);
-    try {
-      target = (await (await fetch(`http://127.0.0.1:${PORT}/json`)).json()).find((t) => t.type === "page");
-    } catch {
-      // Chrome is still starting.
-    }
-  }
-  assert.ok(target, "Chrome did not start");
-  ws = new WebSocket(target.webSocketDebuggerUrl);
-  await new Promise((r) => (ws.onopen = r));
-  ws.onmessage = (event) => {
-    const m = JSON.parse(event.data);
-    if (m.id && pending.has(m.id)) {
-      pending.get(m.id)(m.result ?? m.error);
-      pending.delete(m.id);
-    }
-  };
-  await send("Page.enable");
-  await send("Runtime.enable");
-  await send("DOM.enable");
-  await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "no-preference" }] });
-  await setWidth(1440);
+  await start({ width: 1440, height: 1000 });
 });
 
-after(() => {
-  try {
-    ws?.close();
-  } catch {
-    // Already closed.
-  }
-  chrome?.kill();
-  server?.kill();
-});
+after(stop);
 
 // ---------------------------------------------------------------------------------------------- no sideways scroll
 
@@ -203,8 +124,7 @@ test("long lines (a 200 character product line without spaces) never cause sidew
   await importPath(tmpFile("long.md", block({ project: { name: "N".repeat(60), description: "W".repeat(200), stack: "html-css" } })));
   for (const theme of ["light", "dark"]) {
     await ev(`localStorage.setItem("design-sys-md:tool-theme","${theme}")`);
-    await send("Page.reload");
-    await sleep(2400);
+    await navigate(await ev(`location.href`));
     for (const width of [1920, 1280, 768, 390]) {
       await setWidth(width);
       await click(`document.querySelectorAll('[role=tablist][aria-label="File view"] [role=tab]')[0]`);
@@ -262,7 +182,7 @@ for (const theme of ["light", "dark"]) {
       assert.ok(m.sheetRight <= m.panelRight + 0.5, `${width}: the sheet and its fade stay left of the scrollbar`);
       // At the end of the scroll the last line is not under the fade.
       await ev(`(()=>{const p=document.querySelector("[role=tabpanel]");p.scrollTop=p.scrollHeight})()`);
-      await sleep(200);
+      await settle();
       const end = await ev(`(()=>{const sheet=document.querySelector(".export-sheet");const fade=sheet.querySelector(".export-fade").getBoundingClientRect();const last=[...sheet.children].filter(c=>!c.hasAttribute("aria-hidden")).pop().getBoundingClientRect();return {lastBottom:last.bottom,fadeTop:fade.top}})()`);
       assert.ok(end.lastBottom <= end.fadeTop + 1, `${width}: at the end the last line (${end.lastBottom}) sits above the fade (${end.fadeTop})`);
     }
@@ -271,7 +191,7 @@ for (const theme of ["light", "dark"]) {
 
 test("under the Download buttons both sizes show, and both come from the real generated files for each stack", async () => {
   await fresh("/app/export");
-  await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await setWidth(1440, 900);
   await click(`input[name=stack][value=next-tailwind-shadcn]`);
   const read = async (stack) => {
     await click(`input[name=stack][value="${stack}"]`);
@@ -297,7 +217,7 @@ test("under the Download buttons both sizes show, and both come from the real ge
   const before = (await read("html-css")).line;
   await click(`#product-line`);
   await send("Input.insertText", { text: "A longer product line that adds a few hundred bytes. ".repeat(3) });
-  await sleep(300);
+  await settle();
   const after = (await read("html-css")).line;
   assert.notEqual(after, before, "the number follows the product line");
 });
@@ -357,7 +277,8 @@ test("1280 and wider keeps two columns; below 1280 the board, editor and Export 
   await setWidth(390);
   assert.equal(await ev(`(()=>{const n=document.querySelector('nav[aria-label="Design systems"]');return n.scrollWidth>n.clientWidth})()`), true);
   await ev(`(()=>{const n=document.querySelector('nav[aria-label="Design systems"]');n.querySelectorAll("button")[5].click()})()`);
-  await sleep(500);
+  await waitFor(`(()=>{const n=document.querySelector('nav[aria-label="Design systems"]');const c=n.querySelector('[aria-current="true"]');return !!c&&c.textContent.includes("Shadows")})()`, { label: "the sixth system to open" });
+  await settle();
   assert.equal(await ev(`(()=>{const n=document.querySelector('nav[aria-label="Design systems"]');const c=n.querySelector('[aria-current="true"]').getBoundingClientRect(),r=n.getBoundingClientRect();return c.left>=r.left-1&&c.right<=r.right+1})()`), true, "the open chip is in view");
 
   // Export.
@@ -388,17 +309,15 @@ test("1280 and wider keeps two columns; below 1280 the board, editor and Export 
 test("browser zoom of 200 percent at 1280 reflows to the stacked layout", async () => {
   await fresh("/app");
   // 200% zoom of a 1280px window is a 640 CSS pixel wide viewport at twice the pixel density.
-  await send("Emulation.setDeviceMetricsOverride", { width: 640, height: 450, deviceScaleFactor: 2, mobile: false });
-  await sleep(500);
+  await setWidth(640, 450, { scale: 2 });
   for (const [path, a, b] of [["/app", 'div.grid[class*="grid-cols"]', 'section[aria-label="Live preview"]'], ["/app/export", "section[aria-label='Download']", "section[aria-label='File preview']"]]) {
     if (path !== "/app") await fresh(path);
-    await send("Emulation.setDeviceMetricsOverride", { width: 640, height: 450, deviceScaleFactor: 2, mobile: false });
-    await sleep(500);
+    await setWidth(640, 450, { scale: 2 });
     const m = await ev(`(()=>{const x=document.querySelector(${JSON.stringify(a)}).getBoundingClientRect(),y=document.querySelector(${JSON.stringify(b)}).getBoundingClientRect();return {stacked:y.top>=x.bottom-1,doc:document.documentElement.scrollWidth,win:innerWidth}})()`);
     assert.equal(m.stacked, true, `${path}: stacked at 200% zoom`);
     assert.ok(m.doc <= m.win, `${path}: no sideways scroll at 200% zoom`);
   }
-  await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await setWidth(1440, 900);
 });
 
 // ---------------------------------------------------------------------------------------------- compact top bar and the More menu
@@ -410,16 +329,16 @@ test("the top bar shows everything from 768 up and compacts below 768 to the log
   await fresh("/app");
   for (const width of [1920, 1440, 1280, 1024, 768]) {
     await setWidth(width);
-    assert.equal(await ev(`(()=>{const h=document.querySelector("header");const t=[...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim());return t.join("|")})()`), "Design Sys.md|SaaS Clean|Blank slate|Import file|Switch to dark mode|Export file", `${width}: logo, preset switch, Import, theme toggle and Export`);
+    assert.equal(await ev(`(()=>{const h=document.querySelector("header");const t=[...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim());return t.join("|")})()`), "Design Sys.md, home|SaaS Clean|Blank slate|Import file|Switch to dark mode|Export file", `${width}: logo, preset switch, Import, theme toggle and Export`);
     assert.equal(await ev(`(()=>{const r=document.querySelector("header > div").getBoundingClientRect();return r.height<=72})()`), true, `${width}: the bar is one row`);
   }
   await setWidth(390);
-  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Design Sys.md|Export file|More");
+  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Design Sys.md, home|Export file|More");
   assert.equal(await ev(`(()=>{const r=document.querySelector("header > div").getBoundingClientRect();return r.height<=72})()`), true, "390: the bar is one row");
   // On the Export screen the compact bar offers Back to editing instead.
   await fresh("/app/export");
   await setWidth(390);
-  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Design Sys.md|Back to editing|More");
+  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Design Sys.md, home|Back to editing|More");
 });
 
 test("the More menu opens by keyboard, moves with the arrows, closes on Escape and Tab, and returns focus", async () => {
@@ -540,7 +459,7 @@ const roleText = (key) => ev(`${roleRow(key)}.innerText`);
 /** Phones: the page scrolls, the tray sticks under the top bar. Bring a role row to the middle of the window. */
 const phoneRolesView = async (key = "primary") => {
   await ev(`${roleRow(key)}.scrollIntoView({block:"center"})`);
-  await sleep(300);
+  await settle();
 };
 
 test("Roles at 390: a touch drag applies a swatch to a role without scrolling anything, and tap to pick up works", async () => {
@@ -559,12 +478,12 @@ test("Roles at 390: a touch drag applies a swatch to a role without scrolling an
     const scrollBefore = await ev(`scrollY`);
     await touch("touchStart", from.x, from.y);
     for (let i = 1; i <= 10; i++) await touch("touchMove", from.x + ((to.x - from.x) * i) / 10, from.y + ((to.y - from.y) * i) / 10);
-    await sleep(150);
+    await waitFor(`!!document.querySelector(".tool-float") && ${roleRow("primary")}.dataset.over === "true"`, { label: "the floating swatch and the highlighted row" });
     assert.equal(await ev(`!!document.querySelector(".tool-float")`), true, "a floating copy follows the finger");
     assert.equal(await ev(`${roleRow("primary")}.dataset.over`), "true", "the row under the finger lights up");
     assert.equal(await ev(`scrollY`), scrollBefore, "the page did not scroll while the finger dragged");
     await touch("touchEnd", to.x, to.y);
-    await sleep(400);
+    await waitFor(`/neutral 700/.test(${roleRow("primary")}.innerText)`, { label: "Primary to take neutral 700" });
     assert.match(await roleText("primary"), /neutral 700/, "the touch drop applied");
     // A second drag onto another role also works.
     await phoneRolesView("foreground");
@@ -573,15 +492,17 @@ test("Roles at 390: a touch drag applies a swatch to a role without scrolling an
     await touch("touchStart", from2.x, from2.y);
     for (let i = 1; i <= 10; i++) await touch("touchMove", from2.x + ((to2.x - from2.x) * i) / 10, from2.y + ((to2.y - from2.y) * i) / 10);
     await touch("touchEnd", to2.x, to2.y);
-    await sleep(400);
+    await waitFor(`/neutral 800/.test(${roleRow("foreground")}.innerText)`, { label: "Text to take neutral 800" });
     assert.match(await roleText("foreground"), /neutral 800/);
 
     // Tap to pick up: tap a swatch, then tap a role.
     await phoneRolesView("border");
     await tap(swatch("neutral-600"));
+    await waitFor(`/^Holding neutral 600/.test(document.querySelector("[data-tray-bar]").textContent)`, { label: "the tray to say it is holding neutral 600" });
     assert.match(await ev(`document.querySelector("[data-tray-bar]").textContent`), /^Holding neutral 600\. Click a role to use it\./);
     await phoneRolesView("border");
     await tap(`${roleRow("border")}.querySelector(".truncate")`);
+    await waitFor(`/neutral 600/.test(${roleRow("border")}.innerText)`, { label: "Border to take neutral 600" });
     assert.match(await roleText("border"), /neutral 600/, "tap to pick up applied the swatch");
     assert.match(await ev(`document.querySelector("[data-tray-bar]").textContent`), /^Drag onto a role, or click then click a role/, "nothing is held any more");
   } finally {
@@ -600,10 +521,10 @@ test("Roles at 390: dragging near the bottom edge of the window scrolls the page
     const before = await ev(`({page:scrollY,panel:${EDITOR}.querySelector("[data-role-scroll]").scrollTop})`);
     await touch("touchStart", from.x, from.y);
     for (let i = 1; i <= 8; i++) await touch("touchMove", from.x, from.y + ((844 - 12 - from.y) * i) / 8);
-    await sleep(1000);
+    await waitFor(`scrollY - ${before.page} > 40`, { timeout: 5000, label: "the page to scroll while the finger rests at the bottom edge" });
     const during = await ev(`({page:scrollY,panel:${EDITOR}.querySelector("[data-role-scroll]").scrollTop})`);
     await touch("touchEnd", from.x, 832);
-    await sleep(300);
+    await waitFor(`!document.querySelector(".tool-float")`, { label: "the drag to end" });
     assert.ok(during.page - before.page > 40, `the page scrolled while dragging (${before.page} to ${during.page})`);
     assert.equal(during.panel, 0, "the panel does not scroll inside itself");
     assert.equal(await ev(`!!document.querySelector(".tool-float")`), false, "the drag ended");
@@ -636,8 +557,7 @@ test("below 768 the editor panel and the file card do not scroll inside themselv
       const m = await ev(`(()=>{const p=document.querySelector("[role=tabpanel]");const card=document.querySelector("section[aria-label='File preview']");return {overflow:getComputedStyle(p).overflowY,scroll:p.scrollHeight,client:p.clientHeight,card:card.getBoundingClientRect().height,fade:!!document.querySelector(".export-fade")&&getComputedStyle(document.querySelector(".export-fade")).display}})()`);
       assert.equal(m.overflow, "visible", `${width} ${view ? "raw" : "rendered"}: the file card does not scroll inside itself`);
       assert.ok(m.scroll <= m.client + 1, `${width}: nothing is hidden inside the file card`);
-      assert.ok(m.card > 3000, `${width}: the card is as tall as the file (${m.card}px)`);
-      assert.equal(m.fade, "none", `${width}: no bottom fade is needed when the card does not scroll`);
+      assert.equal(m.fade, "none", `${width}: no scroll fade is needed when the card does not scroll`);
     }
   }
   for (const width of [768, 1024]) {
@@ -740,12 +660,10 @@ test("on a phone the scaled previews scroll sideways inside their own frame: rea
     assert.ok((await ev(`${region}.scrollLeft`)) >= m.scroll - m.client - 2, `${tab}: the right edge of the preview can be reached`);
     await assertNoSidewaysScroll(`phone ${tab} preview, scrolled`);
   }
-  // Other tabs have no scroll region and no hint.
-  for (const tab of ["Buttons and states", "Forms", "Tables"]) {
-    await click(previewTab(tab));
-    assert.equal(await ev(`!!document.querySelector('[role=region][aria-label="Preview, scrolls sideways"]')`), false, `${tab}: no scroll region`);
-    assert.equal(await ev(`/Swipe sideways/.test(document.querySelector('[aria-label="Live preview"]').innerText)`), false, `${tab}: no hint`);
-  }
+  // Forms has nothing to scroll: no scroll region and no hint. (Buttons and states and Tables scroll their grid and table: see their own tests.)
+  await click(previewTab("Forms"));
+  assert.equal(await ev(`!!document.querySelector('[role=region][aria-label="Preview, scrolls sideways"]')`), false, "Forms: no scroll region");
+  assert.equal(await ev(`/Swipe sideways/.test(document.querySelector('[aria-label="Live preview"]').innerText)`), false, "Forms: no hint");
   // Wider frames show neither.
   await click(previewTab("Pricing"));
   for (const width of [768, 1024, 1440]) {
@@ -762,7 +680,9 @@ test("below 480px the wordmark is hidden but the mark stays, and the logo is a l
   for (const width of [390, 479]) {
     await setWidth(width);
     const m = await ev(`(()=>{const a=${logo};const mark=a.querySelector("[aria-hidden]").getBoundingClientRect();const name=a.querySelector("span:not([aria-hidden])");const r=a.getBoundingClientRect();return {text:a.textContent.trim(),mark:Math.round(mark.width),pos:getComputedStyle(name).position,nameW:Math.round(name.getBoundingClientRect().width),w:Math.round(r.width),h:Math.round(r.height)}})()`);
-    assert.equal(m.text, "Design Sys.md", `${width}: the link's accessible name`);
+    assert.equal(m.text, "Design Sys.md", `${width}: the visible text`);
+    assert.equal(await ev(`${logo}.getAttribute("aria-label")`), "Design Sys.md, home", `${width}: the link's accessible name`);
+    assert.equal(await ev(`${logo}.getAttribute("href")`), "/app", `${width}: it goes to the tool until a landing page exists`);
     assert.equal(m.mark, 32, `${width}: the mark stays`);
     assert.equal(m.pos, "absolute", `${width}: the wordmark is visually hidden`);
     assert.ok(m.nameW <= 1, `${width}: the wordmark takes no room`);
@@ -777,7 +697,7 @@ test("below 480px the wordmark is hidden but the mark stays, and the logo is a l
   await fresh("/app/export");
   await setWidth(390);
   await click(logo);
-  await sleep(900);
+  await waitFor(`location.pathname === "/app"`, { label: "the tool" });
   assert.equal(await ev(`location.pathname`), "/app");
   await setWidth(1440);
 });
@@ -800,3 +720,121 @@ test("the tool's own chrome colors stay identical across widths", async () => {
   }
 });
 
+
+// ---------------------------------------------------------------------------------------------- phone: unscaled tabs, collapsed file
+
+const tabPanel = `document.querySelector('[aria-label="Live preview"] [role=tabpanel]')`;
+const frameSel = `[role=region][aria-label="Preview, scrolls sideways"]`;
+
+test("Forms reflows into one column at 390 and nothing is clipped", async () => {
+  await fresh("/app");
+  await setWidth(390, 844);
+  await click(previewTab("Forms"));
+  const m = await ev(`(()=>{const t=${tabPanel};const fields=[...t.querySelectorAll(".field")].map(f=>{const r=f.getBoundingClientRect();return {left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width)}});return {client:t.clientWidth,scroll:t.scrollWidth,fields,regions:t.querySelectorAll('[role=region]').length}})()`);
+  assert.ok(m.scroll <= m.client + 1, `the form fits its frame (${m.scroll} in ${m.client})`);
+  assert.ok(m.fields.length >= 4, "the form has its fields");
+  assert.equal(new Set(m.fields.map((f) => f.left)).size, 1, "every field starts at the same left edge: one column");
+  assert.ok(m.fields.every((f) => f.right <= m.client + 40), "every field is inside the frame");
+  assert.equal(m.regions, 0, "the form needs no sideways frame");
+  await assertNoSidewaysScroll("phone Forms tab");
+});
+
+for (const [tab, label] of [["Buttons and states", "the buttons grid"], ["Tables", "the table"]]) {
+  test(`${label} (${tab}) scrolls sideways inside its own frame at 390: hint, focusable, labelled, visible ring`, async () => {
+    await fresh("/app");
+    await setWidth(390, 844);
+    await click(previewTab(tab));
+    const region = `${tabPanel}.querySelector('${frameSel}')`;
+    const m = await ev(`(()=>{const r=${region};if(!r)return null;const hint=document.getElementById(r.getAttribute("aria-describedby"));const t=${tabPanel};return {tab:r.tabIndex,scroll:r.scrollWidth,client:r.clientWidth,overflowX:getComputedStyle(r).overflowX,hint:hint&&hint.innerText,hintVisible:!!hint&&hint.getBoundingClientRect().height>0,panelScroll:t.scrollWidth,panelClient:t.clientWidth}})()`);
+    assert.ok(m, `${tab}: the scroll frame exists`);
+    assert.equal(m.tab, 0, "it is in the tab order");
+    assert.equal(m.overflowX, "auto");
+    assert.ok(m.scroll > m.client + 40, `${tab}: its content is wider than the frame (${m.scroll} > ${m.client})`);
+    assert.equal(m.hint, "Swipe sideways to see the full preview");
+    assert.equal(m.hintVisible, true, "the hint is visible");
+    assert.ok(m.panelScroll <= m.panelClient + 1, `${tab}: the preview tile itself does not clip or scroll sideways (${m.panelScroll} in ${m.panelClient})`);
+    await assertNoSidewaysScroll(`phone ${tab}`);
+    // Keyboard: Tab reaches it, there is a visible ring, the arrow keys scroll it.
+    await ev(`${region}.focus({focusVisible:true})`);
+    const ring = await ev(`(()=>{const c=getComputedStyle(${region});return {style:c.outlineStyle,width:parseFloat(c.outlineWidth),offset:parseFloat(c.outlineOffset)}})()`);
+    assert.ok(ring.style !== "none" && ring.width >= 2, `${tab}: a visible focus ring`);
+    assert.ok(ring.offset <= 0, `${tab}: the ring is drawn inside the frame`);
+    assert.equal(await ev(`${region}.scrollLeft`), 0);
+    await key("ArrowRight");
+    await key("ArrowRight");
+    assert.ok((await ev(`${region}.scrollLeft`)) > 0, `${tab}: the arrow keys scroll the frame`);
+    await ev(`${region}.scrollLeft=${region}.scrollWidth`);
+    await assertNoSidewaysScroll(`phone ${tab}, scrolled`);
+  });
+}
+
+test("the Buttons and states groups stack into one column on a phone; a wide screen has no sideways frames or hint", async () => {
+  await fresh("/app");
+  await setWidth(390, 844);
+  await click(previewTab("Buttons and states"));
+  const cols = await ev(`[...${tabPanel}.querySelectorAll(".pvx-cols")].map(c=>getComputedStyle(c).gridTemplateColumns.split(" ").length)`);
+  assert.ok(cols.length >= 2 && cols.every((n) => n === 1), `the groups are one column (${cols.join(", ")})`);
+  await setWidth(1440, 900);
+  for (const tab of ["Buttons and states", "Tables"]) {
+    await click(previewTab(tab));
+    assert.equal(await ev(`!!${tabPanel}.querySelector('${frameSel}')`), false, `${tab}: no sideways frame at 1440`);
+    assert.equal(await ev(`/Swipe sideways/.test(document.querySelector('[aria-label="Live preview"]').innerText)`), false, `${tab}: no hint at 1440`);
+  }
+  // Switching tabs clears the hint.
+  await setWidth(390, 844);
+  await click(previewTab("Tables"));
+  assert.equal(await ev(`/Swipe sideways/.test(document.querySelector('[aria-label="Live preview"]').innerText)`), true);
+  await click(previewTab("Forms"));
+  assert.equal(await ev(`/Swipe sideways/.test(document.querySelector('[aria-label="Live preview"]').innerText)`), false, "Forms has nothing to scroll, so no hint");
+});
+
+test("below 768 the file starts as its first 40 lines with a fade and a real Show the whole file button (Rendered and Raw)", async () => {
+  await fresh("/app/export");
+  const toggle = `document.querySelector("section[aria-label='File preview'] button[aria-expanded]")`;
+  const card = `document.querySelector("section[aria-label='File preview']").getBoundingClientRect().height`;
+  let collapsedHeight = 0;
+  for (const width of [390, 767]) {
+    await setWidth(width, 844);
+    for (const view of [1, 0]) {
+      await click(`document.querySelectorAll('[role=tablist][aria-label="File view"] [role=tab]')[${view}]`);
+      const name = view ? "raw" : "rendered";
+      // Collapsed by default.
+      const m = await ev(`(()=>{const b=${toggle};return {label:b.textContent.trim(),expanded:b.getAttribute("aria-expanded"),controls:b.getAttribute("aria-controls")===document.querySelector("[role=tabpanel]").id,h:b.getBoundingClientRect().height,note:document.querySelector("[data-collapse-note]").textContent,card:${card},fade:!!document.querySelector(".export-collapse")&&getComputedStyle(document.querySelector(".export-collapse")).display,pre:${view}?document.querySelector("[role=tabpanel] pre").textContent.split("\\n").length:null}})()`);
+      assert.equal(m.label, "Show the whole file", `${width} ${name}`);
+      assert.equal(m.expanded, "false");
+      assert.equal(m.controls, true, "aria-controls points at the file panel");
+      assert.ok(m.h >= 44, `the button is ${m.h}px high`);
+      assert.match(m.note, /^Showing the first 40 of \d+ lines\.$/);
+      assert.equal(m.fade, "block", `${width} ${name}: a fade covers the end of the visible lines`);
+      // 40 source lines wrap into many screen lines on a phone, so the collapsed card is a few screens, not the whole file.
+      assert.ok(m.card < 5000, `${width} ${name}: the collapsed card is ${m.card}px`);
+      collapsedHeight = m.card;
+      if (view) assert.equal(m.pre, 40, "the raw view shows exactly 40 lines");
+      await assertNoSidewaysScroll(`${width} ${name} collapsed`);
+      // Expand with the mouse: focus stays on the same button, the label changes, the whole file shows.
+      await click(toggle);
+      let e = await ev(`(()=>{const b=${toggle};return {label:b.textContent.trim(),expanded:b.getAttribute("aria-expanded"),focus:document.activeElement===b,note:document.querySelector("[data-collapse-note]").textContent,card:${card},fade:!!document.querySelector(".export-collapse"),lastLine:document.querySelector("[role=tabpanel]").innerText.includes("Design system data")}})()`);
+      assert.equal(e.label, "Show less");
+      assert.equal(e.expanded, "true");
+      assert.equal(e.focus, true, `${width} ${name}: focus stays on the button`);
+      assert.match(e.note, /^Showing all \d+ lines\.$/);
+      assert.ok(e.card > 3000 && e.card > collapsedHeight * 2, `${width} ${name}: the whole file is on the page (${e.card}px, collapsed was ${collapsedHeight}px)`);
+      assert.equal(e.fade, false, "no collapse fade when expanded");
+      assert.equal(e.lastLine, true, "the last section is there");
+      // Collapse with the keyboard (Enter): the same button, focus kept.
+      await ev(`${toggle}.focus()`);
+      await key("Enter");
+      e = await ev(`(()=>{const b=${toggle};return {label:b.textContent.trim(),expanded:b.getAttribute("aria-expanded"),focus:document.activeElement===b,card:${card}}})()`);
+      assert.equal(e.label, "Show the whole file");
+      assert.equal(e.expanded, "false");
+      assert.equal(e.focus, true, `${width} ${name}: focus stays after collapsing`);
+      assert.ok(Math.abs(e.card - collapsedHeight) < 4, "collapsing returns to the same short card");
+    }
+  }
+  // From 768 up there is no button and no collapse.
+  for (const width of [768, 1440]) {
+    await setWidth(width, 900);
+    assert.equal(await ev(`!!${toggle}`), false, `${width}: no Show the whole file button`);
+    assert.equal(await ev(`!!document.querySelector(".export-collapse")`), false);
+  }
+});

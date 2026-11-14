@@ -8,53 +8,19 @@
 
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { ev, fresh as freshPage, importFile, navigate, send, settle, setWidth, start, state, stop, waitFor } from "./lib/cdp.mjs";
 
-const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const PORT = 9600 + Math.floor(Math.random() * 300);
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-let baseUrl = process.env.LIVE_URL ?? "http://localhost:3000";
-let server = null;
-let chrome = null;
-let ws = null;
-let nextId = 0;
-const pending = new Map();
 const work = mkdtempSync(join(tmpdir(), "export-test-"));
 const downloads = join(work, "downloads");
-
-const reachable = async (url) => {
-  try {
-    return (await fetch(url, { signal: AbortSignal.timeout(2000) })).ok;
-  } catch {
-    return false;
-  }
-};
-const send = (method, params = {}) =>
-  new Promise((resolve) => {
-    const id = ++nextId;
-    pending.set(id, resolve);
-    ws.send(JSON.stringify({ id, method, params }));
-  });
-async function ev(expression) {
-  const r = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
-  if (r.exceptionDetails) throw new Error(`Page error: ${r.exceptionDetails.exception?.description ?? r.exceptionDetails.text}\n${expression}`);
-  return r.result?.value;
-}
-async function open(path, { reduced = false } = {}) {
-  await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: reduced ? "reduce" : "no-preference" }] });
-  await send("Page.navigate", { url: baseUrl + path });
-  await sleep(2400);
-}
+const baseUrl = () => state.baseUrl;
 /** Clean browser state, theme chosen, then the page. */
-async function fresh(path = "/app/export", theme = "light") {
-  await send("Page.navigate", { url: baseUrl + "/favicon.ico" });
-  await sleep(500);
-  await ev(`localStorage.clear();sessionStorage.clear();localStorage.setItem("design-sys-md:tool-theme","${theme}")`);
-  await open(path);
-}
+const fresh = (path = "/app/export", theme = "light") => freshPage(path, { theme });
+/** Loads a page again (a reload keeps the saved work). */
+const open = (path) => navigate(baseUrl() + path);
+
 const asExpr = (s) => (/^(document\.|\[\.\.\.|\()/.test(s) ? s : `document.querySelector(${JSON.stringify(s)})`);
 const rectOf = (selector) => `(()=>{const e=${asExpr(selector)};if(!e)return null;e.scrollIntoView({block:"center",inline:"center"});const b=e.getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2}})()`;
 async function click(selector) {
@@ -63,13 +29,13 @@ async function click(selector) {
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
   await send("Input.dispatchMouseEvent", { type: "mousePressed", x: p.x, y: p.y, button: "left", clickCount: 1 });
   await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: p.x, y: p.y, button: "left", clickCount: 1 });
-  await sleep(300);
+  await settle();
 }
 const KEYS = { Enter: 13, ArrowRight: 39, ArrowLeft: 37, Home: 36, End: 35, Tab: 9, Escape: 27 };
 async function key(k, modifiers = 0) {
   await send("Input.dispatchKeyEvent", { type: "keyDown", key: k, code: k, modifiers, windowsVirtualKeyCode: KEYS[k], text: k === "Enter" ? "\r" : undefined });
   await send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code: k, modifiers, windowsVirtualKeyCode: KEYS[k] });
-  await sleep(150);
+  await settle();
 }
 /** Types into a field with real input: click, select all, type. */
 async function type(selector, text) {
@@ -81,7 +47,7 @@ async function type(selector, text) {
   } else {
     await send("Input.insertText", { text });
   }
-  await sleep(250);
+  await settle();
 }
 const byText = (css, text) => `[...document.querySelectorAll(${JSON.stringify(css)})].find(e=>e.textContent.trim().startsWith(${JSON.stringify(text)}))`;
 const rawText = async () => {
@@ -94,12 +60,8 @@ const chooseFile = (which) => click(byText("button", which === "skill" ? "SKILL.
 const meter = () => ev(`(()=>{const m=document.querySelector("[data-size-state]");return {state:m.dataset.sizeState,text:m.querySelector("span.tabular-nums").textContent}})()`);
 
 async function waitForDownload(name) {
-  for (let i = 0; i < 40; i++) {
-    const files = readdirSync(downloads).filter((f) => !f.endsWith(".crdownload"));
-    if (files.includes(name)) return readFileSync(join(downloads, name));
-    await sleep(150);
-  }
-  throw new Error(`no download named ${name}; found: ${readdirSync(downloads).join(", ")}`);
+  await waitFor(() => readdirSync(downloads).filter((f) => !f.endsWith(".crdownload")).includes(name), { timeout: 8000, label: `a download named ${name} (found: ${readdirSync(downloads).join(", ") || "nothing"})` });
+  return readFileSync(join(downloads, name));
 }
 async function download(stack, which) {
   await chooseStack(stack);
@@ -107,19 +69,15 @@ async function download(stack, which) {
   const name = which === "skill" ? "SKILL.md" : "AGENTS.md";
   if (existsSync(join(downloads, name))) {
     // A new download of the same name: Chrome adds (1). Start from an empty folder each time.
-    for (const f of readdirSync(downloads)) writeFileSync(join(downloads, f), "");
+    for (const f of readdirSync(downloads)) rmSync(join(downloads, f), { force: true });
   }
   await click(byText("button", `Download ${name}`));
   const file = await waitForDownload(name);
   return { name, content: file.toString("utf8"), bytes: file.length };
 }
 
-/** Imports a file through the real file input (the same one the Choose file button opens). */
-async function importPath(path) {
-  const r = await send("Runtime.evaluate", { expression: `document.querySelector('input[type=file]')` });
-  await send("DOM.setFileInputFiles", { files: [path], objectId: r.result.objectId });
-  await sleep(700);
-}
+/** Imports a file through the real file input and waits for the import to finish. */
+const importPath = importFile;
 const statusText = () => ev(`[...document.querySelectorAll("[role=status]")].map(e=>e.innerText.trim()).filter(Boolean).join(" | ")`);
 const tmpFile = (name, content) => {
   const path = join(work, name);
@@ -129,59 +87,21 @@ const tmpFile = (name, content) => {
 const block = (settings, version = 3) => "# X\n\nSome text.\n\n```json\n" + JSON.stringify({ format: "design-sys-md", version, preset: "saas-clean", presetVersion: 4, settings }) + "\n```\n";
 
 before(async () => {
-  if (!process.env.LIVE_URL && !(await reachable(baseUrl))) {
-    baseUrl = "http://localhost:3123";
-    server = spawn("npx", ["next", "start", "-p", "3123"], { stdio: "ignore" });
-    for (let i = 0; i < 40 && !(await reachable(baseUrl + "/app")); i++) await sleep(500);
-  }
-  assert.ok(await reachable(baseUrl + "/app/export"), `no server at ${baseUrl}`);
-  chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${PORT}`, "--disable-gpu", "--window-size=1440,1000", `--user-data-dir=${mkdtempSync(join(tmpdir(), "export-chrome-"))}`, "about:blank"], { stdio: "ignore" });
-  let target = null;
-  for (let i = 0; i < 40 && !target; i++) {
-    await sleep(300);
-    try {
-      target = (await (await fetch(`http://127.0.0.1:${PORT}/json`)).json()).find((t) => t.type === "page");
-    } catch {
-      // Chrome is still starting.
-    }
-  }
-  assert.ok(target, "Chrome did not start");
-  ws = new WebSocket(target.webSocketDebuggerUrl);
-  await new Promise((r) => (ws.onopen = r));
-  ws.onmessage = (event) => {
-    const m = JSON.parse(event.data);
-    if (m.id && pending.has(m.id)) {
-      pending.get(m.id)(m.result ?? m.error);
-      pending.delete(m.id);
-    }
-  };
-  await send("Page.enable");
-  await send("Runtime.enable");
-  await send("DOM.enable");
-  await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
+  await start({ width: 1440, height: 1000 });
   await send("Browser.grantPermissions", { permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"] }).catch(() => {});
-  const { mkdirSync } = await import("node:fs");
   mkdirSync(downloads, { recursive: true });
   const r = await send("Browser.setDownloadBehavior", { behavior: "allow", downloadPath: downloads, eventsEnabled: true });
   if (r?.code) await send("Page.setDownloadBehavior", { behavior: "allow", downloadPath: downloads });
 });
 
-after(() => {
-  try {
-    ws?.close();
-  } catch {
-    // Already closed.
-  }
-  chrome?.kill();
-  server?.kill();
-});
+after(stop);
 
 // ---------------------------------------------------------------------------------------------- navigation
 
 test("the top bar Export file opens /app/export with one primary button, and the browser Back button returns", async () => {
   await fresh("/app");
   await click(byText("a", "Export file"));
-  await sleep(1200);
+  await waitFor(`location.pathname === "/app/export" && !!document.querySelector("#product-name")`, { label: "the Export screen" });
   assert.equal(await ev(`location.pathname`), "/app/export");
   assert.equal(await ev(`document.querySelectorAll(".tool-btn--primary").length`), 1, "exactly one primary button on the screen");
   assert.equal(await ev(`document.querySelector(".tool-btn--primary").textContent.trim()`), "Download SKILL.md");
@@ -190,19 +110,19 @@ test("the top bar Export file opens /app/export with one primary button, and the
   await chooseFile("agents");
   assert.equal(await ev(`document.querySelector(".tool-btn--primary").textContent.trim()`), "Download AGENTS.md");
   await ev(`history.back()`);
-  await sleep(1200);
+  await waitFor(`location.pathname === "/app" && !!document.querySelector(".tool-tile, section[aria-labelledby=editor-title]")`, { label: "the board again" });
   assert.equal(await ev(`location.pathname`), "/app", "browser Back returns to the board");
   // Back to editing is a link to the board too.
   await click(byText("a", "Export file"));
-  await sleep(900);
+  await waitFor(`location.pathname === "/app/export"`, { label: "the Export screen" });
   await click(byText("header a", "Back to editing"));
-  await sleep(900);
+  await waitFor(`location.pathname === "/app"`, { label: "the board" });
   assert.equal(await ev(`location.pathname`), "/app");
 });
 
 test("the old wizard pages are gone, the skill review pages stay", async () => {
   for (const [path, expected] of [["/debug", 404], ["/debug/data", 404], ["/debug/skill", 200], ["/debug/skill/react-tailwind", 200], ["/debug/skill/html-css", 200]]) {
-    assert.equal((await fetch(baseUrl + path)).status, expected, path);
+    assert.equal((await fetch(baseUrl() + path)).status, expected, path);
   }
 });
 
@@ -295,7 +215,8 @@ test("Copy file copies the selected file and confirms it visibly and in a live r
   assert.equal(await ev(`document.querySelector('[aria-label=Download] [role=status]').getAttribute("aria-live")`), "polite");
   const clip = await ev(`navigator.clipboard.readText()`);
   assert.equal(clip, await rawText(), "the clipboard holds the exact file");
-  await sleep(2800);
+  // The "Copied" message goes away by itself; wait for the button to say Copy file again.
+  await waitFor(`!!${byText("button", "Copy file")}`, { timeout: 6000, label: "the Copied message to reset" });
   await chooseFile("agents");
   await click(byText("button", "Copy file"));
   assert.equal(await ev(`navigator.clipboard.readText()`), await rawText());
@@ -315,8 +236,8 @@ test("the size meter is neutral below 30 KiB, a gentle note from 30 KiB, a stron
   assert.equal(m.state, "fits");
   assert.ok(Number.parseFloat(m.text) < 30, m.text);
   assert.equal(await ev(`!!document.querySelector("[data-size-state] svg")`), false, "no status icon while it fits");
-  // 30 to 32 KiB: plain HTML with a secondary color, a 30 character name and a 100 character description.
-  await importPath(tmpFile("near.md", block({ project: { name: "Acme Billing Platform for Teams".slice(0, 30), description: DESC200.slice(0, 100), stack: "html-css" }, colors: { secondary: "#9243CD" } })));
+  // 30 to 32 KiB: React with a secondary color, a 30 character name and a 100 character description (plain HTML is over 32 KiB with these now).
+  await importPath(tmpFile("near.md", block({ project: { name: "Acme Billing Platform for Teams".slice(0, 30), description: DESC200.slice(0, 100), stack: "react-tailwind" }, colors: { secondary: "#9243CD" } })));
   m = await meter();
   assert.equal(m.state, "near", m.text);
   assert.ok(Number.parseFloat(m.text) >= 30 && Number.parseFloat(m.text) <= 32, m.text);
@@ -387,8 +308,10 @@ test("import by dropping a file on the card works, and the top bar Import file w
   await send("Input.dispatchDragEvent", { type: "dragEnter", x: p.x, y: p.y, data });
   await send("Input.dispatchDragEvent", { type: "dragOver", x: p.x, y: p.y, data });
   assert.match(await ev(`document.querySelector("[data-import-file]").textContent`), /Drop the file to import it/, "the card shows a drop target");
+  const imports = Number(await ev(`document.querySelector("input[type=file]").dataset.imports`));
   await send("Input.dispatchDragEvent", { type: "drop", x: p.x, y: p.y, data });
-  await sleep(700);
+  await waitFor(`Number(document.querySelector("input[type=file]").dataset.imports) > ${imports}`, { label: "the dropped file to be imported" });
+  await settle();
   assert.equal(await ev(`document.querySelector("#product-name").value`), "Dropped Co");
   assert.match(await statusText(), /Restored SaaS Clean/);
   // From the board: the top bar button, the same hidden input, a banner with the result.
@@ -399,7 +322,7 @@ test("import by dropping a file on the card works, and the top bar Import file w
   await click(`[aria-label="Dismiss"]`);
   assert.equal((await ev(`document.querySelector("header + [role=status]").innerText`)).trim(), "");
   await click(byText("a", "Export file"));
-  await sleep(900);
+  await waitFor(`location.pathname === "/app/export" && !!document.querySelector("#product-name")`, { label: "the Export screen" });
   assert.equal(await ev(`document.querySelector("#product-name").value`), "From The Top", "the import is shared state");
 });
 
@@ -452,7 +375,7 @@ test("Rendered and Raw are real tabs: arrow keys, Home and End move between them
 test("the file is rendered safely: markup in the product line shows as text and never runs", async () => {
   await fresh();
   await type("#product-line", `<img src=x onerror="window.__pwned=1"><script>window.__pwned=2</script>`);
-  await sleep(500);
+  await waitFor(`document.querySelector("[role=tabpanel]").innerText.includes("img src=x onerror")`, { label: "the product line to appear in the file" });
   assert.equal(await ev(`!!document.querySelector("[role=tabpanel] img")`), false, "no injected element");
   assert.equal(await ev(`window.__pwned`), undefined, "nothing ran");
   assert.match(await ev(`document.querySelector("[role=tabpanel]").innerText`), /img src=x onerror=/, "the text is shown as plain text, with the angle brackets removed");
@@ -462,8 +385,7 @@ test("no sideways scrolling at 1280 and 1440, in either view, and the layout hol
   await fresh();
   try {
     for (const width of [1280, 1440]) {
-      await send("Emulation.setDeviceMetricsOverride", { width, height: 1000, deviceScaleFactor: 1, mobile: false });
-      await sleep(500);
+      await setWidth(width, 1000);
       for (const view of ["rendered", "raw"]) {
         if (view === "raw") await rawText();
         else await renderedTab();
@@ -471,12 +393,11 @@ test("no sideways scrolling at 1280 and 1440, in either view, and the layout hol
         assert.ok(m.doc <= m.win, `${width} ${view}: the page is ${m.doc}px wide in a ${m.win}px window`);
       }
     }
-    await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
-    await sleep(400);
+    await setWidth(1440, 1000);
     const cols = await ev(`[...document.querySelectorAll("main > div[class*='xl:flex-row'] > *")].map(e=>Math.round(e.getBoundingClientRect().width))`);
     assert.equal(cols[0], 480, "the left column is 480px wide, as in the mockup");
   } finally {
-    await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
+    await setWidth(1440, 1000);
   }
 });
 
@@ -580,7 +501,7 @@ for (const theme of ["light", "dark"]) {
     await importPath(tmpFile(`over-${theme}.md`, block({ project: { name: NAME60, description: DESC200, stack: "html-css" }, colors: { secondary: "#9243CD", brand: "#E54848" }, typography: OWN_FONTS })));
     const over = await ev(`(()=>{const C=${CONTRAST};return C.textRatio(document.querySelector("[data-size-state] [role=alert]"))})()`);
     assert.ok(over >= 4.5, `${theme}: the over limit message is ${over.toFixed(2)}:1`);
-    await importPath(tmpFile(`near-${theme}.md`, block({ project: { name: "Acme Billing Platform for Teams".slice(0, 30), description: DESC200.slice(0, 100), stack: "html-css" }, colors: { secondary: "#9243CD" } })));
+    await importPath(tmpFile(`near-${theme}.md`, block({ project: { name: "Acme Billing Platform for Teams".slice(0, 30), description: DESC200.slice(0, 100), stack: "react-tailwind" }, colors: { secondary: "#9243CD" } })));
     const near = await ev(`(()=>{const C=${CONTRAST};return C.textRatio(document.querySelector("[data-size-state] p.flex"))})()`);
     assert.ok(near >= 4.5, `${theme}: the close to the limit message is ${near.toFixed(2)}:1`);
   });

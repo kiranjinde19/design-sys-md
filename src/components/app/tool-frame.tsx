@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -38,8 +38,15 @@ function ImportBanner() {
 /** The frame every /app page shares: the fixed monochrome theme, the top bar and the import feedback. */
 export function ToolFrame({ children }: { children: ReactNode }) {
   const { dark, toggle } = useToolTheme();
+  // The page is drawn light on the server and switches to the saved theme right after it loads. Transitions stay off until
+  // the first frames have passed (`data-ready`), so the colors do not animate through that switch.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => setReady(true)));
+    return () => cancelAnimationFrame(frame);
+  }, []);
   return (
-    <div className={cn("tool min-h-screen bg-background text-foreground", dark && "dark")} style={toolVars(dark)}>
+    <div className={cn("tool min-h-screen bg-background text-foreground", dark && "dark")} style={toolVars(dark)} data-ready={ready ? "true" : undefined}>
       <ImportProvider>
         <TopBar dark={dark} onToggleTheme={toggle} />
         <ImportBanner />

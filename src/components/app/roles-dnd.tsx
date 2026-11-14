@@ -85,15 +85,24 @@ const roleAt = (point: { x: number; y: number }): OverridableRole | null => {
   return (row?.dataset.roleRow as OverridableRole | undefined) ?? null;
 };
 
-/** The click that ends a drag must not do anything (no copy, no pick up). Removed if no click comes. */
+/**
+ * The click that ends a mouse drag must not do anything (no copy, no pick up). That click arrives within a few milliseconds
+ * of the release, so the guard is gone after 150ms: a touch drag makes no click at all, and the next real tap must work.
+ */
 function suppressNextClick() {
+  const done = () => {
+    window.removeEventListener("click", stop, true);
+    window.removeEventListener("pointerdown", done, true);
+  };
   const stop = (event: Event) => {
     event.stopPropagation();
     event.preventDefault();
-    window.removeEventListener("click", stop, true);
+    done();
   };
   window.addEventListener("click", stop, true);
-  setTimeout(() => window.removeEventListener("click", stop, true), 500);
+  // A new press means the drag's own click is over (a touch drag makes none), so the guard ends there too.
+  window.addEventListener("pointerdown", done, true);
+  setTimeout(done, 150);
 }
 
 export function RolesDnd({ children }: { children: ReactNode }) {

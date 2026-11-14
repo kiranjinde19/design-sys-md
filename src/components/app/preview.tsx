@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useId, useState } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
 import { ButtonsTab } from "./skill-preview/buttons-tab";
 import { FormsTab } from "./skill-preview/forms-tab";
 import { ScaledStage, type StageScale } from "./scaled-stage";
+import { ScrollHintContext } from "./scroll-frame";
 import { SkillScope } from "./skill-preview/skill-scope";
 import { TablesTab } from "./skill-preview/tables-tab";
 import { DashboardTab } from "./skill-preview/dashboard-tab";
@@ -44,6 +45,11 @@ export function Preview({ height }: { height: number }) {
   const [stage, setStage] = useState<StageScale>({ scale: SCALE, scrolls: false });
   const onScale = useCallback((next: StageScale) => setStage((current) => (current.scale === next.scale && current.scrolls === next.scrolls ? current : next)), []);
   const hintId = useId();
+  // Parts of the Buttons and Tables tabs that scroll sideways report here, so the hint shows whenever something does.
+  const [frames, setFrames] = useState<Record<string, boolean>>({});
+  const report = useCallback((id: string, scrolls: boolean) => setFrames((current) => (current[id] === scrolls || (!scrolls && !(id in current)) ? current : { ...current, [id]: scrolls })), []);
+  const hintContext = useMemo(() => ({ hintId, report }), [hintId, report]);
+  const frameScrolls = Object.values(frames).some(Boolean);
 
   const chips: { label: string; swatch?: string }[] = [
     { label: colors.brand[600], swatch: colors.brand[600] },
@@ -97,7 +103,7 @@ export function Preview({ height }: { height: number }) {
         <div className="flex flex-wrap justify-between gap-x-4 text-xs leading-4 text-muted-foreground">
           <span>{note[tab]}</span>
           <span>{scaled ? `Shown at ${Math.round(stage.scale * 100)}%` : "Changes as you edit"}</span>
-          {scaled && stage.scrolls ? (
+          {(scaled && stage.scrolls) || frameScrolls ? (
             <span id={hintId} className="basis-full text-foreground">
               Swipe sideways to see the full preview
             </span>
@@ -105,9 +111,15 @@ export function Preview({ height }: { height: number }) {
         </div>
         {/* The stage. Light only; it receives the user's design system and nothing else. */}
         <div role="tabpanel" className="tool-scroll relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-[10px] border border-border shadow-[var(--t-shadow-sm)]" style={{ ...previewVars(tokens), background: "var(--pv-background)" }}>
-          {scaled ? <ScaledStage key={tab} scale={SCALE} hintId={hintId} onScale={onScale}>
-              {page}
-            </ScaledStage> : page}
+          <ScrollHintContext.Provider value={hintContext}>
+            {scaled ? (
+              <ScaledStage key={tab} scale={SCALE} hintId={hintId} onScale={onScale}>
+                {page}
+              </ScaledStage>
+            ) : (
+              page
+            )}
+          </ScrollHintContext.Provider>
         </div>
       </div>
 

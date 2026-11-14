@@ -9,6 +9,9 @@ import { MoreMenu } from "./more-menu";
 import { Segmented } from "@/components/controls/controls";
 import { PRESETS, PRESET_IDS, useDesignSystem, type PresetId } from "@/lib/design-system";
 
+/** The logo goes home: the landing page at "/" once it exists, the tool until then. */
+const HOME_HREF = "/app";
+
 const BUTTON = "inline-flex h-10 items-center gap-2 rounded-[10px] border border-transparent px-4 text-base font-medium leading-6";
 
 /** The top bar (56px minimum): logo and name left, the preset switch centered, Import file, the theme toggle and Export file (Back to editing on the Export screen) right. */
@@ -34,7 +37,7 @@ export function TopBar({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: 
       {/* The inner container has the same max width and side padding as the page, so the logo lines up with the title and Export with the progress bar. */}
       <div className="mx-auto flex min-h-14 max-w-[1440px] flex-wrap items-center justify-between gap-x-2 gap-y-2 px-4 py-2 md:px-6 xl:gap-x-4 xl:px-8">
         {/* The mark and the name are one link to the tool. Below 480px the name is hidden but stays the link's accessible name. */}
-        <Link href="/app" className="flex items-center gap-3 rounded-[10px]">
+        <Link href={HOME_HREF} aria-label="Design Sys.md, home" className="flex items-center gap-3 rounded-[10px]">
           <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-[10px] border border-[var(--card-border)] bg-card text-foreground">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="4" y="4" width="16" height="4" rx="1" />

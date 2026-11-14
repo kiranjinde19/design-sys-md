@@ -2,6 +2,7 @@
 
 import { CircleAlert, Ellipsis, LoaderCircle, Trash2 } from "lucide-react";
 import { SELECTION_RULES, useDesignSystem } from "@/lib/design-system";
+import { ScrollFrame } from "../scroll-frame";
 import { PvIcon } from "../preview-icon";
 
 const Trash = () => <PvIcon icon={Trash2} />;
@@ -31,7 +32,7 @@ export function ButtonsTab() {
 
       <section className="pvx-section" aria-label="Button states">
         <h2>Buttons</h2>
-        <div className="pvx-matrix-wrap">
+        <ScrollFrame className="pvx-matrix-wrap">
         <div className="pvx-matrix">
           <span />
           {STATES.map((state) => (
@@ -43,7 +44,7 @@ export function ButtonsTab() {
             <Row key={variant} variant={variant} tinted={tinted} />
           ))}
         </div>
-        </div>
+        </ScrollFrame>
         {tinted ? (
           <div className="pvx-row">
             <span className="pvx-label">Confirmation dialog only</span>
