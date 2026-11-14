@@ -296,8 +296,8 @@ test("1280 and wider keeps two columns; below 1280 the board, editor and Export 
         const maxHeight = await ev(`document.querySelector("section[aria-label='File preview']").getBoundingClientRect().height <= innerHeight * 0.7 + 1 || document.querySelector("section[aria-label='File preview']").getBoundingClientRect().height <= 420`);
         assert.equal(maxHeight, true, `${width}: the file preview is at most 70% of the window high`);
       } else {
-        const tall = await ev(`(()=>{const c=document.querySelector("section[aria-label='File preview']").getBoundingClientRect().height;return c>innerHeight*1.5})()`);
-        assert.equal(tall, true, `${width}: below 768 the file preview is as tall as the file, and the page scrolls`);
+        const card = await ev(`(()=>{const c=document.querySelector("section[aria-label='File preview']").getBoundingClientRect().height;return c>innerHeight*0.7&&c<innerHeight*1.6})()`);
+        assert.equal(card, true, `${width}: below 768 the file preview starts as about one screen of the file, and the page scrolls`);
       }
       assert.equal(await ev(`getComputedStyle(document.querySelector("#install-title").closest("section").querySelector(".grid")).gridTemplateColumns.split(" ").length`), 1, `${width}: install cards in one column`);
     }
@@ -554,6 +554,10 @@ test("below 768 the editor panel and the file card do not scroll inside themselv
     await setWidth(width, 844);
     for (const view of [0, 1]) {
       await click(`document.querySelectorAll('[role=tablist][aria-label="File view"] [role=tab]')[${view}]`);
+      // The file starts clipped to one screen; open it fully, then the card must not scroll inside itself.
+      await waitFor(`!!document.querySelector("section[aria-label='File preview'] button[aria-expanded]")`, { label: "the Show the whole file button" });
+      await ev(`document.querySelector("section[aria-label='File preview'] button[aria-expanded=false]")?.click()`);
+      await waitFor(`!document.querySelector("section[aria-label='File preview'] button[aria-expanded=false]") && getComputedStyle(document.querySelector('[role=tabpanel]')).overflowY === 'visible'`, { label: "the file to open fully" });
       const m = await ev(`(()=>{const p=document.querySelector("[role=tabpanel]");const card=document.querySelector("section[aria-label='File preview']");return {overflow:getComputedStyle(p).overflowY,scroll:p.scrollHeight,client:p.clientHeight,card:card.getBoundingClientRect().height,fade:!!document.querySelector(".export-fade")&&getComputedStyle(document.querySelector(".export-fade")).display}})()`);
       assert.equal(m.overflow, "visible", `${width} ${view ? "raw" : "rendered"}: the file card does not scroll inside itself`);
       assert.ok(m.scroll <= m.client + 1, `${width}: nothing is hidden inside the file card`);
@@ -788,7 +792,7 @@ test("the Buttons and states groups stack into one column on a phone; a wide scr
   assert.equal(await ev(`/Swipe sideways/.test(document.querySelector('[aria-label="Live preview"]').innerText)`), false, "Forms has nothing to scroll, so no hint");
 });
 
-test("below 768 the file starts as its first 40 lines with a fade and a real Show the whole file button (Rendered and Raw)", async () => {
+test("below 768 the file starts clipped to about one screen (70vh) with a fade and a real Show the whole file button (Rendered and Raw)", async () => {
   await fresh("/app/export");
   const toggle = `document.querySelector("section[aria-label='File preview'] button[aria-expanded]")`;
   const card = `document.querySelector("section[aria-label='File preview']").getBoundingClientRect().height`;
@@ -799,17 +803,18 @@ test("below 768 the file starts as its first 40 lines with a fade and a real Sho
       await click(`document.querySelectorAll('[role=tablist][aria-label="File view"] [role=tab]')[${view}]`);
       const name = view ? "raw" : "rendered";
       // Collapsed by default.
-      const m = await ev(`(()=>{const b=${toggle};return {label:b.textContent.trim(),expanded:b.getAttribute("aria-expanded"),controls:b.getAttribute("aria-controls")===document.querySelector("[role=tabpanel]").id,h:b.getBoundingClientRect().height,note:document.querySelector("[data-collapse-note]").textContent,card:${card},fade:!!document.querySelector(".export-collapse")&&getComputedStyle(document.querySelector(".export-collapse")).display,pre:${view}?document.querySelector("[role=tabpanel] pre").textContent.split("\\n").length:null}})()`);
+      const m = await ev(`(()=>{const b=${toggle};return {label:b.textContent.trim(),expanded:b.getAttribute("aria-expanded"),controls:b.getAttribute("aria-controls")===document.querySelector("[role=tabpanel]").id,h:b.getBoundingClientRect().height,note:document.querySelector("[data-collapse-note]").textContent,card:${card},fade:!!document.querySelector(".export-collapse")&&getComputedStyle(document.querySelector(".export-collapse")).display,panel:document.querySelector("[role=tabpanel]").getBoundingClientRect().height,fadeBox:document.querySelector(".export-collapse").getBoundingClientRect().bottom-document.querySelector("[role=tabpanel]").getBoundingClientRect().bottom,vh:innerHeight}})()`);
       assert.equal(m.label, "Show the whole file", `${width} ${name}`);
       assert.equal(m.expanded, "false");
       assert.equal(m.controls, true, "aria-controls points at the file panel");
       assert.ok(m.h >= 44, `the button is ${m.h}px high`);
-      assert.match(m.note, /^Showing the first 40 of \d+ lines\.$/);
+      assert.match(m.note, /^Showing the first screen of \d+ lines\.$/);
       assert.equal(m.fade, "block", `${width} ${name}: a fade covers the end of the visible lines`);
-      // 40 source lines wrap into many screen lines on a phone, so the collapsed card is a few screens, not the whole file.
-      assert.ok(m.card < 5000, `${width} ${name}: the collapsed card is ${m.card}px`);
+      // The file is clipped to about one screen (70vh), in both views.
+      assert.ok(Math.abs(m.panel - m.vh * 0.7) < 2, `${width} ${name}: the clipped file is ${m.panel}px, 70vh is ${m.vh * 0.7}px`);
+      assert.ok(Math.abs(m.fadeBox) < 2, `${width} ${name}: the fade sits at the bottom of the clipped file`);
+      assert.ok(m.card < m.vh * 1.6, `${width} ${name}: the collapsed card is ${m.card}px`);
       collapsedHeight = m.card;
-      if (view) assert.equal(m.pre, 40, "the raw view shows exactly 40 lines");
       await assertNoSidewaysScroll(`${width} ${name} collapsed`);
       // Expand with the mouse: focus stays on the same button, the label changes, the whole file shows.
       await click(toggle);

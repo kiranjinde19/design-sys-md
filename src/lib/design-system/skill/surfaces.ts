@@ -23,7 +23,7 @@ function formsSection(ctx: SkillContext): string[] {
   return lines(
     "### Forms",
     "",
-    `One column, full width. Labels above fields, primary button last. Helper text is small and muted. An error replaces it (${tw ? "" : "`field__help--error`, "}\`${statusRef(ctx, "error")}\`) and says what to fix; the field also gets the destructive border and \`aria-invalid\`, so color is never the only signal.`,
+    `One column, full width. Labels above fields, primary button last. Helper text is small and muted. An error replaces it (${tw ? "" : "`field__help--error`, "}\`${statusRef(ctx, "error")}\`) and says what to fix; the field also gets the destructive border and \`aria-invalid\`.`,
     "",
     fence(tw ? "tsx" : "html", tw
       ? [`<form className="flex flex-col gap-${unit(spacing.semantic.stackGap)}"><div className="flex flex-col gap-${unit(spacing.semantic.inlineGap / 2)}">`, `  <label htmlFor="email" className="text-sm font-medium">Email</label>`, `  <input id="email" className="${inputClassString(ctx)}" aria-describedby="email-help" />`, `  <p id="email-help" className="text-sm ${TILE}">Helper text.</p>`, "</div></form>"]
@@ -76,7 +76,7 @@ function pricingSection(ctx: SkillContext): string[] {
   return lines(
     "### Pricing cards",
     "",
-    `${tw ? "Grid" : "A `.plans` grid"} with ${spacing.semantic.stackGap}px gaps, equal height. The section title and intro are centered; everything inside the cards (plan name, description, price, feature list) is left aligned. Every plan is \`card card-hover\`. The recommended plan adds \`card-featured\` (a 2px brand border); a hovered featured card lifts like the others and keeps its border. Only it has the primary button with \`cta\`; the others are secondary. Price ${big.px}px, heading font, tabular figures. Cards are flex columns with a stack gap between their parts; the description reserves two lines (${tw ? `\`min-h-${unit(descLines)}\`` : "`.plan__desc`"}, so price, divider and features line up, and the button sits at the bottom (${tw ? "`mt-auto`" : "`.plan__cta`; cards are `plan`"}).`,
+    `${tw ? "Grid" : "A `.plans` grid"} with ${spacing.semantic.stackGap}px gaps, equal height. The section title and intro are centered; everything inside the cards (plan name, description, price, features) is left aligned. Every plan is \`card card-hover\`. The recommended plan adds \`card-featured\` (a 2px brand border); a hovered featured card lifts like the others, border kept. Only it has the primary button with \`cta\`; the others are secondary. Price ${big.px}px, heading font, tabular figures. Cards are flex columns with a stack gap${tw ? "" : " (`plan`)"}; the description reserves two lines (${tw ? `\`min-h-${unit(descLines)}\`` : "`.plan__desc`"}) so price, divider and features line up; the button sits at the bottom (${tw ? "`mt-auto`" : "`.plan__cta`"}).`,
     "",
     tw ? fence("tsx", [`<div className="grid gap-${unit(spacing.semantic.stackGap)} md:grid-cols-3">`, `  <div className="card card-hover flex flex-col gap-${unit(spacing.semantic.stackGap)}"><h3>…</h3><p className="min-h-${unit(descLines)} text-sm ${ctx.twColor("text", ctx.t.colors.roles["muted-foreground"], ["muted-foreground"])}">…</p>…<Button variant="secondary" className="mt-auto w-full">…</Button></div>`, `  <div className="card card-hover card-featured flex flex-col gap-${unit(spacing.semantic.stackGap)}">…<Button variant="primary" className="cta mt-auto">…</Button></div>`, "</div>"]) : null,
     tw ? null : "",

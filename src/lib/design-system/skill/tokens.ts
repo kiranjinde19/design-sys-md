@@ -280,14 +280,14 @@ export function tokensSection(ctx: SkillContext): string[] {
     fontLoading(ctx),
     "### Type, radius, spacing, borders, shadows",
     "",
-    `- **Type** (${ty.sizes[0].px}px to ${ty.sizes[ty.sizes.length - 1].px}px, each with its line height, a multiple of 4px, in the tokens above). xs captions, sm labels and helper text, base body, inputs and buttons, lg card titles, xl section titles, 2xl to 3xl page titles, 4xl to 5xl marketing only.`,
+    `- **Type** (${ty.sizes[0].px}px to ${ty.sizes[ty.sizes.length - 1].px}px, line heights in the tokens above, multiples of 4px). xs captions, sm labels and helper text, base body, inputs and buttons, lg card titles, xl section titles, 2xl to 3xl page titles, 4xl to 5xl marketing only.`,
     `- **Fonts:** headings ${ty.heading.name} ${ty.headingWeight}${tw ? " (`font-heading`)" : ""}, body ${ty.body.name} ${ty.bodyWeight}, labels and buttons ${ty.weights.medium}${ty.mono ? `, mono ${ty.mono.name}` : ", code in the system monospace stack"}. Heading tracking: ${tw ? "`tracking-heading` from 2xl up, `-sm` at xl, `-xs` at lg" : "`--tracking-heading` from 2xl up, `-sm` at xl, `-xs` at lg"}.`,
     `- **Tabular numbers:** ${tw ? `\`${ty.tabularNumbers.className}\`` : "`font-variant-numeric: tabular-nums`"} on number columns, prices and metrics, right aligned.`,
     tw
       ? `- **Radius:** sm ${radius.sm}px \`rounded-sm\` checkboxes; md ${radius.md}px \`rounded-md\` buttons, inputs, selects, icon tiles; lg ${radius.lg}px \`rounded-lg\` cards, dialogs, popovers; full \`rounded-full\` radios, switches, avatars, badges.`
       : `- **Radius:** \`--radius-sm\` ${radius.sm}px checkboxes; \`--radius-md\` ${radius.md}px buttons, inputs, selects, icon tiles; \`--radius-lg\` ${radius.lg}px cards, dialogs, popovers; \`--radius-full\` radios, switches, avatars, badges.`,
     `- **Spacing** (${spacing.base}px grid, ${spacing.density}): ladder ${tw ? `${spacing.scale.map((s) => s.px).join(", ")}; the class number is px divided by 4 (16px is \`p-4\`)` : "`--space-N`"}. ${tw ? `Inline gap ${sp(spacing.semantic.inlineGap)}, stack gap ${sp(spacing.semantic.stackGap)}, button padding ${sp(spacing.semantic.buttonPaddingX)} by ${sp(spacing.semantic.buttonPaddingY)}, input padding ${sp(spacing.semantic.inputPaddingX)} by ${sp(spacing.semantic.inputPaddingY)}, card padding ${sp(spacing.semantic.cardPadding)}, section gap ${sp(spacing.semantic.sectionGap)}.` : `Roles: \`--gap-inline\`, \`--gap-stack\`, \`--button-px\` and \`--button-py\`, \`--input-px\` and \`--input-py\`, \`--pad-card\`, \`--gap-section\`.`}`,
-    `- **Borders** ${borders.width}px. Dividers and card edges use ${tw ? "`border-border`" : "`var(--border)`"}. Form controls use ${tw ? "`border-input`" : "`var(--input)`"}, the lightest neutral that reaches 3:1 on every surface. Never \`border\` on a form control.`,
+    `- **Borders** ${borders.width}px. Dividers and card edges use ${tw ? "`border-border`" : "`var(--border)`"}. Form controls use ${tw ? "`border-input`" : "`var(--input)`"}. Never \`border\` on a form control.`,
     `- **Shadows:** ${elevation.levels === 0 ? "off. Separate surfaces with borders and tints." : `${elevation.levels} levels, ${elevation.style}. ${shadows}.`}`,
     "",
   );

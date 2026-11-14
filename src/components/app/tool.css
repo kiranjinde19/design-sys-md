@@ -325,18 +325,14 @@ body.tool-dragging {
   }
 }
 
-/* A phone shows the first 40 lines of the file and fades them out; the fade is the last child of the sheet or the raw text,
-   pulled up over the end of the visible lines, and fades to that surface's own background. */
+/* A phone shows about one screen (70vh) of the file and fades it out; the fade sits at the bottom of the clipped box and
+   fades to that surface's own background. */
 .export-collapse {
-  display: block;
-  position: relative;
+  position: absolute;
+  inset: auto 0 0;
   height: 96px;
-  margin: -96px -24px 0;
   pointer-events: none;
   background: linear-gradient(to bottom, transparent, var(--background));
-}
-.export-collapse--flush {
-  margin: -96px 0 0;
 }
 
 /* Until the page has settled on its saved theme, nothing animates: the switch from the server's light to dark is instant. */

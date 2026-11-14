@@ -31,12 +31,10 @@ function overlaysCss(ctx: SkillContext): string[] {
 }
 
 function overlaysHtml(ctx: SkillContext): string[] {
-  const { elevation } = ctx.t;
-  const lvl = (n: number) => (elevation.levels > 0 ? `\`--shadow-${Math.min(n, elevation.levels)}\`` : "no shadow");
   return lines(
     "## Overlays and feedback",
     "",
-    `Floating layers use the \`popover\` colors (not the tinted \`card\`), \`--radius-lg\` and shadows ${lvl(3)} (popovers), ${lvl(4)} (dialogs), ${lvl(5)} (toasts). **Dialog:** \`.overlay\` behind \`.dialog\` (an \`h2\` title, \`.dialog__desc\`, \`.dialog__footer\`): tertiary Cancel, one primary action (destructive for deletes); focus trapped, Escape closes. **Toast:** \`.toast\` with a tone class (\`.tone-success\`, \`-error\`, \`-warning\`, \`-info\`); \`role="status"\` (\`alert\` for errors); only non-critical toasts auto-dismiss. **Tabs:** \`role="tab"\`, \`aria-selected\`. **Badge:** plain or with a tone class (\`.tone-brand\` too); a label, never a button. **Skeleton:** shaped like the content it replaces; never a page-wide spinner.`,
+    `Floating layers use the \`popover\` colors (not the tinted \`card\`), \`--radius-lg\` and the shadows listed under Shadows. **Dialog:** \`.overlay\` behind \`.dialog\` (an \`h2\` title, \`.dialog__desc\`, \`.dialog__footer\`): tertiary Cancel, one primary action (destructive for deletes); focus trapped, Escape closes. **Toast:** \`.toast\` with a tone class (\`.tone-success\`, \`-error\`, \`-warning\`, \`-info\`); \`role="status"\` (\`alert\` for errors); only non-critical toasts auto-dismiss. **Tabs:** \`role="tab"\`, \`aria-selected\`. **Badge:** plain or with a tone class (\`.tone-brand\` too); a label, never a button. **Skeleton:** shaped like the content it replaces; never a page-wide spinner.`,
     "",
     fence("css", tight(ctx, compactCss(overlaysCss(ctx).join("\n"), 600).split("\n"))),
     "",

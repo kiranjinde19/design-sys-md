@@ -302,7 +302,7 @@ export function generateSignature(
         settings.primaryCta === "underline-sweep"
           ? "On hover, an underline sweeps in from the left under the label."
           : beam
-            ? "The beam is decorative: a 2px ring at the button edge. Button text and its contrast are unchanged."
+            ? "The beam is decorative, a 2px ring at the button edge; button text contrast is unchanged."
             : undefined,
       ),
       animated,
