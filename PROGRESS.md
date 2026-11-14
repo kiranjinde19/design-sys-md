@@ -54,11 +54,11 @@ Measured 2026-11-14, after the plain HTML recipe fixes. Normal = 30 character na
 |---|---|---|
 | Stage 1: Project setup | 5 | 5 |
 | Stage 2: Token engine | 11 | 11 |
-| Stage 3: Skill file generator | 9 | 10 |
+| Stage 3: Skill file generator | 10 | 10 |
 | Stage 4: The tool's own screen (shell) | 7 | 7 |
 | Stage 5: Live preview and editors | 26 | 26 |
 | Stage 6: Landing page and final polish | 1 | 4 |
-| **Overall** | **59** | **63** |
+| **Overall** | **60** | **63** |
 
 ## Checklist by stage
 
@@ -91,7 +91,7 @@ Measured 2026-11-14, after the plain HTML recipe fixes. Normal = 30 character na
 - [x] Size under the Codex cap for every stack
 - [x] Next.js and React files built in fresh projects
 - [x] Plain HTML under the Codex cap for every brand at normal input; the maximum input with a red brand is 169 bytes over and accepted
-- [ ] Plain HTML file tried in a real fresh page (only its CSS is syntax checked so far)
+- [x] Plain HTML file tried in a real fresh page (done by the owner; also covered by scripts/plain-html-test.mjs)
 - [x] Plain HTML recipe fixes (no JavaScript, inline SVG icons, pixel rule exceptions, precedence line, box-sizing and top bar, sample identity, real browser test)
 
 ### Stage 4: The tool's own screen (shell)
