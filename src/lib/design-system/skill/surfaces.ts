@@ -10,7 +10,7 @@ function cardsSection(ctx: SkillContext): string[] {
   return lines(
     "### Cards",
     "",
-    `A card is \`card\` (see Signature details): title in the heading font, muted body text, one primary action at the bottom.`,
+    `A \`card\` (see Signature details): title in the heading font, muted body text, one primary action at the bottom.`,
     "",
     tw ? fence("tsx", [`<div className="card card-hover flex flex-col gap-${unit(spacing.semantic.stackGap)}"><span className="icon-tile"><Icon className="size-${unit(icons.sizes.md)}" /></span><h3 className="font-heading text-${title.name} ${weightClass(typography.headingWeight)} tracking-heading-xs">Title</h3><p className="text-sm ${TILE}">Text.</p></div>`]) : null,
     "",
@@ -41,7 +41,7 @@ function dashboardsSection(ctx: SkillContext): string[] {
   return lines(
     "### Dashboards",
     "",
-    `Section gaps ${spacing.semantic.sectionGap}px, card grid gaps ${spacing.semantic.stackGap}px. Metrics first, then charts, then the table. A metric card: small muted label, the number (${big.px}px, heading font, tabular figures), then an optional change badge (${tw ? "success 50 tint up, error 50 tint down, muted flat" : "`badge tone-success` up, `tone-error` down, plain `badge` flat"}) with an arrow icon and the value, and one muted helper line.`,
+    `Section gaps ${spacing.semantic.sectionGap}px, card grid gaps ${spacing.semantic.stackGap}px. Metrics first, then charts, then the table. A metric card: small muted label, the number (${big.px}px, heading font, tabular figures), an optional change badge (${tw ? "success 50 tint up, error 50 tint down, muted flat" : "`badge tone-success` up, `tone-error` down, plain `badge` flat"}) with an arrow icon and the value, and one muted helper line.`,
     "",
     fence(tw ? "tsx" : "html", tw
       ? `<div className="grid gap-${unit(spacing.semantic.stackGap)} sm:grid-cols-2 lg:grid-cols-4"><div className="card"><p className="text-sm ${TILE}">Label</p><p className="font-heading text-${big.name} ${weightClass(typography.headingWeight)} tracking-heading ${typography.tabularNumbers.className}">11,111</p></div></div>`
@@ -57,7 +57,7 @@ function chartsSection(ctx: SkillContext): string[] {
   const check = colors.chartCheck;
   const tw = ctx.tailwind;
   const claim = check.passes
-    ? `Color blind check (deuteranopia, protanopia, tritanopia): the closest pair differs by ${check.minDistance} (OKLab; ${check.threshold} or more is clearly different) and each color reaches ${check.minContrast}:1 on the background. `
+    ? `Color blind check (deuteranopia, protanopia, tritanopia): the closest pair differs by ${check.minDistance} (OKLab; ${check.threshold} or more is clearly different) and each reaches ${check.minContrast}:1 on the background. `
     : `The color check found charts ${check.worstPair.join(" and ")} close under ${check.worstVision} (${check.minDistance}, below ${check.threshold}). Never rely on color alone: always add markers, patterns or direct labels.`;
   return lines(
     "### Charts",
@@ -76,7 +76,7 @@ function pricingSection(ctx: SkillContext): string[] {
   return lines(
     "### Pricing cards",
     "",
-    `${tw ? "Grid" : "A `.plans` grid"} with ${spacing.semantic.stackGap}px gaps, equal height. The section title and intro are centered; everything inside the cards (plan name, description, price, features) is left aligned. Every plan is \`card card-hover\`. The recommended plan adds \`card-featured\` (a 2px brand border); a hovered featured card lifts like the others, border kept. Only it has the primary button with \`cta\`; the others are secondary. Price ${big.px}px, heading font, tabular figures. Cards are flex columns with a stack gap${tw ? "" : " (`plan`)"}; the description reserves two lines (${tw ? `\`min-h-${unit(descLines)}\`` : "`.plan__desc`"}) so price, divider and features line up; the button sits at the bottom (${tw ? "`mt-auto`" : "`.plan__cta`"}).`,
+    `${tw ? "Grid" : "A `.plans` grid"} with ${spacing.semantic.stackGap}px gaps, equal height. Section title and intro centered; everything inside the cards (plan name, description, price, features) left aligned. Every plan is \`card card-hover\`. The recommended plan adds \`card-featured\` (2px brand border); a hovered featured card lifts like the others, border kept. Only it has the primary button with \`cta\`; the others are secondary. Price ${big.px}px, heading font, tabular figures. Cards${tw ? "" : " (`plan`)"} are flex columns with a stack gap; ${tw ? `\`min-h-${unit(descLines)}\`` : "`.plan__desc`"} reserves two lines so price, divider and features line up; ${tw ? "`mt-auto`" : "`.plan__cta`"} sits at the bottom.`,
     "",
     tw ? fence("tsx", [`<div className="grid gap-${unit(spacing.semantic.stackGap)} md:grid-cols-3">`, `  <div className="card card-hover flex flex-col gap-${unit(spacing.semantic.stackGap)}"><h3>…</h3><p className="min-h-${unit(descLines)} text-sm ${ctx.twColor("text", ctx.t.colors.roles["muted-foreground"], ["muted-foreground"])}">…</p>…<Button variant="secondary" className="mt-auto w-full">…</Button></div>`, `  <div className="card card-hover card-featured flex flex-col gap-${unit(spacing.semantic.stackGap)}">…<Button variant="primary" className="cta mt-auto">…</Button></div>`, "</div>"]) : null,
     tw ? null : "",

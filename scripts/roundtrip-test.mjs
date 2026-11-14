@@ -392,3 +392,13 @@ test("size meter thresholds: fits at 29 KiB, near at 30 and 30.5 KiB, over above
   assert.equal(sizeState(32 * KiB + 1), "over");
   assert.equal(sizeState(32.5 * KiB), "over");
 });
+
+test("size goals at normal input (secondary color, 30 character name, 100 character line): Next.js under 30, React under 31, plain HTML 31.7 KiB or less and never over Codex's 32 KiB", () => {
+  const goals = { "next-tailwind-shadcn": 30, "react-tailwind": 31, "html-css": 31.7 };
+  for (const stack of STACKS) {
+    const settings = applyPatch(saas, { colors: { secondary: "#9243CD" }, project: { name: "N".repeat(30), description: "D".repeat(100), stack } });
+    const { agentsBytes } = generateSkillFile(createDesignSystem(settings), { presetId: "saas-clean" });
+    assert.ok(agentsBytes / 1024 <= goals[stack], `${stack}: ${(agentsBytes / 1024).toFixed(3)} KiB, goal ${goals[stack]}`);
+    assert.notEqual(sizeState(agentsBytes), "over", `${stack}: the strong Export warning must not show in the default case`);
+  }
+});

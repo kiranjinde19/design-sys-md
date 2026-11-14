@@ -47,7 +47,7 @@ export function dataBlock(settings: DesignSystemSettings, presetId: PresetId): s
   return lines(
     "## Design system data",
     "",
-    "Written by Design Sys.md. Do not edit by hand. The tool reads it to restore this design system.",
+    "Written by Design Sys.md to restore this design system. Do not edit by hand.",
     "",
     fence("json", JSON.stringify({ format: DATA_FORMAT, version: DATA_FORMAT_VERSION, preset: presetId, presetVersion, settings: changes })),
   );

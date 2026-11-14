@@ -236,8 +236,8 @@ test("the size meter is neutral below 30 KiB, a gentle note from 30 KiB, a stron
   assert.equal(m.state, "fits");
   assert.ok(Number.parseFloat(m.text) < 30, m.text);
   assert.equal(await ev(`!!document.querySelector("[data-size-state] svg")`), false, "no status icon while it fits");
-  // 30 to 32 KiB: React with a secondary color, a 30 character name and a 100 character description (plain HTML is over 32 KiB with these now).
-  await importPath(tmpFile("near.md", block({ project: { name: "Acme Billing Platform for Teams".slice(0, 30), description: DESC200.slice(0, 100), stack: "react-tailwind" }, colors: { secondary: "#9243CD" } })));
+  // 30 to 32 KiB: plain HTML with a secondary color, a 30 character name and a 100 character description (the default case: a gentle note, never the strong warning).
+  await importPath(tmpFile("near.md", block({ project: { name: "Acme Billing Platform for Teams".slice(0, 30), description: DESC200.slice(0, 100), stack: "html-css" }, colors: { secondary: "#9243CD" } })));
   m = await meter();
   assert.equal(m.state, "near", m.text);
   assert.ok(Number.parseFloat(m.text) >= 30 && Number.parseFloat(m.text) <= 32, m.text);
@@ -501,7 +501,7 @@ for (const theme of ["light", "dark"]) {
     await importPath(tmpFile(`over-${theme}.md`, block({ project: { name: NAME60, description: DESC200, stack: "html-css" }, colors: { secondary: "#9243CD", brand: "#E54848" }, typography: OWN_FONTS })));
     const over = await ev(`(()=>{const C=${CONTRAST};return C.textRatio(document.querySelector("[data-size-state] [role=alert]"))})()`);
     assert.ok(over >= 4.5, `${theme}: the over limit message is ${over.toFixed(2)}:1`);
-    await importPath(tmpFile(`near-${theme}.md`, block({ project: { name: "Acme Billing Platform for Teams".slice(0, 30), description: DESC200.slice(0, 100), stack: "react-tailwind" }, colors: { secondary: "#9243CD" } })));
+    await importPath(tmpFile(`near-${theme}.md`, block({ project: { name: "Acme Billing Platform for Teams".slice(0, 30), description: DESC200.slice(0, 100), stack: "html-css" }, colors: { secondary: "#9243CD" } })));
     const near = await ev(`(()=>{const C=${CONTRAST};return C.textRatio(document.querySelector("[data-size-state] p.flex"))})()`);
     assert.ok(near >= 4.5, `${theme}: the close to the limit message is ${near.toFixed(2)}:1`);
   });

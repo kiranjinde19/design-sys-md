@@ -45,15 +45,15 @@ export function accessibilitySection(ctx: SkillContext): string[] {
   return lines(
     "## Accessibility",
     "",
-    "Every pair was measured from these tokens and passes (text needs 4.5:1, interface parts 3:1).",
+    "Every pair was measured from these tokens and passes (text 4.5:1, interface parts 3:1).",
     "",
     `At 7:1 or more (lowest ${worst(strong).levels.ratio.toFixed(2)}:1): ${strong.map((p) => (p.foregroundRole === "foreground" ? "foreground on background" : p.foregroundRole === `${p.backgroundRole}-foreground` ? p.backgroundRole : p.label)).join(", ")}.`,
     "",
     ...table(["Pair", "Ratio"], rows),
     "",
-    `- White text on a filled color works from this step and darker: ${(["brand", "success", "warning", "error", "info"] as const).map((n) => `${n} ${guide(n)}`).join(", ")}.`,
+    `- White text on a fill works from this step and darker: ${(["brand", "success", "warning", "error", "info"] as const).map((n) => `${n} ${guide(n)}`).join(", ")}.`,
     `- Every interactive element shows the focus ring (${signature.focusRing.label.toLowerCase()}), never removed. Controls are at least ${controls.buttons.height.sm}px tall, ${ctx.t.spacing.semantic.inlineGap}px apart.`,
-    "- State is never color alone. Use real elements (`button`, `a`, `label`, `th scope`), logical headings, and alt text on images.",
+    "- State is never color alone. Use real elements (`button`, `a`, `label`, `th scope`), logical headings, alt text on images.",
     ...(colors.brandReport.nearError ? ["- Brand near the error red: the focus ring is `foreground`, never brand red, and errors show an alert icon and message, not only red."] : []),
     "",
   );

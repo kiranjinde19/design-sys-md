@@ -107,7 +107,7 @@ function buttonsSection(ctx: SkillContext): string[] {
     "",
     fence(ctx.tailwind ? "tsx" : "css", ctx.tailwind ? tw : tight(ctx, css)),
     "",
-    `Focus: same colors plus ${ctx.tailwind ? "`focus-ring`" : "the automatic focus ring"}. Loading: same colors, a ${spinner.size}px spinner (${ctx.tailwind ? `\`ds-spinner size-${unit(spinner.size)}\`` : "`ds-spinner`"}, a ${spinner.strokeWidth}px ring, \`currentColor\`) before the label, \`aria-busy\`, no clicks. Only disabled is faded, and it needs a reason shown nearby.`,
+    `Focus: same colors plus ${ctx.tailwind ? "`focus-ring`" : "the automatic focus ring"}. Loading: same colors, a ${spinner.size}px spinner (${ctx.tailwind ? `\`ds-spinner size-${unit(spinner.size)}\`` : "`ds-spinner`"}, a ${spinner.strokeWidth}px ring, \`currentColor\`) before the label, \`aria-busy\`, no clicks. Only disabled is faded; show the reason nearby.`,
     "",
     fence("css", tightCss(compactCss(spinner.stylesheet).split("\n"))),
     "",
@@ -154,7 +154,7 @@ function inputsSection(ctx: SkillContext): string[] {
   return lines(
     "### Inputs and selects",
     "",
-    `The outline is the \`input\` border; hover, focus (plus the focus ring) and error (plus error text) change it, and disabled uses the muted fill. Every input has a visible label, never a placeholder as the label. A select (6 or more options, or tight space) uses the same classes on its trigger${ctx.tailwind ? "" : ", and its menu uses `popover` colors, `--radius-md`, `--shadow-3` and `accent` on hover"}; fewer options and one choice, use radios.`,
+    `The outline is the \`input\` border; hover, focus (plus the focus ring) and error (plus error text) change it, and disabled uses the muted fill. Every input has a visible label, never only a placeholder. A select (6 or more options, or tight space) uses the same classes on its trigger${ctx.tailwind ? "" : "; its menu uses `popover` colors, `--radius-md`, `--shadow-3` and `accent` on hover"}; fewer options and one choice, use radios.`,
     "",
     fence(ctx.tailwind ? "tsx" : "css", ctx.tailwind ? [`<input className="${inputClasses(ctx)}" />`, `menu: "${join(["rounded-md border", ctx.twColor("border", popover.border, ["border"]), ctx.twColor("bg", popover.popover, ["popover"]), ctx.twColor("text", popover["popover-foreground"], ["popover-foreground"]), "shadow-md"])}"; item hover: "${join([ctx.twColor("hover:bg", popover.accent, ["accent"]), ctx.twColor("hover:text", popover["accent-foreground"], ["accent-foreground"])])}"`] : tight(ctx, cssCode)),
     "",
@@ -300,7 +300,7 @@ function linksSection(ctx: SkillContext): string[] {
   return lines(
     "### Links",
     "",
-    `Text links are underlined in the brand color; hover, pressed and visited are darker, and focus shows the ring. The underline stays in every state. Logos and nav links are bare: no underline, foreground color, \`primary\` on hover, visited unchanged${tw ? "" : " (`.link`, or `.link.link--bare`)"}.`,
+    `Text links are underlined in the brand color in every state; hover, pressed and visited are darker, and focus shows the ring. Logos and nav links are bare: no underline, foreground color, \`primary\` on hover, visited unchanged${tw ? "" : " (`.link`, or `.link.link--bare`)"}.`,
     "",
     fence(tw ? "tsx" : "css", code),
     "",

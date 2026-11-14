@@ -124,7 +124,7 @@ function roleVars(ctx: SkillContext, withRadius: boolean, prefix = "--"): string
   const solid = controls.buttons.destructiveSolid;
   const role = (name: string) => `${prefix}${name}: ${colors.roles[name as keyof typeof colors.roles]};`;
   return lines(
-    ctx.shadcn ? "  /* Roles (shadcn names) and derived button states. Replace the values init wrote */" : "  /* Roles (shadcn names) and derived button states */",
+    ctx.shadcn ? "  /* Roles (shadcn names) and derived button states. Replace the values init wrote */" : "  /* Roles and button states */",
     ROLE_GROUPS.map((group) => `  ${group.map(role).join(" ")}`),
     `  ${prefix}placeholder: ${colors.placeholder};${withRadius ? ` --radius: ${radius.md}px;` : ""} ${prefix}primary-hover: ${v.primary.hover.background}; ${prefix}primary-pressed: ${v.primary.pressed.background};`,
     `  ${prefix}destructive-hover: ${solid.hover.background}; ${prefix}destructive-pressed: ${solid.pressed.background};`,
