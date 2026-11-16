@@ -1,8 +1,8 @@
 /**
  * Runs the test suites with a timeout on every test and on the whole run.
  *
- *   npm run test:fast     the quick suite (about 1.5 minutes): the round trip tests, the plain HTML recipes, the Export
- *                         screen, the live behavior of the tool and the responsive checks that do not loop over every width
+ *   npm run test:fast     the quick suite (about 1.5 minutes): the round trip tests, the plain HTML recipes, the landing
+ *                         page, the Export screen, the live behavior of the tool and the responsive checks that do not loop over every width
  *   npm run test:full     everything (about 2.5 minutes): the fast suite plus the slow responsive checks
  *   npm run test:live     the same as test:full (the name CLAUDE.md uses)
  *
@@ -26,6 +26,7 @@ const SLOW_RESPONSIVE = ["no horizontal page scroll on the board", "no horizonta
 const STEPS = [
   { name: "round trip", files: ["scripts/roundtrip-test.mjs"], browser: false },
   { name: "plain HTML recipes", files: ["scripts/plain-html-test.mjs"], browser: false },
+  { name: "landing page", files: ["scripts/landing-test.mjs"], browser: true },
   { name: "Export screen", files: ["scripts/export-test.mjs"], browser: true },
   { name: "live behavior", files: ["scripts/live-behavior-test.mjs"], browser: true },
   { name: "responsive (quick checks)", files: ["scripts/responsive-test.mjs"], browser: true, skip: SLOW_RESPONSIVE },

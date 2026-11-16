@@ -61,6 +61,17 @@ const meter = () => ev(`(()=>{const m=document.querySelector("[data-size-state]"
 
 async function waitForDownload(name) {
   await waitFor(() => readdirSync(downloads).filter((f) => !f.endsWith(".crdownload")).includes(name), { timeout: 8000, label: `a download named ${name} (found: ${readdirSync(downloads).join(", ") || "nothing"})` });
+  // Chrome creates the file before it has written it: wait until it has content and stops growing.
+  let size = -1;
+  await waitFor(
+    async () => {
+      const now = readFileSync(join(downloads, name)).length;
+      const done = now > 0 && now === size;
+      size = now;
+      return done;
+    },
+    { timeout: 8000, label: `the download ${name} to be written completely` },
+  );
   return readFileSync(join(downloads, name));
 }
 async function download(stack, which) {
@@ -290,7 +301,7 @@ test("import: success summary, failures with a clear reason, and the same file t
   await importPath(tmpFile("plain.md", "# Just a note\n\nNo data block here.\n"));
   assert.match(await statusText(), /No data block found/);
   await importPath(tmpFile("broken.md", "# X\n\n```json\n{not valid json\n```\n"));
-  assert.match(await statusText(), /No data block found\. The file has JSON, but none of it is a Design Sys\.md data block/);
+  assert.match(await statusText(), /No data block found\. The file has JSON, but none of it is a Plinth data block/);
   await importPath(tmpFile("future.md", block({}, 99)));
   assert.match(await statusText(), /Unsupported version/);
   // A failed import keeps the work.

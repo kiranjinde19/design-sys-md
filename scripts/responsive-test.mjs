@@ -329,16 +329,16 @@ test("the top bar shows everything from 768 up and compacts below 768 to the log
   await fresh("/app");
   for (const width of [1920, 1440, 1280, 1024, 768]) {
     await setWidth(width);
-    assert.equal(await ev(`(()=>{const h=document.querySelector("header");const t=[...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim());return t.join("|")})()`), "Design Sys.md, home|SaaS Clean|Blank slate|Import file|Switch to dark mode|Export file", `${width}: logo, preset switch, Import, theme toggle and Export`);
+    assert.equal(await ev(`(()=>{const h=document.querySelector("header");const t=[...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim());return t.join("|")})()`), "Plinth, home|SaaS Clean|Blank slate|Import file|Switch to dark mode|Export file", `${width}: logo, preset switch, Import, theme toggle and Export`);
     assert.equal(await ev(`(()=>{const r=document.querySelector("header > div").getBoundingClientRect();return r.height<=72})()`), true, `${width}: the bar is one row`);
   }
   await setWidth(390);
-  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Design Sys.md, home|Export file|More");
+  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Plinth, home|Export file|More");
   assert.equal(await ev(`(()=>{const r=document.querySelector("header > div").getBoundingClientRect();return r.height<=72})()`), true, "390: the bar is one row");
   // On the Export screen the compact bar offers Back to editing instead.
   await fresh("/app/export");
   await setWidth(390);
-  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Design Sys.md, home|Back to editing|More");
+  assert.equal(await ev(`(()=>{const h=document.querySelector("header");return [...h.querySelectorAll("button,a")].filter(e=>e.getBoundingClientRect().width>0).map(e=>(e.getAttribute("aria-label")||e.textContent).trim()).join("|")})()`), "Plinth, home|Back to editing|More");
 });
 
 test("the More menu opens by keyboard, moves with the arrows, closes on Escape and Tab, and returns focus", async () => {
@@ -678,31 +678,23 @@ test("on a phone the scaled previews scroll sideways inside their own frame: rea
 
 // ---------------------------------------------------------------------------------------------- phone top bar: the logo link
 
-test("below 480px the wordmark is hidden but the mark stays, and the logo is a link named Design Sys.md", async () => {
+test("the Plinth wordmark is the logo at every width, a link named Plinth, home that goes to the landing page", async () => {
   await fresh("/app");
-  const logo = `document.querySelector('header a[href="/app"]')`;
-  for (const width of [390, 479]) {
+  const logo = `document.querySelector('header a[aria-label="Plinth, home"]')`;
+  for (const width of [390, 479, 480, 768, 1440]) {
     await setWidth(width);
-    const m = await ev(`(()=>{const a=${logo};const mark=a.querySelector("[aria-hidden]").getBoundingClientRect();const name=a.querySelector("span:not([aria-hidden])");const r=a.getBoundingClientRect();return {text:a.textContent.trim(),mark:Math.round(mark.width),pos:getComputedStyle(name).position,nameW:Math.round(name.getBoundingClientRect().width),w:Math.round(r.width),h:Math.round(r.height)}})()`);
-    assert.equal(m.text, "Design Sys.md", `${width}: the visible text`);
-    assert.equal(await ev(`${logo}.getAttribute("aria-label")`), "Design Sys.md, home", `${width}: the link's accessible name`);
-    assert.equal(await ev(`${logo}.getAttribute("href")`), "/app", `${width}: it goes to the tool until a landing page exists`);
-    assert.equal(m.mark, 32, `${width}: the mark stays`);
-    assert.equal(m.pos, "absolute", `${width}: the wordmark is visually hidden`);
-    assert.ok(m.nameW <= 1, `${width}: the wordmark takes no room`);
+    const m = await ev(`(()=>{const a=${logo};const svg=a.querySelector("svg").getBoundingClientRect();const r=a.getBoundingClientRect();return {href:a.getAttribute("href"),svgW:Math.round(svg.width),svgH:Math.round(svg.height),w:Math.round(r.width),h:Math.round(r.height),text:a.textContent.trim()}})()`);
+    assert.equal(m.href, "/", `${width}: the logo goes to the landing page`);
+    assert.equal(m.text, "", `${width}: the wordmark is a drawing, its name is the link's accessible name`);
+    assert.ok(m.svgW >= 70 && m.svgH >= 20, `${width}: the wordmark shows (${m.svgW}x${m.svgH})`);
     assert.ok(m.w >= 44 && m.h >= 44, `${width}: the link is at least 44px (${m.w}x${m.h})`);
   }
-  for (const width of [480, 768, 1440]) {
-    await setWidth(width);
-    const name = await ev(`Math.round(${logo}.querySelector("span:not([aria-hidden])").getBoundingClientRect().width)`);
-    assert.ok(name > 60, `${width}: the wordmark shows (${name}px)`);
-  }
-  // It works as a link: from the Export view it goes to the tool.
+  // It works as a link: from the Export view it goes home.
   await fresh("/app/export");
   await setWidth(390);
   await click(logo);
-  await waitFor(`location.pathname === "/app"`, { label: "the tool" });
-  assert.equal(await ev(`location.pathname`), "/app");
+  await waitFor(`location.pathname === "/"`, { label: "the landing page" });
+  assert.equal(await ev(`location.pathname`), "/");
   await setWidth(1440);
 });
 

@@ -47,7 +47,7 @@ export function dataBlock(settings: DesignSystemSettings, presetId: PresetId): s
   return lines(
     "## Design system data",
     "",
-    "Written by Design Sys.md to restore this design system. Do not edit by hand.",
+    "Written by Plinth to restore this design system. Do not edit by hand.",
     "",
     fence("json", JSON.stringify({ format: DATA_FORMAT, version: DATA_FORMAT_VERSION, preset: presetId, presetVersion, settings: changes })),
   );
@@ -73,13 +73,13 @@ function countChanges(value: unknown): number {
 
 /**
  * Reads the data block from an exported file and rebuilds the full settings. Uses the last block that
- * belongs to Design Sys.md. Older files that hold complete settings and no preset still load. Every
+ * belongs to Plinth. Older files that hold complete settings and no preset still load. Every
  * failure says why, so the screen can show it.
  */
 export function parseSkillFile(text: string): ParseResult {
   const blocks = [...text.matchAll(/```json\s*\n([\s\S]*?)\n```/g)].map((m) => m[1]);
   if (blocks.length === 0) {
-    return { ok: false, error: "No data block found. This file has no JSON block at the end, so it was not exported from Design Sys.md (or the block was deleted)." };
+    return { ok: false, error: "No data block found. This file has no JSON block at the end, so it was not exported from Plinth (or the block was deleted)." };
   }
   let invalid = false;
   for (const body of blocks.reverse()) {
@@ -110,7 +110,7 @@ export function parseSkillFile(text: string): ParseResult {
   return {
     ok: false,
     error: invalid
-      ? "Invalid JSON: the Design Sys.md data block at the end of the file is damaged (a comma, quote or bracket is missing). Export the file again, or restore it from the original."
-      : "No data block found. The file has JSON, but none of it is a Design Sys.md data block.",
+      ? "Invalid JSON: the Plinth data block at the end of the file is damaged (a comma, quote or bracket is missing). Export the file again, or restore it from the original."
+      : "No data block found. The file has JSON, but none of it is a Plinth data block.",
   };
 }

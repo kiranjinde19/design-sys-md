@@ -352,7 +352,7 @@ test("the header lines up with the page at 1280, 1440 and 1920", async () => {
   try {
     for (const width of [1280, 1440, 1920]) {
       await setWidth(width, 900);
-      const m = await ev(`(()=>{const l=document.querySelector("header span[aria-hidden]").getBoundingClientRect().left;const h=document.querySelector("h1").getBoundingClientRect().left;const e=[...document.querySelectorAll("header a")].find(a=>a.textContent.includes("Export")).getBoundingClientRect().right;const p=document.querySelector("[role=status] span[aria-hidden]").getBoundingClientRect().right;return {l,h,e,p}})()`);
+      const m = await ev(`(()=>{const l=document.querySelector("header a[aria-label='Plinth, home'] svg").getBoundingClientRect().left;const h=document.querySelector("h1").getBoundingClientRect().left;const e=[...document.querySelectorAll("header a")].find(a=>a.textContent.includes("Export")).getBoundingClientRect().right;const p=document.querySelector("[role=status] span[aria-hidden]").getBoundingClientRect().right;return {l,h,e,p}})()`);
       assert.ok(Math.abs(m.l - m.h) < 1.5, `${width}: logo left ${m.l} vs title left ${m.h}`);
       assert.ok(Math.abs(m.e - m.p) < 1.5, `${width}: Export right ${m.e} vs progress right ${m.p}`);
     }

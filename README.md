@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Plinth
 
-## Getting Started
+Plinth is a free web tool. You build your brand design system with sliders, pickers and drag and drop, then download one markdown file (`SKILL.md` for Claude Code, `AGENTS.md` for Codex and ChatGPT). Your AI coding tool reads it before it builds, so your product looks like yours from the first screen. Plinth builds your SKILL.md. (Earlier working name: Design Sys.md.)
 
-First, run the development server:
+- No login, no backend, no database. Everything runs in the browser, and your work is saved in the browser.
+- `/` is the landing page. `/app` is the tool. `/app/export` is the Export and Import screen.
+- Stack: Next.js (App Router), TypeScript, Tailwind CSS 4, shadcn/ui. Deployed on Vercel from GitHub.
+
+## Run it on your Mac
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install          # once
+npm run dev          # then open http://localhost:3000 (landing page) and http://localhost:3000/app (the tool)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+For the production version, which is what the tests use:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm run start        # http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tests
 
-## Learn More
+```bash
+npm run test:roundtrip   # the file generator: export, import, export again gives the same file
+npm run test:fast        # about 1.5 minutes: everything except the slowest every width checks
+npm run test:full        # everything (the same as npm run test:live)
+```
 
-To learn more about Next.js, take a look at the following resources:
+The browser tests drive a real headless Chrome against a production build (run `npm run build` first). See `CLAUDE.md` for the project rules and `PROGRESS.md` for the checklist.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Where things live
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app/(site)`: the landing page. `src/app/(tool)`: the tool and the review pages under `/debug`.
+- `src/lib/design-system`: the token engine and the SKILL.md generator (`skill/`). Every value comes from one design system object.
+- `src/components/landing`: the landing page. Its demo uses the real engine, loaded in the browser after the page is up.
+- `public/brand/plinth-wordmark.svg`: the wordmark. `src/app/icon.svg`: the favicon.

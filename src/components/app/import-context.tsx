@@ -43,7 +43,7 @@ export function ImportProvider({ children }: { children: ReactNode }) {
       if (!file) return;
       if (input.current) input.current.value = "";
       if (!MARKDOWN_NAME.test(file.name) && !file.type.startsWith("text/")) {
-        setStatus({ ok: false, fileName: file.name, text: "This is not a Markdown file. Choose a .md file exported from Design Sys.md (SKILL.md or AGENTS.md)." });
+        setStatus({ ok: false, fileName: file.name, text: "This is not a Markdown file. Choose a .md file exported from Plinth (SKILL.md or AGENTS.md)." });
         return;
       }
       let text: string;

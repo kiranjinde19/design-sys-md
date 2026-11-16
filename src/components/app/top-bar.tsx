@@ -4,13 +4,14 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, Download, Moon, Sun, Upload } from "lucide-react";
+import { PlinthWordmark } from "@/components/brand/plinth-wordmark";
 import { useImport } from "./import-context";
 import { MoreMenu } from "./more-menu";
 import { Segmented } from "@/components/controls/controls";
 import { PRESETS, PRESET_IDS, useDesignSystem, type PresetId } from "@/lib/design-system";
 
-/** The logo goes home: the landing page at "/" once it exists, the tool until then. */
-const HOME_HREF = "/app";
+/** The logo goes home: the landing page. */
+const HOME_HREF = "/";
 
 const BUTTON = "inline-flex h-10 items-center gap-2 rounded-[10px] border border-transparent px-4 text-base font-medium leading-6";
 
@@ -36,16 +37,9 @@ export function TopBar({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: 
     <header ref={bar} className="z-40 border-b border-border bg-background max-md:sticky max-md:top-0">
       {/* The inner container has the same max width and side padding as the page, so the logo lines up with the title and Export with the progress bar. */}
       <div className="mx-auto flex min-h-14 max-w-[1440px] flex-wrap items-center justify-between gap-x-2 gap-y-2 px-4 py-2 md:px-6 xl:gap-x-4 xl:px-8">
-        {/* The mark and the name are one link to the tool. Below 480px the name is hidden but stays the link's accessible name. */}
-        <Link href={HOME_HREF} aria-label="Design Sys.md, home" className="flex items-center gap-3 rounded-[10px]">
-          <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-[10px] border border-[var(--card-border)] bg-card text-foreground">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="4" y="4" width="16" height="4" rx="1" />
-              <rect x="4" y="10" width="10" height="4" rx="1" />
-              <rect x="4" y="16" width="13" height="4" rx="1" />
-            </svg>
-          </span>
-          <span className="text-base font-semibold leading-6 max-[480px]:sr-only">Design Sys.md</span>
+        {/* The wordmark is the link home (the landing page). It is drawn in currentColor, so it follows light and dark. */}
+        <Link href={HOME_HREF} aria-label="Plinth, home" className="flex min-h-11 items-center">
+          <PlinthWordmark height={22} />
         </Link>
 
         {/* 768 and up: the preset switch, Import and the theme toggle sit in the bar. Below 768 they move into the More menu. */}
