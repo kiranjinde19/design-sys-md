@@ -110,6 +110,27 @@ export const EXTRA_CSS = `
 .btn.pvx-icon { color: var(--muted-foreground); }
 .btn.pvx-icon:hover, .btn.pvx-icon.is-hover { background: var(--accent); color: var(--accent-foreground); }
 .btn.pvx-icon:active, .btn.pvx-icon.is-pressed { background: var(--neutral-200); color: var(--accent-foreground); }
+/* Phones: the team table is a compact list. Same table, same cells and buttons. Each row is three short lines: name with usage
+   on the right, role with the status badge, then the email, and the actions button on the right edge. The header row stays for
+   screen readers only (every row carries its own values). Rows are at least 44px high with the hairline between rows. */
+@media (max-width: 767px) {
+  /* The page padding on a phone is --page-pad (16px), as the file's layout section says, not the 24px card padding. */
+  .pvx-page { padding: var(--page-pad); }
+  /* The list runs edge to edge inside its card (the card's padding is given back), so names and emails get the room. */
+  .pvx-team-card .pvx-table-wrap { margin-inline: calc(var(--pad-card) * -1); border-inline: 0; border-radius: 0; }
+  .pvx-table-wrap .pvx-team thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .pvx-table-wrap .pvx-team, .pvx-table-wrap .pvx-team tbody { display: block; width: 100%; }
+  .pvx-table-wrap .pvx-team tbody tr { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "name name usage" "role status status" "email email email"; column-gap: var(--gap-inline); row-gap: var(--space-1); align-items: center; min-height: 44px; padding: var(--space-3) calc(44px + var(--space-2)) var(--space-3) var(--pad-card); border-top: var(--border-w) solid var(--border); }
+  .pvx-table-wrap .pvx-team tbody tr:first-child { border-top: 0; }
+  .pvx-table-wrap .pvx-team td { display: block; height: auto; min-width: 0; padding: 0; border: 0; }
+  .pvx-team td[data-cell="name"] { grid-area: name; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .pvx-team td[data-cell="usage"] { grid-area: usage; justify-self: end; }
+  .pvx-team td[data-cell="role"] { grid-area: role; font-size: var(--text-sm); line-height: var(--leading-sm); color: var(--muted-foreground); }
+  .pvx-team td[data-cell="status"] { grid-area: status; justify-self: start; }
+  .pvx-team td[data-cell="email"] { grid-area: email; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); line-height: var(--leading-sm); color: var(--muted-foreground); }
+  .pvx-team td[data-cell="actions"] { position: absolute; top: 50%; right: var(--space-1); transform: translateY(-50%); }
+  .pvx-team td[data-cell="actions"] .btn { width: 44px !important; height: 44px; }
+}
 /* Last, so it wins over the desktop rules above. */
-@media (max-width: 767px) { .pvx-cols, .pvx-layers { grid-template-columns: minmax(0, 1fr); } .pvx-toasts { grid-column: auto; } }
+@media (max-width: 767px) { .pvx-cols, .pvx-layers { grid-template-columns: minmax(0, 1fr); } .pvx-toasts { grid-column: auto; } .pvx-split { flex-wrap: wrap; } }
 `;

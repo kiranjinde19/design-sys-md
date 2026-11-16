@@ -735,7 +735,8 @@ test("Forms reflows into one column at 390 and nothing is clipped", async () => 
   await assertNoSidewaysScroll("phone Forms tab");
 });
 
-for (const [tab, label] of [["Buttons and states", "the buttons grid"], ["Tables", "the table"]]) {
+// (The Tables tab no longer scrolls sideways on a phone: it is a compact list, see its own test below.)
+for (const [tab, label] of [["Buttons and states", "the buttons grid"]]) {
   test(`${label} (${tab}) scrolls sideways inside its own frame at 390: hint, focusable, labelled, visible ring`, async () => {
     await fresh("/app");
     await setWidth(390, 844);
@@ -778,10 +779,125 @@ test("the Buttons and states groups stack into one column on a phone; a wide scr
   }
   // Switching tabs clears the hint.
   await setWidth(390, 844);
-  await click(previewTab("Tables"));
+  await click(previewTab("Buttons and states"));
   assert.equal(await ev(`/Swipe sideways/.test(document.querySelector('[aria-label="Live preview"]').innerText)`), true);
   await click(previewTab("Forms"));
   assert.equal(await ev(`/Swipe sideways/.test(document.querySelector('[aria-label="Live preview"]').innerText)`), false, "Forms has nothing to scroll, so no hint");
+});
+
+// ------------------------------------------------------------------------------------------------ phone preview tabs and table
+
+const TABBAR = `document.querySelector('[role=tablist][aria-label="Preview pages"]')`;
+
+test("the preview tab bar on a phone: only sideways, fixed height, no scrollbar, keeps its position, a tap scrolls the tab into view once", async () => {
+  await fresh("/app");
+  for (const width of [360, 390]) {
+    await setWidth(width, 844);
+    const m = await ev(`(()=>{const t=${TABBAR};const c=getComputedStyle(t);return {ox:c.overflowX,oy:c.overflowY,overscrollX:c.overscrollBehaviorX,snap:c.scrollSnapType,sw:t.scrollWidth,cw:t.clientWidth,sh:t.scrollHeight,ch:t.clientHeight,h:Math.round(t.getBoundingClientRect().height),bar:c.scrollbarWidth,tabs:[...t.querySelectorAll("[role=tab]")].map(b=>Math.round(b.getBoundingClientRect().height))}})()`);
+    assert.equal(m.ox, "auto", `${width}: it scrolls sideways`);
+    assert.equal(m.oy, "hidden", `${width}: and never up and down (a 1px overflow let a finger drag it)`);
+    assert.ok(m.sh <= m.ch + 1 || m.oy === "hidden");
+    assert.equal(m.overscrollX, "contain", `${width}: a sideways swipe does not chain into the browser's back gesture`);
+    assert.equal(m.snap, "none", `${width}: no scroll snap to fight the finger`);
+    assert.equal(m.bar, "none", `${width}: no scrollbar is drawn`);
+    assert.ok(m.sw > m.cw + 40, `${width}: the tabs need to scroll (${m.sw} in ${m.cw})`);
+    assert.ok(m.tabs.length === 6 && m.tabs.every((h) => h >= 44), `${width}: every tab is at least 44px high (${m.tabs.join(", ")})`);
+    // The height is the same at every scroll position, and it keeps its position when the page re-renders.
+    const heights = [];
+    for (const left of [0, 80, 400]) {
+      await ev(`${TABBAR}.scrollLeft=${left}`);
+      await settle();
+      heights.push(await ev(`Math.round(${TABBAR}.getBoundingClientRect().height*100)/100`));
+    }
+    assert.equal(new Set(heights).size, 1, `${width}: the bar keeps its height while scrolled (${heights.join(", ")})`);
+    await ev(`${TABBAR}.scrollLeft=120;${TABBAR}.dataset.same="1"`);
+    await settle();
+    // Selecting a tab that is fully in view re-renders the page; the bar is the same element and does not move.
+    // (A plain mouse press: the click helper above would center the element first, and that moves the bar.)
+    const q = await ev(`(()=>{const t=${TABBAR}.getBoundingClientRect();const b=[...${TABBAR}.querySelectorAll("[role=tab]")].find(b=>{const r=b.getBoundingClientRect();return r.left>=t.left&&r.right<=t.right&&b.getAttribute("aria-selected")!=="true"});const r=b.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`);
+    await send("Input.dispatchMouseEvent", { type: "mousePressed", x: q.x, y: q.y, button: "left", clickCount: 1 });
+    await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: q.x, y: q.y, button: "left", clickCount: 1 });
+    await settle();
+    assert.equal(await ev(`${TABBAR}.dataset.same`), "1", `${width}: the bar is not rebuilt when the page changes`);
+    assert.equal(await ev(`${TABBAR}.scrollLeft`), 120, `${width}: and its scroll position is kept`);
+  }
+  // A tap on a tab that is partly off screen brings it into view, only as far as needed, once.
+  await setWidth(390, 844);
+  await ev(`${TABBAR}.scrollIntoView({block:"center",inline:"nearest"});${TABBAR}.scrollLeft=0`);
+  await settle();
+  const edge = await ev(`(()=>{const t=${TABBAR}.getBoundingClientRect();const tabs=[...${TABBAR}.querySelectorAll("[role=tab]")];const b=tabs.find(x=>{const r=x.getBoundingClientRect();return r.left<t.right-20&&r.right>t.right+1});const r=b.getBoundingClientRect();return {name:b.textContent.trim(),x:(r.left+t.right)/2,y:r.top+r.height/2,left:${TABBAR}.scrollLeft}})()`);
+  assert.ok(edge.name, "a tab sticks out at the right edge");
+  const TAB = `[...${TABBAR}.querySelectorAll("[role=tab]")].find(x=>x.textContent.trim()===${JSON.stringify(edge.name)})`;
+  // Tap the visible part of that tab.
+  await send("Input.dispatchMouseEvent", { type: "mousePressed", x: edge.x, y: edge.y, button: "left", clickCount: 1 });
+  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: edge.x, y: edge.y, button: "left", clickCount: 1 });
+  await waitFor(`${TAB}.getAttribute("aria-selected")==="true"`, { label: `${edge.name} to be selected` });
+  await settle();
+  const first = await ev(`(()=>{const r=${TAB}.getBoundingClientRect();const t=${TABBAR}.getBoundingClientRect();return {inView:r.left>=t.left-1&&r.right<=t.right+1,left:${TABBAR}.scrollLeft,gap:Math.round(t.right-r.right)}})()`);
+  assert.equal(first.inView, true, `${edge.name} is fully in view after the tap`);
+  assert.ok(first.left > edge.left, "the bar scrolled");
+  // "Nearest": it moved only as far as needed, so the tab sits at the edge of the bar, not centered.
+  assert.ok(first.gap <= 12, `the tab sits at the right edge of the bar (${first.gap}px from it)`);
+  await sleep(500); // elapsed time is the thing measured: a scroll that repeats would show up in this time
+  assert.equal(await ev(`${TABBAR}.scrollLeft`), first.left, "and the bar does not move again by itself");
+  // Keyboard focus still works: Tab reaches the tabs and a ring shows.
+  await ev(`${TABBAR}.querySelector("[role=tab]").focus({focusVisible:true})`);
+  const ring = await ev(`(()=>{const c=getComputedStyle(document.activeElement);return {role:document.activeElement.getAttribute("role"),style:c.outlineStyle,w:parseFloat(c.outlineWidth)}})()`);
+  assert.equal(ring.role, "tab");
+  assert.ok(ring.style !== "none" && ring.w >= 2, "a visible focus ring on the focused tab");
+  // From 768 up nothing changed: the strip keeps its old settings.
+  await setWidth(768, 900);
+  assert.equal(await ev(`getComputedStyle(${TABBAR}).overflowY`), "auto", "768 and wider is untouched");
+  await setWidth(1440, 900);
+});
+
+test("the Tables preview is a compact list on a phone: name with usage, role with status, email under them, 44px rows, hairlines, real buttons", async () => {
+  await fresh("/app");
+  for (const width of [360, 390, 767]) {
+    await setWidth(width, 844);
+    await click(previewTab("Tables"));
+    const m = await ev(`(()=>{const t=${tabPanel};const table=t.querySelector("table");const rows=[...table.querySelectorAll("tbody tr")];const rect=(e)=>e.getBoundingClientRect();
+      const info=rows.map((r,i)=>{const c=(n)=>r.querySelector('[data-cell="'+n+'"]');const rr=rect(r);return {h:Math.round(rr.height),border:getComputedStyle(r).borderTopWidth,line1:[c("name"),c("role"),c("usage")].map(e=>Math.round(rect(e).top)),email:Math.round(rect(c("email")).top),status:Math.round(rect(c("status")).top),btn:[Math.round(rect(c("actions").querySelector("button")).width),Math.round(rect(c("actions").querySelector("button")).height)],emailRight:Math.round(rect(c("email")).right),tableRight:Math.round(rect(table).right),name:c("name").textContent,nameClip:c("name").scrollWidth>c("name").clientWidth+1,noOverlap:rect(c("name")).right<=rect(c("usage")).left+1&&rect(c("role")).right<=rect(c("status")).left+1&&rect(c("usage")).right<=rect(c("actions").querySelector("button")).left+1&&rect(c("status")).right<=rect(c("actions").querySelector("button")).left+1}});
+      const wrap=t.querySelector(".pvx-table-wrap");const th=[...table.querySelectorAll("thead th")];
+      return {rows:info,wrapScroll:wrap.scrollWidth,wrapClient:wrap.clientWidth,hint:/Swipe sideways/.test(document.querySelector('[aria-label="Live preview"]').innerText),th:th.length,thHidden:rect(table.querySelector("thead")).height<=1,isTable:table.tagName,cols:th.map(x=>x.textContent.trim()),panel:[t.scrollWidth,t.clientWidth]}})()`);
+    assert.equal(m.rows.length, 5, `${width}: five rows`);
+    assert.ok(m.wrapScroll <= m.wrapClient + 1, `${width}: the table fits its frame, no sideways scroll (${m.wrapScroll} in ${m.wrapClient})`);
+    assert.equal(m.hint, false, `${width}: so no sideways hint`);
+    assert.ok(m.panel[0] <= m.panel[1] + 1, `${width}: the preview does not scroll sideways`);
+    assert.equal(m.th, 6, "the header row is still there for screen readers");
+    assert.equal(m.thHidden, true, `${width}: and hidden visually (every row carries its own values)`);
+    m.rows.forEach((r, i) => {
+      assert.ok(r.h >= 44, `${width}: row ${i + 1} is ${r.h}px high`);
+      assert.equal(r.border, i === 0 ? "0px" : "1px", `${width}: row ${i + 1} hairline`);
+      assert.ok(Math.abs(r.line1[0] - r.line1[2]) <= 8, `${width}: ${r.name}: name and usage share the first line (${r.line1.join(", ")})`);
+      assert.ok(r.line1[1] > r.line1[0] + 8, `${width}: ${r.name}: the role is on the line under the name`);
+      assert.ok(Math.abs(r.status - r.line1[1]) <= 12, `${width}: ${r.name}: the status badge is on the role line`);
+      assert.ok(r.email > r.line1[1] + 12, `${width}: ${r.name}: the email is stacked under them`);
+      assert.ok(r.nameClip === false, `${width}: ${r.name}: the name is not cut off`);
+      assert.ok(r.noOverlap, `${width}: ${r.name}: nothing overlaps nothing`);
+      assert.deepEqual(r.btn, [44, 44], `${width}: the actions button is 44x44`);
+      assert.ok(r.emailRight <= r.tableRight + 1, `${width}: the email stays inside the row`);
+    });
+    // The real controls still work: the actions button takes focus and a click, and Next and Previous are real buttons.
+    await click(`${tabPanel}.querySelector('button[aria-label="More actions for Alex Morgan"]')`);
+    assert.equal(await ev(`document.activeElement.getAttribute("aria-label")`), "More actions for Alex Morgan");
+    await assertNoSidewaysScroll(`phone Tables ${width}`);
+  }
+  // 768 and wider is the old table: six columns in one row.
+  await setWidth(768, 900);
+  assert.equal(await ev(`getComputedStyle(${tabPanel}.querySelector("tbody tr")).display`), "table-row", "768: the table is a table again");
+  await setWidth(1440, 900);
+});
+
+test("every preview tab is free of sideways overflow at 360 and 390", async () => {
+  await fresh("/app");
+  for (const width of [360, 390]) {
+    await setWidth(width, 844);
+    for (const tab of ["Pricing", "Buttons and states", "Forms", "Tables", "Dashboard", "Charts"]) {
+      await click(previewTab(tab));
+      await assertNoSidewaysScroll(`${width} ${tab}`);
+    }
+  }
 });
 
 test("below 768 the file starts clipped to about one screen (70vh) with a fade and a real Show the whole file button (Rendered and Raw)", async () => {

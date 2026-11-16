@@ -51,6 +51,17 @@ export function LandingShell({ initial, children }: { initial: DemoView; childre
     readTheme,
     () => null,
   );
+  // Keep <html> in step with the choice (the page's CSS reads it there; the head script set it before the first paint).
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme) {
+      root.dataset.theme = theme;
+      root.style.colorScheme = theme;
+    } else {
+      delete root.dataset.theme;
+      root.style.removeProperty("color-scheme");
+    }
+  }, [theme]);
   const toggleTheme = useCallback(() => {
     const effective = readTheme() ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     try {

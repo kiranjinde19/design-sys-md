@@ -87,7 +87,11 @@ export function Preview({ height }: { height: number }) {
             role="tab"
             type="button"
             aria-selected={name === tab}
-            onClick={() => setTab(name)}
+            onClick={(event) => {
+              setTab(name);
+              // On a phone the strip scrolls: bring the tapped tab into view once, only as far as needed.
+              if (window.matchMedia("(max-width: 767px)").matches) event.currentTarget.scrollIntoView({ inline: "nearest", block: "nearest" });
+            }}
             className={cn(
               "-mb-px h-10 shrink-0 border-b-2 px-3 text-sm font-medium leading-5 whitespace-nowrap",
               name === tab ? "border-[var(--t-brand-600)] text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",

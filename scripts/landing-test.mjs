@@ -440,3 +440,36 @@ test("the first load stays light: the engine loads after the page, fonts come fr
   assert.ok(res.some((n) => /\/_next\/static\/media\/.*\.woff2/.test(n)), "fonts are self hosted by next/font");
   assert.equal(await ev(`document.querySelector(".pl").dataset.engine`), "ready");
 });
+
+test("no theme flash: the saved choice is applied before the first paint, even when it differs from the system setting", async () => {
+  const LIGHT = "rgb(245, 246, 247)";
+  const DARK = "rgb(10, 10, 11)";
+  // The tiny script is inline, under 300 bytes, and the only script in <head>.
+  const html = await (await fetch(state.baseUrl + "/")).text();
+  const head = html.slice(0, html.indexOf("</head>"));
+  const inline = [...head.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]).filter((code) => code.includes("design-sys-md:tool-theme"));
+  assert.equal(inline.length, 1, "one inline theme script in the head");
+  assert.ok(Buffer.byteLength(inline[0]) < 300, `the script is ${Buffer.byteLength(inline[0])} bytes`);
+  // For every mix of saved choice and system setting: every frame painted while the page loads has the right colors.
+  for (const [saved, system] of [["dark", "light"], ["light", "dark"], [null, "dark"], [null, "light"], ["dark", "dark"]]) {
+    await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }, { name: "prefers-color-scheme", value: system }] });
+    await navigate(state.baseUrl + "/favicon.ico", null);
+    await ev(`localStorage.clear();${saved ? `localStorage.setItem("design-sys-md:tool-theme","${saved}")` : ""}`);
+    // From the first moment of the next page, note the page's background on every animation frame (each one is a paint).
+    const { identifier } = await send("Page.addScriptToEvaluateOnNewDocument", {
+      source: `window.__frames=[];(function f(){var el=document.querySelector(".pl");if(el)window.__frames.push(getComputedStyle(el).backgroundColor);if(document.readyState!=="complete"||window.__frames.length<8)requestAnimationFrame(f)})()`,
+    });
+    try {
+      await navigate(state.baseUrl + "/", LANDING_READY);
+      const frames = await ev(`window.__frames`);
+      const expected = (saved ?? system) === "dark" ? DARK : LIGHT;
+      assert.ok(frames.length >= 3, `frames were observed (${frames.length})`);
+      assert.deepEqual([...new Set(frames)], [expected], `saved ${saved}, system ${system}: every frame is ${expected === DARK ? "dark" : "light"}`);
+      assert.equal(await ev(`document.querySelector(".pl").dataset.theme ?? null`), saved, "React agrees with the script");
+      assert.equal(await ev(`document.documentElement.dataset.theme ?? null`), saved);
+    } finally {
+      await send("Page.removeScriptToEvaluateOnNewDocument", { identifier });
+    }
+  }
+  await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "no-preference" }, { name: "prefers-color-scheme", value: "light" }] });
+});

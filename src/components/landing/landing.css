@@ -27,8 +27,10 @@
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   text-align: left;
 }
+/* The theme is read from the <html> element, where a tiny script in <head> sets the saved choice before the first paint
+   (see the site layout). With no saved choice the system setting decides. */
 @media (prefers-color-scheme: dark) {
-  .pl:not([data-theme="light"]) {
+  :root:not([data-theme]) .pl {
     --bg: #0a0a0b;
     --surface: #131315;
     --ink: #f3f3f5;
@@ -38,7 +40,7 @@
     color-scheme: dark;
   }
 }
-.pl[data-theme="dark"] {
+:root[data-theme="dark"] .pl {
   --bg: #0a0a0b;
   --surface: #131315;
   --ink: #f3f3f5;
@@ -859,11 +861,11 @@
   justify-content: space-between;
   gap: 8px;
 }
-.pl[data-theme="dark"] .v-lab {
+:root[data-theme="dark"] .pl .v-lab {
   color: #9c9ca5;
 }
 @media (prefers-color-scheme: dark) {
-  .pl:not([data-theme="light"]) .v-lab {
+  :root:not([data-theme]) .pl .v-lab {
     color: #9c9ca5;
   }
 }

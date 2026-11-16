@@ -16,7 +16,10 @@ const PEOPLE = [
 
 const Dots = () => <PvIcon icon={Ellipsis} />;
 
-/** A "Team members" card with a table, drawn with the skill file's own classes. */
+/**
+ * A "Team members" card with a table, drawn with the skill file's own classes. Below 768px the same table (same cells, same
+ * buttons) is drawn compactly by CSS in extra-css.ts: name, role and usage on one line, email and status stacked under it.
+ */
 export function TablesTab() {
   const copy = useVoiceCopy();
   return (
@@ -26,13 +29,13 @@ export function TablesTab() {
         <p>People with access to this workspace. Sample content.</p>
       </div>
 
-      <div className="card">
+      <div className="card pvx-team-card">
         <div className="pvx-card-head">
           <h2>Team members</h2>
           <p className="pvx-note">Usage is requests this month.</p>
         </div>
         <ScrollFrame className="pvx-table-wrap">
-          <table className="table">
+          <table className="table pvx-team">
             <thead>
               <tr>
                 <th scope="col">Name</th>
@@ -50,14 +53,14 @@ export function TablesTab() {
             <tbody>
               {PEOPLE.map((person) => (
                 <tr key={person.email}>
-                  <td>{person.name}</td>
-                  <td>{person.email}</td>
-                  <td>{person.role}</td>
-                  <td>
+                  <td data-cell="name">{person.name}</td>
+                  <td data-cell="email">{person.email}</td>
+                  <td data-cell="role">{person.role}</td>
+                  <td data-cell="status">
                     <span className={`badge${person.active ? " tone-success" : ""}`}>{person.active ? "Active" : "Invited"}</span>
                   </td>
-                  <td className="num">{person.usage}</td>
-                  <td>
+                  <td className="num" data-cell="usage">{person.usage}</td>
+                  <td data-cell="actions">
                     <button type="button" className="btn btn--tertiary btn--sm pvx-icon" aria-label={`More actions for ${person.name}`} style={{ width: "var(--control-h-sm)", padding: 0 }}>
                       <Dots />
                     </button>

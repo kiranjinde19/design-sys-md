@@ -140,6 +140,19 @@
   display: none;
 }
 
+/* Phones: a tab strip scrolls sideways and only sideways. Its content is a pixel taller than its box (the active underline
+   overlaps the border), and overflow-x: auto turns the other axis into auto too, so a finger on the strip could drag it up and
+   down by that pixel and bounce. Hiding the vertical axis keeps the strip still; the page still scrolls from a vertical swipe,
+   and a sideways swipe never chains into the browser's back gesture. */
+@media (max-width: 767px) {
+  .tool-tabs {
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tool-tile,
   .tool-item,
