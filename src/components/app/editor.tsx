@@ -135,7 +135,8 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-4 xl:h-[810px] xl:w-auto xl:flex-[0_0_auto] xl:flex-row xl:gap-6">
-      <nav ref={list} aria-label="Design systems" className="tool-tabs relative -mx-1 flex shrink-0 gap-2 overflow-x-auto px-1 py-2 xl:mx-0 xl:w-56 xl:flex-col xl:overflow-visible xl:p-0">
+      <div className="flex min-w-0 shrink-0 flex-col gap-2 xl:w-56">
+      <nav ref={list} aria-label="Design systems" className="tool-tabs relative -mx-1 flex shrink-0 gap-2 overflow-x-auto px-1 py-2 xl:mx-0 xl:w-full xl:flex-col xl:overflow-visible xl:p-0">
         {SYSTEMS.map((item, itemIndex) => {
           const done = reviewed.includes(item.id);
           return (
@@ -148,15 +149,17 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
             </button>
           );
         })}
-        {isModified ? (
-          <div className="flex shrink-0 flex-col gap-1 xl:mt-2">
-            <span className="text-xs leading-4 text-muted-foreground">{PRESETS[presetId].name}, edited</span>
-            <button type="button" onClick={reset} className="tool-link h-8 self-start rounded-[10px] px-3 text-sm leading-5">
-              Reset to {PRESETS[presetId].name}
-            </button>
-          </div>
-        ) : null}
       </nav>
+      {isModified ? (
+        // Its own row under the step list (never inside the scrolling strip): status on the left, Reset after it.
+        <div data-edited-row className="flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-1 xl:min-h-0 xl:flex-col xl:items-start xl:justify-start xl:gap-1">
+          <span className="text-xs leading-4 text-muted-foreground">{PRESETS[presetId].name}, edited</span>
+          <button type="button" onClick={reset} className="tool-link inline-flex h-11 items-center rounded-[10px] px-3 text-sm leading-5 xl:h-8 xl:px-0">
+            Reset to {PRESETS[presetId].name}
+          </button>
+        </div>
+      ) : null}
+      </div>
 
       <section aria-labelledby="editor-title" className="tool-panel flex h-[min(810px,85vh)] min-h-[520px] w-full shrink-0 flex-col gap-4 p-4 max-md:h-auto max-md:min-h-0 md:p-6 xl:h-auto xl:min-h-0 xl:w-[400px]">
         <header className="flex items-start justify-between gap-3">
@@ -173,10 +176,7 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
         <div data-role-scroll className="@container relative min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable] max-md:overflow-visible max-md:pr-0">
           <EditorBody id={openId} />
         </div>
-        <footer className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 pt-2">
-          <button type="button" onClick={onClose} className="tool-link inline-flex h-10 items-center rounded-[10px] px-4 text-base leading-6 whitespace-nowrap">
-            Back to board
-          </button>
+        <footer className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 pt-2">
           <div className="flex gap-2">
             {previous ? (
               <button type="button" onClick={() => onOpen(previous.id)} className="tool-link inline-flex h-10 items-center rounded-[10px] px-4 text-base leading-6">

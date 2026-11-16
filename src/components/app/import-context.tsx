@@ -41,7 +41,6 @@ export function ImportProvider({ children }: { children: ReactNode }) {
   const importFile = useCallback(
     async (file: File | undefined) => {
       if (!file) return;
-      if (input.current) input.current.value = "";
       if (!MARKDOWN_NAME.test(file.name) && !file.type.startsWith("text/")) {
         setStatus({ ok: false, fileName: file.name, text: "This is not a Markdown file. Choose a .md file exported from Plinth (SKILL.md or AGENTS.md)." });
         return;
@@ -52,6 +51,10 @@ export function ImportProvider({ children }: { children: ReactNode }) {
       } catch {
         setStatus({ ok: false, fileName: file.name, text: "The file could not be read. Try choosing it again." });
         return;
+      } finally {
+        // Cleared only after the file is read (some phone browsers drop the file when the input is cleared first),
+        // so choosing the same file again still fires a change.
+        if (input.current) input.current.value = "";
       }
       if (text.trim() === "") {
         setStatus({ ok: false, fileName: file.name, text: "The file is empty." });
@@ -84,7 +87,7 @@ export function ImportProvider({ children }: { children: ReactNode }) {
         ref={input}
         type="file"
         aria-label="Import a previous file"
-        accept=".md,.markdown,.txt,text/markdown,text/plain"
+        accept="text/markdown,text/plain,.md,.markdown,.txt"
         className="sr-only"
         tabIndex={-1}
         data-imports={finished}

@@ -11,13 +11,13 @@ import assert from "node:assert/strict";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ev, fresh as freshPage, importFile, navigate, send, settle, setWidth, start, state, stop, waitFor } from "./lib/cdp.mjs";
+import { ev, fresh as freshPage, importFile, navigate, onEvent, send, settle, setWidth, start, state, stop, waitFor } from "./lib/cdp.mjs";
 
 const work = mkdtempSync(join(tmpdir(), "export-test-"));
 const downloads = join(work, "downloads");
 const baseUrl = () => state.baseUrl;
 /** Clean browser state, theme chosen, then the page. */
-const fresh = (path = "/app/export", theme = "light") => freshPage(path, { theme });
+const fresh = (path = "/app/export", theme = "light", editor = null) => freshPage(path, { theme, editor });
 /** Loads a page again (a reload keeps the saved work). */
 const open = (path) => navigate(baseUrl() + path);
 
@@ -235,7 +235,7 @@ test("the starter prompt appears after a download, names the right file and fold
   await click(byText("button", "Copy prompt"));
   assert.equal(await ev(`navigator.clipboard.readText()`), await ev(`document.querySelector("[data-prompt-text]").textContent`));
   assert.equal(await ev(`${byText("button", "Copied")}?.textContent.trim()`), "Copied");
-  assert.match(await ev(`document.querySelector("[data-starter-prompt] [role=status]").textContent`), /Copied the starter prompt/);
+  assert.match(await ev(`document.querySelector("[data-prompt-status]").textContent`), /Copied the starter prompt/);
 });
 
 test("tokens.css and tokens.json download next to the file, with the same values as the file", async () => {
@@ -577,4 +577,136 @@ test("the tool's own chrome colors stay identical across five brands, light and 
       assert.equal(await read(), baseline, `${theme}: the chrome is identical with ${brand}`);
     }
   }
+});
+
+// ---------------------------------------------------------------------------------------------- phone fixes
+
+/** Types like a person: one character group at a time into the focused field (no select all). */
+async function typeMore(text) {
+  await send("Input.insertText", { text });
+  await settle();
+}
+
+test("Product name and line keep spaces while typing, and the file holds the trimmed text", async () => {
+  await fresh();
+  await click("#product-name");
+  await ev(`document.querySelector("#product-name").select()`);
+  await typeMore("Acme");
+  await typeMore(" ");
+  assert.equal(await ev(`document.querySelector("#product-name").value`), "Acme ", "a trailing space stays while typing");
+  await typeMore("Billing");
+  assert.equal(await ev(`document.querySelector("#product-name").value`), "Acme Billing", "a space between words stays");
+  await typeMore("  Co ");
+  assert.equal(await ev(`document.querySelector("#product-name").value`), "Acme Billing  Co ", "the field shows exactly what was typed while focused");
+  // Same for the line.
+  await click("#product-line");
+  await ev(`document.querySelector("#product-line").select()`);
+  await typeMore("Billing for");
+  await typeMore(" small teams. ");
+  assert.equal(await ev(`document.querySelector("#product-line").value`), "Billing for small teams. ");
+  // Leaving the field shows the cleaned value, and the exported file has the trimmed text.
+  await click("#product-name");
+  await click("h1");
+  assert.equal(await ev(`document.querySelector("#product-name").value`), "Acme Billing Co");
+  assert.equal(await ev(`document.querySelector("#product-line").value`), "Billing for small teams.");
+  const raw = await rawText();
+  assert.match(raw, /"name":"Acme Billing Co"/);
+  assert.match(raw, /Billing for small teams\./);
+  assert.ok(!/Billing for small teams\. /.test(raw.split("\n").slice(0, 8).join("\n")), "no trailing space in the header text");
+});
+
+test("Copy prompt: the clipboard API, then the older way, then a selectable prompt with Press and hold to copy", async () => {
+  await fresh();
+  await download("html-css", "skill");
+  await waitFor(`!!document.querySelector("[data-starter-prompt]")`, { label: "the starter prompt" });
+  const promptText = () => ev(`document.querySelector("[data-prompt-text]").textContent`);
+  // 1. The Clipboard API is missing: the hidden textarea way copies for real.
+  await ev(`Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true }); window.__legacy = 0; const o = document.execCommand.bind(document); document.execCommand = (c) => { window.__legacy++; return o(c); };`);
+  await click(byText("button", "Copy prompt"));
+  assert.equal(await ev(`window.__legacy`), 1, "the older copy was used");
+  assert.equal(await ev(`!!${byText("button", "Copied")}`), true, "Copied is shown after a real copy");
+  assert.equal(await ev(`document.querySelector("[data-starter-prompt] [role=status]").textContent`), "Copied");
+  assert.equal(await ev(`document.querySelectorAll("textarea").length`), 0, "the hidden textarea is removed");
+  // 2. Both fail: no false Copied, the prompt is selected, and the words tell what to do.
+  await ev(`document.execCommand = () => false`);
+  await click(`document.querySelector("[data-starter-prompt] button")`);
+  assert.equal(await ev(`!!${byText("button", "Copied")}`), false, "no Copied when the copy failed");
+  assert.equal(await ev(`document.querySelector("[data-prompt-status]").textContent`), "Press and hold to copy");
+  assert.equal(await ev(`getSelection().toString()`), await promptText(), "the whole prompt is selected");
+  assert.match(await ev(`document.querySelector("[data-starter-prompt] [role=status]").textContent`), /Copy failed/);
+  assert.equal(await ev(`document.querySelector("[data-starter-prompt] [role=status]").getAttribute("aria-live")`), "polite");
+});
+
+test("Import file works from the desktop bar and the phone More menu, and restores what was exported", async () => {
+  await fresh();
+  await type("#product-name", "Acme Billing");
+  await type("#product-line", "Billing software for small teams.");
+  await chooseStack("react-tailwind");
+  const exported = await download("react-tailwind", "skill");
+  await send("Page.setInterceptFileChooserDialog", { enabled: true });
+  let opened = 0;
+  const stopListening = onEvent((method) => {
+    if (method === "Page.fileChooserOpened") opened++;
+  });
+  try {
+    // Desktop: the bar button opens the chooser.
+    await fresh("/app");
+    await click(byText("header button", "Import file"));
+    await waitFor(() => opened === 1, { label: "the file chooser from the desktop button" });
+    // Phone: More, then Import file, opens the chooser too.
+    await setWidth(390, 844);
+    await click(byText("header button", "More"));
+    await click(byText("[role=menuitem]", "Import file"));
+    await waitFor(() => opened === 2, { label: "the file chooser from the More menu" });
+    // The input accepts markdown by type and by extension.
+    const accept = await ev(`document.querySelector("input[type=file]").accept`);
+    assert.match(accept, /text\/markdown/);
+    assert.match(accept, /\.md/);
+    // Choosing the exported file restores it: a new export is identical, and the banner says so.
+    await importPath(tmpFile("SKILL.md", exported.content));
+    assert.match(await statusText(), /Restored SaaS Clean/);
+    await open("/app/export");
+    await setWidth(1440, 1000);
+    const again = await download("react-tailwind", "skill");
+    assert.equal(again.content, exported.content, "the imported file exports identically");
+    assert.equal(await ev(`document.querySelector("#product-name").value`), "Acme Billing");
+    // An invalid file says what is wrong.
+    await importPath(tmpFile("notes.md", "# Just notes\n"));
+    assert.match(await statusText(), /No data block found/);
+  } finally {
+    stopListening();
+    await send("Page.setInterceptFileChooserDialog", { enabled: false });
+  }
+});
+
+test("Back to board appears once in every step, the edited row sits under the step list, and Previous and Next stay", async () => {
+  const steps = ["colors", "typography", "radius", "spacing", "borders", "shadows", "buttons", "signature", "voice"];
+  for (const width of [1440, 390]) {
+    await setWidth(width, 900);
+    await fresh("/app", "light", "colors");
+    await waitFor(`!!document.querySelector("input[aria-label='Brand color hex code']")`, { label: "the Colors editor" });
+    // Make an edit so the edited row shows.
+    await ev(`(()=>{const i=document.querySelector("input[aria-label='Brand color hex code']");const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;set.call(i,"#0D9488");i.dispatchEvent(new Event("input",{bubbles:true}))})()`);
+    await settle();
+    for (let n = 0; n < steps.length; n++) {
+      const count = await ev(`[...document.querySelectorAll("button")].filter(b=>b.textContent.trim()==="Back to board").length`);
+      assert.equal(count, 1, `one Back to board in step ${n + 1} at ${width}px`);
+      const footer = await ev(`[...document.querySelectorAll("section[aria-labelledby=editor-title] footer button")].map(b=>b.textContent.trim().split(":")[0])`);
+      assert.deepEqual(footer, n === 0 ? ["Next"] : n === steps.length - 1 ? ["Previous", "Finish"] : ["Previous", "Next"], `footer buttons in step ${n + 1} at ${width}px`);
+      if (n < steps.length - 1) await click(byText("section[aria-labelledby=editor-title] footer button", "Next"));
+    }
+    // The edited row: its own row, outside the scrolling strip, left aligned with the step cards on desktop.
+    const g = await ev(`(()=>{const nav=document.querySelector("nav[aria-label='Design systems']");const row=document.querySelector("[data-edited-row]");const btn=row.querySelector("button");const label=row.querySelector("span");const r=(e)=>e.getBoundingClientRect();return {inNav:nav.contains(row),rowTop:r(row).top,navBottom:r(nav).bottom,navLeft:r(nav.querySelector("button")).left,labelLeft:r(label).left,btnLeft:r(btn).left,btnH:r(btn).height,rowW:r(row).width,navW:r(nav).width,sx:document.documentElement.scrollWidth-document.documentElement.clientWidth}})()`);
+    assert.equal(g.inNav, false, `the edited row is not inside the scrolling strip at ${width}px`);
+    assert.ok(g.rowTop >= g.navBottom - 1, `the edited row sits below the step list at ${width}px`);
+    assert.ok(g.btnH >= 44 || width > 768, "the Reset button is 44px high on phones");
+    assert.equal(g.sx, 0, "no sideways page scroll");
+    if (width === 1440) {
+      assert.ok(Math.abs(g.labelLeft - g.navLeft) <= 1 && Math.abs(g.btnLeft - g.navLeft) <= 1, `the status and Reset line up with the step cards (${g.labelLeft}, ${g.btnLeft}, ${g.navLeft})`);
+    } else {
+      assert.ok(g.rowW >= g.navW - 40, "the row is full width on a phone");
+      assert.ok(await ev(`document.querySelector("nav[aria-label='Design systems']").scrollWidth > document.querySelector("nav[aria-label='Design systems']").clientWidth`), "the tab strip still scrolls sideways");
+    }
+  }
+  await setWidth(1440, 1000);
 });

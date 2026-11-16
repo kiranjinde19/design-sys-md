@@ -6,6 +6,8 @@ import { Segmented } from "@/components/controls/controls";
 import { useImport } from "@/components/app/import-context";
 import { STACK_IDS, fileSections, generateSkillFile, generateTokenFiles, kib, starterPrompt, useDesignSystem, type StackId } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
+import { copyText } from "@/lib/copy-text";
+import { DraftInput } from "./draft-input";
 import { FilePreview } from "./file-preview";
 import { InstallSteps } from "./install-steps";
 import { SizeMeter } from "./size-meter";
@@ -71,22 +73,28 @@ export function ExportScreen() {
   const prompt = starterPrompt(file, generated.slug);
 
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied({ ok: true, text: `Copied ${fileName} to the clipboard.` });
-    } catch {
-      setCopied({ ok: false, text: "Copying was blocked by the browser. Use Download instead." });
-    }
+    const ok = await copyText(text);
+    setCopied(ok ? { ok: true, text: `Copied ${fileName} to the clipboard.` } : { ok: false, text: "Copying was blocked by the browser. Use Download instead." });
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setCopied(null), 2500);
   };
 
+  const promptBox = useRef<HTMLPreElement>(null);
   const copyPrompt = async () => {
-    try {
-      await navigator.clipboard.writeText(prompt);
+    const ok = await copyText(prompt);
+    if (ok) {
       setPromptCopied({ ok: true, text: "Copied the starter prompt to the clipboard." });
-    } catch {
-      setPromptCopied({ ok: false, text: "Copying was blocked by the browser. Select the text and copy it." });
+      return;
+    }
+    // Both ways failed: select the prompt so it can be copied by hand.
+    setPromptCopied({ ok: false, text: "Press and hold to copy" });
+    const box = promptBox.current;
+    if (box) {
+      const range = document.createRange();
+      range.selectNodeContents(box);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
     }
   };
 
@@ -115,21 +123,20 @@ export function ExportScreen() {
               <label htmlFor="product-name" className="text-sm font-medium leading-5">
                 Product name
               </label>
-              <input id="product-name" type="text" value={project.name} maxLength={60} placeholder="Acme Billing" className={INPUT} onChange={(event) => update({ project: { name: event.target.value } })} />
+              <DraftInput id="product-name" value={project.name} maxLength={60} placeholder="Acme Billing" className={INPUT} onValue={(name) => update({ project: { name } })} />
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="product-line" className="text-sm font-medium leading-5">
                 One line about the product
               </label>
-              <input
+              <DraftInput
                 id="product-line"
-                type="text"
                 value={project.description}
                 maxLength={200}
                 placeholder="Billing software for small teams."
                 aria-describedby="product-line-help"
                 className={INPUT}
-                onChange={(event) => update({ project: { description: event.target.value } })}
+                onValue={(description) => update({ project: { description } })}
               />
               <p id="product-line-help" className="text-sm leading-5 text-muted-foreground">
                 Optional. If you leave it empty, it is left out of the file.
@@ -199,7 +206,7 @@ export function ExportScreen() {
                 <p className="text-sm leading-5 text-muted-foreground">
                   Paste this into {file === "skill" ? "Claude Code" : "Codex"} once the file is in place, and say what you want built.
                 </p>
-                <pre className="whitespace-pre-wrap rounded-[5px] bg-muted p-3 font-mono text-sm leading-5 [overflow-wrap:anywhere]" data-prompt-text>
+                <pre ref={promptBox} className="select-all whitespace-pre-wrap rounded-[5px] bg-muted p-3 font-mono text-sm leading-5 [overflow-wrap:anywhere]" data-prompt-text>
                   {prompt}
                 </pre>
                 <div className="flex flex-wrap items-center gap-2">
@@ -208,9 +215,13 @@ export function ExportScreen() {
                     {promptCopied?.ok ? "Copied" : "Copy prompt"}
                   </button>
                 </div>
-                <p role="status" aria-live="polite" className="text-sm leading-5 text-muted-foreground empty:hidden">
+                <p data-prompt-status className={cn("text-sm leading-5 empty:hidden", promptCopied && !promptCopied.ok ? "font-medium text-[var(--t-error-700)]" : "text-muted-foreground")}>
                   {promptCopied?.text}
                 </p>
+                {/* Always present, so a screen reader announces the result. */}
+                <span role="status" aria-live="polite" className="sr-only">
+                  {promptCopied?.ok ? "Copied" : promptCopied ? "Copy failed. Press and hold the prompt to copy it." : ""}
+                </span>
               </div>
             ) : null}
             <p className="text-sm leading-5" data-skill-size>
