@@ -27,6 +27,8 @@ const STEPS = [
   { name: "round trip", files: ["scripts/roundtrip-test.mjs"], browser: false },
   { name: "plain HTML recipes", files: ["scripts/plain-html-test.mjs"], browser: false },
   { name: "landing page", files: ["scripts/landing-test.mjs"], browser: true },
+  { name: "404, error pages and SEO", files: ["scripts/site-test.mjs"], browser: true },
+  { name: "privacy (nothing leaves the site)", files: ["scripts/privacy-test.mjs"], browser: true },
   { name: "Export screen", files: ["scripts/export-test.mjs"], browser: true },
   { name: "live behavior", files: ["scripts/live-behavior-test.mjs"], browser: true },
   { name: "responsive (quick checks)", files: ["scripts/responsive-test.mjs"], browser: true, skip: SLOW_RESPONSIVE },
@@ -63,7 +65,7 @@ async function ensureServer() {
   }
   if (!existsSync(".next/BUILD_ID")) throw new Error("There is no production build. Run `npm run build` first.");
   if (await reachable("http://localhost:3123/app")) throw new Error("Port 3123 is already in use. Stop that server, or set LIVE_URL to use it.");
-  server = spawn("npx", ["next", "start", "-p", "3123"], { stdio: "ignore" });
+  server = spawn("npx", ["next", "start", "-p", "3123"], { stdio: "ignore", env: { ...process.env, PLINTH_TEST_ROUTES: "1" } });
   for (let i = 0; i < 60 && !(await reachable("http://localhost:3123/app")); i++) await sleep(500);
   if (!(await reachable("http://localhost:3123/app"))) throw new Error("`next start` did not come up on port 3123.");
   process.env.LIVE_URL = "http://localhost:3123";

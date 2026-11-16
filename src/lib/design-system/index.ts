@@ -35,6 +35,7 @@ export {
   type BodyRecommendation,
 } from "./font-pairings";
 export { buildFontsUrl, selectedFontsUrl, fontNamesUrl, galleryFontsUrl, type FontRequest } from "./font-loading";
+export { fontStylesheet, selectedFontStylesheets, slugOfFont, FONT_NAMES_STYLESHEET, FONT_GALLERY_STYLESHEET } from "./font-hosting";
 export { generateRadius, radiusLabel } from "./radius";
 export { generateSpacing } from "./spacing";
 export { generateBorders } from "./borders";

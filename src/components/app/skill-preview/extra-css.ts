@@ -127,7 +127,7 @@ export const EXTRA_CSS = `
   .pvx-team td[data-cell="usage"] { grid-area: usage; justify-self: end; }
   .pvx-team td[data-cell="role"] { grid-area: role; font-size: var(--text-sm); line-height: var(--leading-sm); color: var(--muted-foreground); }
   .pvx-team td[data-cell="status"] { grid-area: status; justify-self: start; }
-  .pvx-team td[data-cell="email"] { grid-area: email; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); line-height: var(--leading-sm); color: var(--muted-foreground); }
+  .pvx-team td[data-cell="email"] { grid-area: email; white-space: normal; overflow-wrap: anywhere; font-size: var(--text-sm); line-height: var(--leading-sm); color: var(--muted-foreground); }
   .pvx-team td[data-cell="actions"] { position: absolute; top: 50%; right: var(--space-1); transform: translateY(-50%); }
   .pvx-team td[data-cell="actions"] .btn { width: 44px !important; height: 44px; }
 }

@@ -12,7 +12,7 @@ import {
   useDesignSystem,
 } from "@/lib/design-system";
 import { Section } from "@/components/controls/section";
-import { nameFamily } from "./google-fonts";
+import { nameFamily } from "./hosted-fonts";
 import { FontPicker } from "./font-picker";
 import { PairingGallery } from "./pairing-gallery";
 

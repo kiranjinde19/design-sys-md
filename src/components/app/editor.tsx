@@ -78,7 +78,7 @@ function ColorsWithRoles() {
   );
 }
 
-/** The controls for one system. Every one of these is shared with /debug. */
+/** The controls for one system. Controls live in src/components/controls and are written once. */
 function EditorBody({ id }: { id: SystemId }) {
   switch (id) {
     case "colors":

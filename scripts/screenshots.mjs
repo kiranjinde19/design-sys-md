@@ -1,5 +1,5 @@
 /**
- * Takes the responsive screenshots: the board, the Colors editor and the Export view at 1920, 1440, 1280, 1024, 768 and
+ * Takes the responsive screenshots: the landing page, the board, the Colors editor and the Export view at 1920, 1440, 1280, 1024, 768 and
  * 390 wide, in light and dark. A real headless Chrome, no extra packages.
  *
  *   node scripts/screenshots.mjs [outDir] [baseUrl]
@@ -13,7 +13,7 @@ import { join } from "node:path";
 const out = process.argv[2] ?? "design/screenshots/responsive";
 const base = process.argv[3] ?? "http://localhost:3000";
 const WIDTHS = [1920, 1440, 1280, 1024, 768, 390];
-const STATES = { board: "/app", editor: "/app", export: "/app/export" };
+const STATES = { landing: "/", board: "/app", editor: "/app", export: "/app/export" };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 mkdirSync(out, { recursive: true });
 
@@ -42,6 +42,8 @@ ws.onmessage = (e) => {
 const send = (method, params = {}) => new Promise((res) => { const i = ++id; pending.set(i, res); ws.send(JSON.stringify({ id: i, method, params })); });
 const ev = async (expression) => (await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true })).result?.value;
 await send("Page.enable");
+// Motion off, so the landing page demo and the loops are in their resting state in every picture.
+await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
 
 for (const theme of ["light", "dark"]) {
   for (const [state, path] of Object.entries(STATES)) {

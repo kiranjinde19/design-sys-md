@@ -2,7 +2,7 @@
 
 /**
  * Small building blocks for every editor: a labelled field, a slider, a row of choices and a color box.
- * Used by /debug and by the tool screen at /app, so a control is written once.
+ * Used by the tool screen at /app and the Export screen, so a control is written once.
  */
 
 import { useState, type ReactNode } from "react";

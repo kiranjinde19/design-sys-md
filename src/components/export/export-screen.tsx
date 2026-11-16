@@ -219,6 +219,10 @@ export function ExportScreen() {
 
       <InstallSteps slug={generated.slug} stack={project.stack} />
 
+      <p className="text-sm leading-5 text-muted-foreground" data-usage-note>
+        Your choices stay in your browser. Files you create with Plinth are yours to use in any project, personal or commercial, and no credit is needed. The open source fonts you choose keep their own licenses.
+      </p>
+
       <details className="tool-panel p-4">
         <summary className="cursor-pointer text-sm font-medium">Advanced: raw tokens (JSON)</summary>
         <pre className="mt-3 max-h-96 overflow-auto font-mono text-xs">{JSON.stringify(tokens, null, 2)}</pre>

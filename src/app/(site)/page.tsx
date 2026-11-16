@@ -7,7 +7,11 @@ import { DEMO_DEFAULT } from "@/components/landing/demo-constants";
 import { HowSteps } from "@/components/landing/how-steps";
 import { LandingShell } from "@/components/landing/landing-shell";
 import { ThemeToggle } from "@/components/landing/theme-toggle";
+import { baseMetadata } from "@/lib/site";
+import type { Metadata } from "next";
 import "@/components/landing/landing.css";
+
+export const metadata: Metadata = baseMetadata("Plinth", { path: "/" });
 
 const MARQUEE = [
   "Buttons",
@@ -93,7 +97,7 @@ export default function Home() {
           </Link>
           <nav aria-label="Main">
             <ThemeToggle />
-            <Link className="btn" href="/app">
+            <Link className="btn" href="/app" prefetch={false}>
               Open Plinth
             </Link>
           </nav>
@@ -109,7 +113,7 @@ export default function Home() {
                 Plinth turns your brand choices into one markdown file. <span>Claude Code, Codex and ChatGPT read it before they build, so your product looks like yours from the first screen.</span>
               </p>
               <div className="cta-row">
-                <Link className="btn big" href="/app">
+                <Link className="btn big" href="/app" prefetch={false}>
                   Build your brand file
                 </Link>
                 <span className="small">Free. No login. Runs in your browser.</span>
@@ -242,7 +246,7 @@ export default function Home() {
         <section className="close" aria-labelledby="close-t">
           <h2 id="close-t">Lay the first stone.</h2>
           <div className="cta-row">
-            <Link className="btn big" href="/app">
+            <Link className="btn big" href="/app" prefetch={false}>
               Open Plinth
             </Link>
             <span className="small">About ten minutes to a finished file.</span>

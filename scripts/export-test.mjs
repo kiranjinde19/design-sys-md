@@ -131,9 +131,9 @@ test("the top bar Export file opens /app/export with one primary button, and the
   assert.equal(await ev(`location.pathname`), "/app");
 });
 
-test("the old wizard pages are gone, the skill review pages stay", async () => {
-  for (const [path, expected] of [["/debug", 404], ["/debug/data", 404], ["/debug/skill", 200], ["/debug/skill/react-tailwind", 200], ["/debug/skill/html-css", 200]]) {
-    assert.equal((await fetch(baseUrl() + path)).status, expected, path);
+test("the debug and review pages are gone from the production app: they answer 404", async () => {
+  for (const path of ["/debug", "/debug/data", "/debug/skill", "/debug/skill/next-tailwind-shadcn", "/debug/skill/react-tailwind", "/debug/skill/html-css"]) {
+    assert.equal((await fetch(baseUrl() + path)).status, 404, path);
   }
 });
 

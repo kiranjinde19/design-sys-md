@@ -20,6 +20,12 @@ let ws = null;
 let chrome = null;
 let server = null;
 let nextId = 0;
+const eventListeners = new Set();
+/** Calls `listener(method, params)` for every DevTools event the page sends (network requests, console messages...). Returns a function that stops listening. */
+export function onEvent(listener) {
+  eventListeners.add(listener);
+  return () => eventListeners.delete(listener);
+}
 const pending = new Map();
 export const state = { baseUrl: process.env.LIVE_URL ?? "http://localhost:3000", scriptsDisabled: false };
 
@@ -90,7 +96,7 @@ export async function navigate(url, ready = APP_READY) {
 export async function start({ width = 1440, height = 1000, needsServer = true } = {}) {
   if (needsServer && !process.env.LIVE_URL && !(await reachable(state.baseUrl))) {
     state.baseUrl = "http://localhost:3123";
-    server = spawn("npx", ["next", "start", "-p", "3123"], { stdio: "ignore" });
+    server = spawn("npx", ["next", "start", "-p", "3123"], { stdio: "ignore", env: { ...process.env, PLINTH_TEST_ROUTES: "1" } });
     for (let i = 0; i < 60 && !(await reachable(state.baseUrl + "/app")); i++) await sleep(500);
   }
   if (needsServer && !(await reachable(state.baseUrl + "/app"))) throw new Error(`no server at ${state.baseUrl}`);
@@ -113,6 +119,8 @@ export async function start({ width = 1440, height = 1000, needsServer = true } 
     if (m.id && pending.has(m.id)) {
       pending.get(m.id)(m.result ?? m.error);
       pending.delete(m.id);
+    } else if (m.method) {
+      for (const listener of eventListeners) listener(m.method, m.params);
     }
   };
   await send("Page.enable");

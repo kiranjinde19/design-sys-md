@@ -2,7 +2,7 @@
 
 /**
  * One panel of controls per design system. Each panel reads and changes the design system through
- * useDesignSystem(), so /debug and the tool screen at /app share exactly the same logic.
+ * useDesignSystem(), so every screen of the tool shares exactly the same logic.
  * (Typography and Tone of voice have their own larger editors, see components/typography and components/voice.)
  */
 

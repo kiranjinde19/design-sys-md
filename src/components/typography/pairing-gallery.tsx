@@ -11,7 +11,7 @@ import {
   type FontPairing,
 } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
-import { galleryFamily, useGalleryFonts } from "./google-fonts";
+import { galleryFamily, useGalleryFonts } from "./hosted-fonts";
 
 export function PairingGallery({ onApply }: { onApply: () => void }) {
   useGalleryFonts();

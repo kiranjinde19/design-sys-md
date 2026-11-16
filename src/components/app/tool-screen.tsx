@@ -2,7 +2,7 @@
 
 import { ChevronLeft } from "lucide-react";
 import { PRESETS, SYSTEMS, useDesignSystem } from "@/lib/design-system";
-import { useSelectedFonts } from "@/components/typography/google-fonts";
+import { useSelectedFonts } from "@/components/typography/hosted-fonts";
 import { cn } from "@/lib/utils";
 import { Board } from "./board";
 import { Editor } from "./editor";

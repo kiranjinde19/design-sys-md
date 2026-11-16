@@ -2,7 +2,7 @@
 
 Plinth is a free web tool. You build your brand design system with sliders, pickers and drag and drop, then download one markdown file (`SKILL.md` for Claude Code, `AGENTS.md` for Codex and ChatGPT). Your AI coding tool reads it before it builds, so your product looks like yours from the first screen. Plinth builds your SKILL.md. (Earlier working name: Design Sys.md.)
 
-- No login, no backend, no database. Everything runs in the browser, and your work is saved in the browser.
+- No login, no backend, no database. Everything runs in the browser, and your work is saved in the browser. Your choices stay in your browser: the tool makes no request to any other site (the fonts for the previews are served from this app's own files), and a test checks it (`scripts/privacy-test.mjs`).
 - `/` is the landing page. `/app` is the tool. `/app/export` is the Export and Import screen.
 - Stack: Next.js (App Router), TypeScript, Tailwind CSS 4, shadcn/ui. Deployed on Vercel from GitHub.
 
@@ -32,7 +32,11 @@ The browser tests drive a real headless Chrome against a production build (run `
 
 ## Where things live
 
-- `src/app/(site)`: the landing page. `src/app/(tool)`: the tool and the review pages under `/debug`.
+- `src/app/(site)`: the landing page. `src/app/(tool)`: the tool.
 - `src/lib/design-system`: the token engine and the SKILL.md generator (`skill/`). Every value comes from one design system object.
 - `src/components/landing`: the landing page. Its demo uses the real engine, loaded in the browser after the page is up.
 - `public/brand/plinth-wordmark.svg`: the wordmark. `src/app/icon.svg`: the favicon.
+
+## Usage and license of what you create
+
+Files you create with Plinth are yours to use in any project, personal or commercial, and no credit is needed. The open source fonts you choose keep their own licenses. The copies of the fonts that the tool serves for its previews are listed in `public/fonts/LICENSES.md`.

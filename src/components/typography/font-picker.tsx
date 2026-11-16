@@ -17,7 +17,7 @@ import {
 } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
 import { ChoiceButton } from "@/components/controls/controls";
-import { nameFamily, useFontNames } from "./google-fonts";
+import { nameFamily, useFontNames } from "./hosted-fonts";
 
 type CategoryFilter = FontCategory | "all";
 const FILTERS: CategoryFilter[] = ["all", "sans", "serif", "mono"];
