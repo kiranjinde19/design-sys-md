@@ -39,7 +39,7 @@ function buttonsSection(ctx: SkillContext): string[] {
   const { controls, spacing, typography } = ctx.t;
   const b = controls.buttons;
   const body = typography.sizes.find((size) => size.name === "base")!;
-  const base = join(["inline-flex items-center justify-center", `gap-${unit(spacing.semantic.inlineGap)}`, "rounded-md border border-transparent", `text-${sizeName(ctx, body.px)}`, weightClass(b.fontWeight), "transition-colors focus-ring disabled:pointer-events-none aria-busy:pointer-events-none"]);
+  const base = join(["inline-flex items-center justify-center", `gap-${unit(spacing.semantic.inlineGap)}`, "rounded-md border border-transparent", `text-${sizeName(ctx, body.px)}`, weightClass(b.fontWeight), "transition-colors duration-(--t-fast) ease-(--ease) focus-ring disabled:pointer-events-none aria-busy:pointer-events-none"]);
   const sizes = { sm: `h-${unit(b.height.sm)} px-${unit(b.paddingX.sm)}`, md: `h-${unit(b.height.md)} px-${unit(b.paddingX.md)}`, lg: `h-${unit(b.height.lg)} px-${unit(b.paddingX.lg)}` };
 
   const tw = ctx.shadcn
@@ -192,7 +192,7 @@ function selectionSection(ctx: SkillContext): string[] {
     ctx.twColor(`${swOn}bg`, sw.checked.background),
   ]);
   const thumbOn = react ? "group-aria-checked:" : on;
-  const thumbClasses = join([`pointer-events-none block size-${unit(thumb)} rounded-full transition-transform`, ctx.twColor("bg", sw.default.markColor), ctx.twColor(`${thumbOn}bg`, sw.checked.markColor, ["primary-foreground"]), `${thumbOn}translate-x-${unit(travel)}`]);
+  const thumbClasses = join([`pointer-events-none block size-${unit(thumb)} rounded-full transition-transform duration-(--t-base) ease-(--ease)`, ctx.twColor("bg", sw.default.markColor), ctx.twColor(`${thumbOn}bg`, sw.checked.markColor, ["primary-foreground"]), `${thumbOn}translate-x-${unit(travel)}`]);
 
   // Plain CSS: every size is a variable, and the switch has its disabled and error states.
   const cv = ctx.cssVar;
@@ -203,7 +203,7 @@ function selectionSection(ctx: SkillContext): string[] {
     `.check::before, .radio::before { content: ""; background: ${cv(st.checked.markColor, "fill", ["primary-foreground"])}; transform: scale(0); } .check::before { width: var(--mark-size); height: var(--mark-size); clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0, 43% 62%); } .radio::before { width: var(--dot-size); height: var(--dot-size); border-radius: var(--radius-full); }`,
     `.check:checked::before, .radio:checked::before { transform: scale(1); } .check:disabled::before, .radio:disabled::before { background: ${cv(ctx.t.colors.neutral[400], "fill")}; }`,
     `.switch { position: relative; width: var(--switch-w); height: var(--switch-h); padding: var(--switch-pad); border-radius: var(--radius-full); }`,
-    `.switch__thumb { display: block; width: var(--switch-thumb); height: var(--switch-thumb); border-radius: var(--radius-full); background: ${cv(sw.default.markColor, "fill")}; transition: transform 150ms; }`,
+    `.switch__thumb { display: block; width: var(--switch-thumb); height: var(--switch-thumb); border-radius: var(--radius-full); background: ${cv(sw.default.markColor, "fill")}; transition: transform var(--t-base) var(--ease); }`,
     `.switch[aria-checked="true"] .switch__thumb { background: ${cv(sw.checked.markColor, "fill", ["primary-foreground"])}; transform: translateX(var(--switch-travel)); } .switch:disabled .switch__thumb { background: ${cv(sw.disabled.markColor, "fill")}; } .switch[aria-invalid="true"] .switch__thumb { background: ${cv(sw.error.markColor, "fill")}; }`,
   );
 

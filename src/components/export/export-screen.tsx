@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, type DragEvent, type ReactNode } from "react
 import { Check, Copy, Download } from "lucide-react";
 import { Segmented } from "@/components/controls/controls";
 import { useImport } from "@/components/app/import-context";
-import { STACK_IDS, fileSections, generateSkillFile, kib, useDesignSystem, type StackId } from "@/lib/design-system";
+import { STACK_IDS, fileSections, generateSkillFile, generateTokenFiles, kib, starterPrompt, useDesignSystem, type StackId } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
 import { FilePreview } from "./file-preview";
 import { InstallSteps } from "./install-steps";
@@ -34,8 +34,8 @@ const CardTitle = ({ title, text }: { title: string; text?: string }) => (
   </div>
 );
 
-function download(filename: string, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: "text/markdown;charset=utf-8" }));
+function download(filename: string, text: string, type = "text/markdown") {
+  const url = URL.createObjectURL(new Blob([text], { type: `${type};charset=utf-8` }));
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
@@ -54,6 +54,9 @@ export function ExportScreen() {
   const [copied, setCopied] = useState<{ ok: boolean; text: string } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [dragging, setDragging] = useState(false);
+  // The starter prompt appears after a download of the main file.
+  const [downloaded, setDownloaded] = useState(false);
+  const [promptCopied, setPromptCopied] = useState<{ ok: boolean; text: string } | null>(null);
 
   const generated = useMemo(() => generateSkillFile({ settings, tokens }, { presetId }), [settings, tokens, presetId]);
   const text = file === "skill" ? generated.skill : generated.agents;
@@ -63,6 +66,9 @@ export function ExportScreen() {
   const lines = text.split("\n").length;
   const sections = useMemo(() => fileSections(text), [text]);
   const fileName = FILES[file].name;
+  // The token downloads come from the same engine values as the file (see generateTokenFiles).
+  const tokenFiles = useMemo(() => generateTokenFiles({ settings, tokens }), [settings, tokens]);
+  const prompt = starterPrompt(file, generated.slug);
 
   const copy = async () => {
     try {
@@ -73,6 +79,15 @@ export function ExportScreen() {
     }
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setCopied(null), 2500);
+  };
+
+  const copyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setPromptCopied({ ok: true, text: "Copied the starter prompt to the clipboard." });
+    } catch {
+      setPromptCopied({ ok: false, text: "Copying was blocked by the browser. Select the text and copy it." });
+    }
   };
 
   const hasFiles = (event: DragEvent) => event.dataTransfer.types.includes("Files");
@@ -146,7 +161,14 @@ export function ExportScreen() {
               <Segmented<FileId> label="File" options={["skill", "agents"]} value={file} onChange={setFile} labelFor={(id) => FILES[id].label} />
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={() => download(fileName, text)} className={`${BUTTON} tool-btn tool-btn--primary`}>
+              <button
+                type="button"
+                onClick={() => {
+                  download(fileName, text);
+                  setDownloaded(true);
+                }}
+                className={`${BUTTON} tool-btn tool-btn--primary`}
+              >
                 <Download aria-hidden className="size-4" />
                 Download {fileName}
               </button>
@@ -158,6 +180,39 @@ export function ExportScreen() {
             <p role="status" aria-live="polite" className={cn("text-sm leading-5 empty:hidden", copied && !copied.ok ? "text-[var(--t-error-700)]" : "text-muted-foreground")}>
               {copied?.text}
             </p>
+            <div className="flex flex-col gap-2" role="group" aria-label="Tokens only">
+              <p className="text-sm leading-5 text-muted-foreground">Only the tokens, made from the same values as the file. Light mode only.</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => download("tokens.css", tokenFiles.css, "text/css")} className={`${BUTTON} tool-btn tool-btn--secondary`} data-download="tokens.css">
+                  <Download aria-hidden className="size-4" />
+                  Download tokens.css
+                </button>
+                <button type="button" onClick={() => download("tokens.json", tokenFiles.json, "application/json")} className={`${BUTTON} tool-btn tool-btn--secondary`} data-download="tokens.json">
+                  <Download aria-hidden className="size-4" />
+                  Download tokens.json
+                </button>
+              </div>
+            </div>
+            {downloaded ? (
+              <div className="flex flex-col gap-2 rounded-[10px] border border-border p-3" data-starter-prompt>
+                <h3 className="text-base font-semibold leading-6">Starter prompt</h3>
+                <p className="text-sm leading-5 text-muted-foreground">
+                  Paste this into {file === "skill" ? "Claude Code" : "Codex"} once the file is in place, and say what you want built.
+                </p>
+                <pre className="whitespace-pre-wrap rounded-[5px] bg-muted p-3 font-mono text-sm leading-5 [overflow-wrap:anywhere]" data-prompt-text>
+                  {prompt}
+                </pre>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={copyPrompt} className={`${BUTTON} tool-btn tool-btn--secondary`}>
+                    {promptCopied?.ok ? <Check aria-hidden className="size-4" /> : <Copy aria-hidden className="size-4" />}
+                    {promptCopied?.ok ? "Copied" : "Copy prompt"}
+                  </button>
+                </div>
+                <p role="status" aria-live="polite" className="text-sm leading-5 text-muted-foreground empty:hidden">
+                  {promptCopied?.text}
+                </p>
+              </div>
+            ) : null}
             <p className="text-sm leading-5" data-skill-size>
               <span className="font-medium">SKILL.md</span> <span className="tabular-nums">{kib(skillBytes)} KiB</span>. Claude Code has no hard size limit for skills. Shorter files work better.
             </p>

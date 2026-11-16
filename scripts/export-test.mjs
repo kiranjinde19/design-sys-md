@@ -215,6 +215,54 @@ test("Download saves the selected file with the right name and the exact content
   }
 });
 
+test("the starter prompt appears after a download, names the right file and folder, and copies", async () => {
+  await fresh();
+  await type("#product-name", "Acme Billing");
+  await chooseStack("html-css");
+  assert.equal(await ev(`!!document.querySelector("[data-starter-prompt]")`), false, "nothing before a download");
+  await download("html-css", "skill");
+  const tail = "first. Then build [describe what you want]. Follow every rule, run the Final checklist at the end and report anything that fails.";
+  await waitFor(`!!document.querySelector("[data-starter-prompt]")`, { label: "the starter prompt" });
+  assert.equal(await ev(`document.querySelector("[data-prompt-text]").textContent`), `Read .claude/skills/acme-billing-design-system/SKILL.md ${tail}`);
+  // Codex: the other file.
+  await chooseFile("agents");
+  assert.equal(await ev(`document.querySelector("[data-prompt-text]").textContent`), `Read AGENTS.md in the root of this project ${tail}`);
+  await chooseFile("skill");
+  // The product name changes the folder.
+  await type("#product-name", "Northwind");
+  assert.match(await ev(`document.querySelector("[data-prompt-text]").textContent`), /^Read \.claude\/skills\/northwind-design-system\/SKILL\.md first\./);
+  // Copy prompt copies exactly the text and says so.
+  await click(byText("button", "Copy prompt"));
+  assert.equal(await ev(`navigator.clipboard.readText()`), await ev(`document.querySelector("[data-prompt-text]").textContent`));
+  assert.equal(await ev(`${byText("button", "Copied")}?.textContent.trim()`), "Copied");
+  assert.match(await ev(`document.querySelector("[data-starter-prompt] [role=status]").textContent`), /Copied the starter prompt/);
+});
+
+test("tokens.css and tokens.json download next to the file, with the same values as the file", async () => {
+  await fresh();
+  await type("#product-name", "Acme Billing");
+  await chooseStack("html-css");
+  const file = await download("html-css", "skill");
+  const take = async (name) => {
+    for (const f of readdirSync(downloads)) rmSync(join(downloads, f), { force: true });
+    await click(`button[data-download="${name}"]`);
+    return (await waitForDownload(name)).toString("utf8");
+  };
+  const css = await take("tokens.css");
+  const json = JSON.parse(await take("tokens.json"));
+  assert.match(css, /^\/\* Plinth tokens for Acme Billing\. Light mode only\./);
+  assert.equal(/prefers-color-scheme|\.dark\b/.test(css), false, "light mode only");
+  const inFile = (name) => file.content.match(new RegExp(`${name}:([^;}]+)[;}]`))?.[1].trim();
+  const inCss = (name) => css.match(new RegExp(`${name}: ([^;]+);`))?.[1].trim();
+  for (const name of ["--brand-600", "--primary", "--background", "--radius-md", "--text-base", "--space-4", "--t-fast", "--t-base", "--t-slow"]) {
+    assert.equal(inCss(name), inFile(name), `${name}: tokens.css and the file say the same`);
+  }
+  assert.equal(json.color.brand["600"].$value, inFile("--brand-600"));
+  assert.equal(json.color.brand["600"].$type, "color");
+  assert.equal(json.motion.duration.base.$value, "200ms");
+  assert.equal(json.radius.md.$type, "dimension");
+});
+
 test("Copy file copies the selected file and confirms it visibly and in a live region", async () => {
   await fresh();
   await chooseStack("html-css");

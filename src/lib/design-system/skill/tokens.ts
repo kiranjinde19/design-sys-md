@@ -116,6 +116,8 @@ const ROLE_GROUPS: (readonly string[])[] = [
   ["sidebar-border", "sidebar-ring"],
 ];
 /** Roles shadcn does not define. Everything else is mapped to a Tailwind color by `shadcn init`. */
+/** Every color role name a design has (the shadcn names plus the ones Plinth adds), in the order the tokens list them. */
+export const ROLE_NAMES: readonly string[] = [...ROLE_GROUPS.flat(), "placeholder", "primary-hover", "primary-pressed", "destructive-hover", "destructive-pressed"];
 const CUSTOM_ROLES = ["card-border", "placeholder", "primary-hover", "primary-pressed", "destructive-hover", "destructive-pressed"];
 
 function roleVars(ctx: SkillContext, withRadius: boolean, prefix = "--"): string[] {
@@ -130,6 +132,13 @@ function roleVars(ctx: SkillContext, withRadius: boolean, prefix = "--"): string
     `  ${prefix}destructive-hover: ${solid.hover.background}; ${prefix}destructive-pressed: ${solid.pressed.background};`,
   );
 }
+
+/** The motion tokens as CSS variables, and the rule that turns every duration into 0 when the user asks for reduced motion. */
+function motionVars(ctx: SkillContext): string[] {
+  const { durations, easing, hoverTransition } = ctx.t.motion;
+  return [`  --t-fast: ${durations.fast}ms; --t-base: ${durations.base}ms; --t-slow: ${durations.slow}ms; --ease: ${easing};`, `  --t-hover: ${hoverTransition};`];
+}
+const REDUCED_MOTION_VARS = "@media (prefers-reduced-motion: reduce) { :root { --t-fast: 0ms; --t-base: 0ms; --t-slow: 0ms; } }";
 
 function tailwindCss(ctx: SkillContext): string[] {
   const { colors, typography: ty, radius, elevation } = ctx.t;
@@ -168,6 +177,10 @@ function tailwindCss(ctx: SkillContext): string[] {
       "}",
       "",
       "@layer base {",
+      "  :root {",
+      motionVars(ctx),
+      "  }",
+      `  ${REDUCED_MOTION_VARS}`,
       "  body { background: var(--color-background); color: var(--color-foreground); font-family: var(--font-sans); }",
       "  h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",
       `  ${autofillRule(ctx)}`,
@@ -197,7 +210,9 @@ function tailwindCss(ctx: SkillContext): string[] {
     "",
     ":root {",
     roleVars(ctx, true),
+    motionVars(ctx),
     "}",
+    REDUCED_MOTION_VARS,
     "",
     "@layer base {",
     "  h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",
@@ -212,7 +227,8 @@ function autofillRule(ctx: SkillContext): string {
   return `:-webkit-autofill { -webkit-text-fill-color: ${ctx.cssVar(field.color, "text", ["foreground"])}; box-shadow: 0 0 0 1000px ${ctx.cssVar(field.background, "fill", ["background"])} inset; }`;
 }
 
-function plainCss(ctx: SkillContext): string[] {
+/** The `:root` block of the plain stylesheet: every token as a CSS variable. The token downloads (tokens.css, tokens.json) are made from exactly these lines. */
+export function plainRootLines(ctx: SkillContext): string[] {
   const { colors, typography: ty, radius, elevation, spacing, controls } = ctx.t;
   const sel = controls.selection;
   const switchPad = (sel.switch.height - 2 * sel.borderWidth - sel.switch.thumb) / 2;
@@ -238,7 +254,15 @@ function plainCss(ctx: SkillContext): string[] {
     `  --border-w: ${ctx.t.borders.width}px; --gap-inline: ${spaceVar(ctx, spacing.semantic.inlineGap)}; --gap-stack: ${spaceVar(ctx, spacing.semantic.stackGap)}; --pad-card: ${spaceVar(ctx, spacing.semantic.cardPadding)}; --gap-section: ${spaceVar(ctx, spacing.semantic.sectionGap)};`,
     `  --check-size: ${sel.size}px; --mark-size: ${sel.size - 4}px; --dot-size: ${Math.round(sel.size / 2.5 / 2) * 2}px; --switch-w: ${sel.switch.width}px; --switch-h: ${sel.switch.height}px; --switch-thumb: ${sel.switch.thumb}px; --switch-pad: ${switchPad}px; --switch-travel: ${switchTravel}px; --row-h: ${rowHeight}px;`,
     `  --header-h: ${ctx.t.layout.headerHeight}px; --sidebar-w: ${ctx.t.layout.sidebar.width}px; --content-max: ${ctx.t.layout.maxContentWidth}px; --dialog-w: ${ctx.t.layout.dialogWidth}px;`,
+    motionVars(ctx),
     "}",
+  );
+}
+
+function plainCss(ctx: SkillContext): string[] {
+  return lines(
+    plainRootLines(ctx),
+    REDUCED_MOTION_VARS,
     "*, *::before, *::after { box-sizing: border-box; }",
     "body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-body); font-size: var(--text-base); line-height: var(--leading-base); }",
     "h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }",

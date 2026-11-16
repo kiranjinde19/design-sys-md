@@ -121,7 +121,8 @@ export const BLANK_SLATE_SIGNATURE: SignatureSettings = {
 
 const ICON_CONTAINER_SIZE = 40;
 const CTA_BEAM_CLASS = "ds-cta-beam";
-const HOVER_TRANSITION = "transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease";
+/** Hover and press use the fast duration: the motion token --t-hover (see motion.ts), so reduced motion can set the durations to 0. */
+const HOVER_TRANSITION = "var(--t-hover)";
 
 interface SignatureContext {
   colors: ColorTokens;
@@ -302,7 +303,7 @@ export function generateSignature(
         settings.primaryCta === "underline-sweep"
           ? "On hover, an underline sweeps in from the left under the label."
           : beam
-            ? "The beam is decorative; button text contrast is unchanged."
+            ? "The beam is decorative."
             : undefined,
       ),
       animated,
@@ -321,7 +322,6 @@ export function generateSignature(
             `  }`,
             `}`,
             `@keyframes ds-beam { to { --beam-angle: 360deg; } }`,
-            `/* Reduced motion: steady brand-400 ring */`,
             `@media (prefers-reduced-motion: reduce) { .${CTA_BEAM_CLASS}::before { animation: none; background: ${brand[400]}; } }`,
           ].join("\n")
         : null,

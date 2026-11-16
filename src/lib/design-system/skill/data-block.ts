@@ -47,7 +47,7 @@ export function dataBlock(settings: DesignSystemSettings, presetId: PresetId): s
   return lines(
     "## Design system data",
     "",
-    "Written by Plinth to restore this design system. Do not edit by hand.",
+    "Written by Plinth. Do not edit by hand.",
     "",
     fence("json", JSON.stringify({ format: DATA_FORMAT, version: DATA_FORMAT_VERSION, preset: presetId, presetVersion, settings: changes })),
   );

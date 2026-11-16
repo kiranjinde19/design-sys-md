@@ -648,6 +648,14 @@ export interface LayoutTokens {
   breakpoints: { sm: number; md: number; lg: number; xl: number; "2xl": number };
 }
 
+/** Three durations in milliseconds and one easing curve. Fast is for hover and press, base for moving parts, slow for large movement. */
+export interface MotionTokens {
+  durations: { fast: number; base: number; slow: number };
+  easing: string;
+  /** The hover and press transition written once, so a button and a card use the same words: the four properties that change, at the fast duration. */
+  hoverTransition: string;
+}
+
 export interface DesignSystemTokens {
   layout: LayoutTokens;
   colors: ColorTokens;
@@ -659,6 +667,7 @@ export interface DesignSystemTokens {
   elevation: ElevationTokens;
   controls: ControlTokens;
   signature: SignatureTokens;
+  motion: MotionTokens;
 }
 
 /** The whole design system: what was chosen, and everything generated from it. */

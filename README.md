@@ -20,6 +20,10 @@ npm run build
 npm run start        # http://localhost:3000
 ```
 
+## What you download
+
+One file (`SKILL.md` for Claude Code or `AGENTS.md` for Codex), and if you want only the tokens, `tokens.css` (CSS custom properties, light mode only) and `tokens.json` (W3C design tokens format). After a download the Export screen shows a starter prompt you can paste into your AI tool.
+
 ## Tests
 
 ```bash

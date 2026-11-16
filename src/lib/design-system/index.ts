@@ -59,6 +59,9 @@ export {
   type VoiceSample,
 } from "./voice";
 export { generateSkillFile, type GeneratedFile } from "./skill/generate";
+export { generateTokenFiles, type TokenFiles } from "./skill/token-files";
+export { starterPrompt } from "./skill/starter-prompt";
+export { PLINTH_VERSION, PLINTH_VERSION_DATE } from "./version";
 export { parseSkillFile } from "./skill/data-block";
 export { STACK_LABELS, skillSlug } from "./skill/context";
 export { SYSTEMS, isSystemId, type SystemId } from "./systems";

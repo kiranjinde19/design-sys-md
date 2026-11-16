@@ -14,7 +14,7 @@ const lib = "src/lib/design-system";
 try {
   execFileSync(
     "npx",
-    ["tsc", ...["generate", "presets", "normalize", "skill/generate", "skill/data-block", "skill/size"].map((f) => `${lib}/${f}.ts`), "--outDir", out, "--module", "commonjs", "--moduleResolution", "node", "--target", "es2020", "--skipLibCheck", "--noEmitOnError", "false"],
+    ["tsc", ...["generate", "presets", "normalize", "skill/generate", "skill/data-block", "skill/size", "skill/token-files", "skill/starter-prompt", "version"].map((f) => `${lib}/${f}.ts`), "--outDir", out, "--module", "commonjs", "--moduleResolution", "node", "--target", "es2020", "--skipLibCheck", "--noEmitOnError", "false"],
     { stdio: "pipe" },
   );
 } catch (error) {
@@ -28,6 +28,9 @@ const { applyPatch } = require(join(out, "normalize.js"));
 const { generateSkillFile } = require(join(out, "skill/generate.js"));
 const { parseSkillFile } = require(join(out, "skill/data-block.js"));
 const { sizeState } = require(join(out, "skill/size.js"));
+const { generateTokenFiles, tokenPath, CSS_ONLY_TOKENS } = require(join(out, "skill/token-files.js"));
+const { starterPrompt } = require(join(out, "skill/starter-prompt.js"));
+const { PLINTH_VERSION, PLINTH_VERSION_DATE } = require(join(out, "version.js"));
 
 const STACKS = ["next-tailwind-shadcn", "react-tailwind", "html-css"];
 const saas = PRESETS["saas-clean"].settings;
@@ -393,12 +396,174 @@ test("size meter thresholds: fits at 29 KiB, near at 30 and 30.5 KiB, over above
   assert.equal(sizeState(32.5 * KiB), "over");
 });
 
-test("size goals at normal input (secondary color, 30 character name, 100 character line): Next.js under 30, React under 31, plain HTML 31.7 KiB or less and never over Codex's 32 KiB", () => {
-  const goals = { "next-tailwind-shadcn": 30, "react-tailwind": 31, "html-css": 31.7 };
+test("size goals at normal input (secondary color, 30 character name, 100 character line): Next.js and React 31 KiB or less, plain HTML 31.7 KiB or less and never over Codex's 32 KiB", () => {
+  const goals = { "next-tailwind-shadcn": 31, "react-tailwind": 31, "html-css": 31.7 };
   for (const stack of STACKS) {
     const settings = applyPatch(saas, { colors: { secondary: "#9243CD" }, project: { name: "N".repeat(30), description: "D".repeat(100), stack } });
     const { agentsBytes } = generateSkillFile(createDesignSystem(settings), { presetId: "saas-clean" });
     assert.ok(agentsBytes / 1024 <= goals[stack], `${stack}: ${(agentsBytes / 1024).toFixed(3)} KiB, goal ${goals[stack]}`);
     assert.notEqual(sizeState(agentsBytes), "over", `${stack}: the strong Export warning must not show in the default case`);
   }
+});
+
+
+// ---------------------------------------------------------------------------------------------- token exports, version line, motion, starter prompt
+
+import { readFileSync } from "node:fs";
+
+/** Every custom property written in the css code blocks of a generated file: name to value. */
+function fileVariables(markdown) {
+  const css = [...markdown.matchAll(/```css\n([\s\S]*?)```/g)].map((m) => m[1]).join("\n").replace(/\/\*[\s\S]*?\*\//g, "");
+  const map = new Map();
+  for (const m of css.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)) if (!map.has(m[1])) map.set(m[1], m[2].trim());
+  return map;
+}
+/** The same value written two ways (0px or 0, .06 or 0.06, #FFF or #FFFFFF) is equal. */
+function canon(value) {
+  let v = value.trim();
+  if (/^#[0-9a-f]{3}$/i.test(v)) v = `#${v[1]}${v[1]}${v[2]}${v[2]}${v[3]}${v[3]}`;
+  if (v.startsWith("#")) return v.toUpperCase();
+  return v.replace(/(-?\d*\.?\d+)(px|rem|em|ms)?(?![\w%])/g, (_, n, unit) => String(Number(n)) + (unit && unit !== "px" && Number(n) !== 0 ? unit : "")).replace(/\s+/g, "").replace(/["']/g, "").toLowerCase();
+}
+
+const EXPORT_CASES = CASES.filter(([label]) => ["untouched SaaS Clean", "untouched Blank slate", "teal brand color", "near black brand", "role overrides", "signature details"].includes(label) || /secondary|font|radius|dense|spacious|shadow/i.test(label));
+
+for (const stack of STACKS) {
+  for (const [label, presetId, base, patch] of EXPORT_CASES) {
+    test(`token exports match the file: ${label} (${stack})`, () => {
+      const settings = applyPatch(applyPatch(base, patch), { project: { ...(patch.project ?? {}), stack } });
+      const ds = createDesignSystem(settings);
+      const file = generateSkillFile(ds, { presetId });
+      const { css, json, declarations } = generateTokenFiles(ds);
+      const fromFile = fileVariables(file.agents);
+      // What tokens.css really says (read back from its text, not from the list it was made from).
+      const rootText = css.match(/:root \{\n([\s\S]*?)\n\}/)[1];
+      const fromCss = new Map([...rootText.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+      assert.equal(fromCss.size, declarations.length, "tokens.css lists every declaration once");
+      const written = declarations.map(({ name }) => ({ name, value: fromCss.get(name) }));
+      // 1. tokens.css against the file. The plain HTML file uses the same names. The Tailwind files write colors as --color-*.
+      let compared = 0;
+      for (const { name, value } of written) {
+        // The Tailwind files keep fonts in their own variables (--font-sans, next/font faces), so fonts are only compared in the plain file.
+        if (stack !== "html-css" && name.startsWith("--font-")) continue;
+        const candidates = stack === "html-css" ? [name] : [name, `--color-${name.slice(2)}`];
+        const found = candidates.find((candidate) => fromFile.has(candidate));
+        if (!found) {
+          assert.notEqual(stack, "html-css", `${name} is in tokens.css but not in the file`);
+          continue;
+        }
+        compared++;
+        assert.equal(canon(fromFile.get(found)), canon(value), `${stack}: ${name} is ${value} in tokens.css and ${fromFile.get(found)} in the file`);
+      }
+      assert.ok(compared >= (stack === "html-css" ? declarations.length : 60), `${stack}: ${compared} values compared`);
+      if (stack === "html-css") {
+        // The other way round: every token the plain file defines in :root is in tokens.css.
+        const root = file.agents.match(/```css\n(:root\{[\s\S]*?\n\})/)[1];
+        for (const m of root.matchAll(/(--[\w-]+)\s*:/g)) assert.ok(fromCss.has(m[1]), `${m[1]} is in the file but not in tokens.css`);
+      }
+      // 2. tokens.json against tokens.css: every token is there, with the same value, and a reference points at a real token.
+      const tree = JSON.parse(json);
+      assert.ok(typeof tree.$description === "string");
+      const byPath = new Map();
+      const walk = (node, path) => {
+        for (const [key, child] of Object.entries(node)) {
+          if (key.startsWith("$")) continue;
+          if (child && typeof child === "object" && "$value" in child) byPath.set([...path, key].join("."), child);
+          else walk(child, [...path, key]);
+        }
+      };
+      walk(tree, []);
+      const nameOf = new Map(declarations.map(({ name }) => [tokenPath(name).path.join("."), name]));
+      for (const { name, value } of written) {
+        if (CSS_ONLY_TOKENS.includes(name)) {
+          assert.ok(!byPath.has(tokenPath(name).path.join(".")), `${name} stays out of tokens.json`);
+          continue;
+        }
+        const token = byPath.get(tokenPath(name).path.join("."));
+        assert.ok(token, `${name} is missing from tokens.json`);
+        assert.equal(token.$type, tokenPath(name).type);
+        const back = jsonToCss(token, nameOf);
+        assert.equal(canon(back), canon(value), `${name}: tokens.json says ${back}, tokens.css says ${value}`);
+      }
+      assert.equal(byPath.size, declarations.length - CSS_ONLY_TOKENS.length, "tokens.json has no extra tokens");
+    });
+  }
+}
+
+/** Writes a tokens.json value back as the CSS it came from. */
+function jsonToCss(token, nameOf) {
+  const v = token.$value;
+  if (typeof v === "string" && /^\{.+\}$/.test(v)) return `var(${nameOf.get(v.slice(1, -1))})`;
+  switch (token.$type) {
+    case "fontFamily":
+      return v.join(",");
+    case "cubicBezier":
+      return `cubic-bezier(${v.join(",")})`;
+    case "shadow":
+      return v.map((l) => `${l.offsetX} ${l.offsetY} ${l.blur} ${l.spread} ${l.color}`).join(",");
+    default:
+      return v;
+  }
+}
+
+test("tokens.css is light mode only, and the same design always gives the same tokens", () => {
+  const ds = createDesignSystem(applyPatch(saas, { colors: { brand: "#0D9488", secondary: "#9243CD" } }));
+  const a = generateTokenFiles(ds);
+  assert.equal(a.css, generateTokenFiles(ds).css);
+  assert.equal(a.json, generateTokenFiles(ds).json);
+  assert.equal(/prefers-color-scheme|\.dark|data-theme/.test(a.css), false, "no dark mode");
+  assert.match(a.css, /^\/\* Plinth tokens/);
+  assert.match(a.css, /--brand-600: #0D9488;/);
+  assert.equal(JSON.parse(a.json).color.brand["600"].$value, "#0D9488");
+  assert.equal(JSON.parse(a.json).motion.duration.fast.$value, "120ms");
+  assert.deepEqual(JSON.parse(a.json).motion.easing.standard.$value, [0.2, 0, 0, 1]);
+});
+
+test("the version line: one short line under the title, in every stack, and files without it still import", () => {
+  const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+  assert.equal(PLINTH_VERSION, pkg.version, "the version in the file is the version of the package");
+  assert.match(PLINTH_VERSION_DATE, /^\d{4}-\d{2}-\d{2}$/);
+  const line = `Made with Plinth ${PLINTH_VERSION}, ${PLINTH_VERSION_DATE}. Import this file into Plinth to change it.`;
+  assert.ok(Buffer.byteLength(line) < 0.2 * 1024, "under 0.2 KiB");
+  for (const stack of STACKS) {
+    const settings = applyPatch(saas, { colors: { brand: "#0D9488" }, project: { name: "Acme Billing", stack } });
+    const file = generateSkillFile(createDesignSystem(settings), { presetId: "saas-clean" });
+    const rows = file.agents.split("\n");
+    assert.match(rows[0], /^# /, `${stack}: the title is first`);
+    assert.equal(rows[2], line, `${stack}: the version line is right under the title`);
+    assert.ok(file.skill.includes(`\n${line}\n`), `${stack}: and it is in SKILL.md too`);
+    // An old file has no such line: it must import and give the same settings, and export again with the line.
+    const old = file.skill.replace(`${line}\n\n`, "");
+    assert.equal(old.includes("Made with Plinth"), false);
+    const imported = parseSkillFile(old);
+    assert.ok(imported.ok, `${stack}: ${imported.error}`);
+    assert.deepEqual(imported.settings, settings);
+    assert.equal(generateSkillFile(createDesignSystem(imported.settings), { presetId: imported.presetId }).skill, file.skill, `${stack}: exported again, it has the line`);
+  }
+});
+
+test("motion tokens: three durations, one easing, reduced motion makes them 0, and every transition uses them", () => {
+  for (const stack of STACKS) {
+    const file = generateSkillFile(createDesignSystem(applyPatch(saas, { project: { name: "Acme Billing", stack } })), { presetId: "saas-clean" }).agents;
+    const vars = fileVariables(file);
+    assert.equal(vars.get("--t-fast"), "120ms", stack);
+    assert.equal(vars.get("--t-base"), "200ms", stack);
+    assert.equal(vars.get("--t-slow"), "320ms", stack);
+    assert.equal(canon(vars.get("--ease")), canon("cubic-bezier(.2,0,0,1)"), stack);
+    assert.match(file.replace(/\s+/g, ""), /@media\(prefers-reduced-motion:reduce\)\{:root\{--t-fast:0ms;--t-base:0ms;--t-slow:0ms;?\}\}/, `${stack}: reduced motion sets the durations to 0`);
+    assert.match(file, /^9\. Motion uses only `--t-fast`.*`--t-slow` and `--ease`\. With `prefers-reduced-motion` all motion stops or becomes instant\.$/m, `${stack}: the rule`);
+    // Nothing that transitions has its own number any more.
+    const css = [...file.matchAll(/```(?:css|tsx|html)\n([\s\S]*?)```/g)].map((m) => m[1]).join("\n");
+    assert.equal(/transition[^;}\n]*\b\d+m?s\b/.test(css.replace(/--t-(fast|base|slow):\d+ms/g, "")), false, `${stack}: a transition still has its own duration`);
+    assert.equal(/duration-\d+/.test(css), false, `${stack}: a Tailwind class still has its own duration`);
+    assert.ok(/transition: ?var\(--t-hover\)/.test(css.replace(/\s+/g, " ")), `${stack}: the hover transition uses the token`);
+    if (stack !== "html-css") assert.ok(css.includes("duration-(--t-fast) ease-(--ease)"), `${stack}: the button classes use the tokens`);
+  }
+});
+
+test("the starter prompt names the file and the folder for the chosen tool, in plain words", () => {
+  const tail = "first. Then build [describe what you want]. Follow every rule, run the Final checklist at the end and report anything that fails.";
+  assert.equal(starterPrompt("skill", "acme-billing-design-system"), `Read .claude/skills/acme-billing-design-system/SKILL.md ${tail}`);
+  assert.equal(starterPrompt("agents", "acme-billing-design-system"), `Read AGENTS.md in the root of this project ${tail}`);
+  assert.equal(/[-–—]/.test(tail), false, "no dashes or hyphens in the wording (only the folder name, which is a name, has hyphens)");
 });

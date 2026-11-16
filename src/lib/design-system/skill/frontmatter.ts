@@ -1,3 +1,4 @@
+import { PLINTH_VERSION, PLINTH_VERSION_DATE } from "../version";
 import { STACK_LABELS, lines, type SkillContext } from "./context";
 
 /** YAML double-quoted string: backslashes and quotes are escaped, so any text is safe. */
@@ -33,6 +34,9 @@ export function header(ctx: SkillContext): string[] {
   return lines(
     `# ${title}`,
     "",
+    // One short line: which Plinth made the file, and that it can be imported back to change it.
+    `Made with Plinth ${PLINTH_VERSION}, ${PLINTH_VERSION_DATE}. Import this file into Plinth to change it.`,
+    "",
     `Design system for ${ctx.product}. Stack: ${STACK_LABELS[ctx.stack]}. Read it all before UI work, copy the recipes exactly, run the Final checklist before calling a screen done. If this file conflicts with the project's own instructions about file layout or tooling, follow the project for structure and this file for every visual value.`,
     "",
     "## Hard rules",
@@ -47,7 +51,7 @@ export function header(ctx: SkillContext): string[] {
     "6. Use only the text and background pairs verified under Accessibility.",
     "7. Radius, spacing and shadows come only from their scales, one radius per component family.",
     "8. Headings use the heading font, other text the body font, code and IDs the mono font. Numbers in tables, dashboards and prices use tabular figures.",
-    "9. Animation respects `prefers-reduced-motion` with a static fallback.",
+    "9. Motion uses only `--t-fast` (hover, press), `--t-base` (moving parts), `--t-slow` and `--ease`. With `prefers-reduced-motion` all motion stops or becomes instant.",
     `10. Light mode only: no \`${tw ? "dark:" : "prefers-color-scheme: dark"}\` styles or \`.dark\` theme unless this file defines one.`,
     "11. All copy follows Tone of voice.",
     `12. Placeholder content: when real product facts (plan names, prices, features) are missing, ${ctx.stack === "html-css" ? "keep the sample content in the HTML, each block wrapped in a comment such as `<!-- SAMPLE CONTENT: plan names, prices -->` and marked `data-sample`. Pages work with JavaScript turned off: JavaScript is only for real behavior (a menu, a switch), never for content or icons" : "use sample content in one clearly marked data file"}. This covers all copy, page titles included; a meta description uses the product line the user entered, or is omitted. Report every placeholder, inert buttons and destinationless links included. Never claim terms (cancellation, trials, refunds, plan changes, security, uptime) unless the user provided them.`,
