@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useId, useMemo, useState } from "react";
+import { PREVIEW_TABS as TABS, setPreviewTab, usePreviewTab, type PreviewTab } from "./preview-tab";
 import { ButtonsTab } from "./skill-preview/buttons-tab";
 import { FormsTab } from "./skill-preview/forms-tab";
 import { ScaledStage, type StageScale } from "./scaled-stage";
@@ -9,37 +10,19 @@ import { SkillScope } from "./skill-preview/skill-scope";
 import { TablesTab } from "./skill-preview/tables-tab";
 import { DashboardTab } from "./skill-preview/dashboard-tab";
 import { ChartsTab } from "./skill-preview/charts-tab";
+import { VoiceTab } from "./skill-preview/voice-tab";
 import { cn } from "@/lib/utils";
 import { useDesignSystem } from "@/lib/design-system";
 import { PricingPreview } from "./pricing-preview";
 import { previewVars } from "./preview-vars";
 
 const SCALE = 0.65;
-const TAB_KEY = "design-sys-md:preview-tab";
-const TABS = ["Pricing", "Buttons and states", "Forms", "Tables", "Dashboard", "Charts"] as const;
-
-function readTab(): (typeof TABS)[number] {
-  try {
-    const saved = window.localStorage.getItem(TAB_KEY);
-    return TABS.find((name) => name === saved) ?? "Pricing";
-  } catch {
-    return "Pricing";
-  }
-}
-
 /** The live preview tile: tabs, a framed stage at 65% scale, and a footer of small token chips. */
 export function Preview({ height }: { height: number }) {
   const { tokens } = useDesignSystem();
-  // The selected tab is remembered while editing (and between visits).
-  const [tab, setTabState] = useState<(typeof TABS)[number]>(readTab);
-  const setTab = (next: (typeof TABS)[number]) => {
-    setTabState(next);
-    try {
-      window.localStorage.setItem(TAB_KEY, next);
-    } catch {
-      // Storage blocked: the tab still switches.
-    }
-  };
+  // The selected tab is shared with the editors (opening a step shows the tab that changes) and remembered between visits.
+  const tab = usePreviewTab();
+  const setTab = setPreviewTab;
   const { colors, typography, radius, spacing, elevation } = tokens;
   // The scale the stage really uses (it shrinks in a narrow frame), and whether it scrolls sideways (phones).
   const [stage, setStage] = useState<StageScale>({ scale: SCALE, scrolls: false });
@@ -61,20 +44,21 @@ export function Preview({ height }: { height: number }) {
 
   // Pricing, Dashboard and Charts are wide pages and are shown at 65%. The other tabs fit the frame at full size.
   const scaled = tab === "Pricing" || tab === "Dashboard" || tab === "Charts";
-  const note: Record<(typeof TABS)[number], string> = {
+  const note: Record<PreviewTab, string> = {
     Pricing: "Pricing page, sample content",
     "Buttons and states": "Buttons, inputs and controls, sample content",
     Forms: "Settings form, sample content",
     Tables: "Team table, sample content",
     Dashboard: "App overview, sample content",
     Charts: "Every chart type, sample content",
+    Voice: "Five sample lines in the tone you set, sample content",
   };
   const page =
     tab === "Pricing" ? (
       <PricingPreview />
     ) : (
       <SkillScope>
-        {tab === "Buttons and states" ? <ButtonsTab /> : tab === "Forms" ? <FormsTab /> : tab === "Tables" ? <TablesTab /> : tab === "Dashboard" ? <DashboardTab /> : <ChartsTab />}
+        {tab === "Buttons and states" ? <ButtonsTab /> : tab === "Forms" ? <FormsTab /> : tab === "Tables" ? <TablesTab /> : tab === "Dashboard" ? <DashboardTab /> : tab === "Charts" ? <ChartsTab /> : <VoiceTab />}
       </SkillScope>
     );
 

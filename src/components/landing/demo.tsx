@@ -268,7 +268,7 @@ export function Demo() {
             </span>
           </div>
           <div>
-            <h3>Pricing</h3>
+            <div className="s-title">Pricing</div>
             <p>Pick the plan that fits your team.</p>
           </div>
           <div className="plans">

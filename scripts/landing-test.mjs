@@ -139,11 +139,11 @@ test("the demo controls change the SKILL.md excerpt and the verdict, and the num
   m = await demoState();
   assert.equal(m.heading, "Newsreader");
   assert.equal(m.body, "Geist");
-  assert.match(await ev(`getComputedStyle(document.querySelector(".sample h3")).fontFamily`), /newsreader/i);
+  assert.match(await ev(`getComputedStyle(document.querySelector(".sample .s-title")).fontFamily`), /newsreader/i);
   await click(`#fonts button:nth-child(3)`);
   m = await demoState();
   assert.equal(m.heading, "IBM Plex Sans");
-  assert.match(await ev(`getComputedStyle(document.querySelector(".sample h3")).fontFamily`), /plex/i);
+  assert.match(await ev(`getComputedStyle(document.querySelector(".sample .s-title")).fontFamily`), /plex/i);
   // The custom picker.
   await ev(`(()=>{const i=document.querySelector('.pl input[type=color]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(i,"#e11d48");i.dispatchEvent(new Event("input",{bubbles:true}))})()`);
   await settle();
@@ -208,16 +208,10 @@ test("a touch in the stage stops the ghost too", async () => {
 
 const RUNNING = `document.getAnimations().filter(a=>a.playState==="running")`;
 
-test("with reduced motion on nothing animates: no cursor, a wrapped static list, Three steps at rest in its finished state", async () => {
+test("with reduced motion on nothing animates: no cursor, Three steps at rest in its finished state", async () => {
   await open({ reduced: true });
   assert.equal(await stageState(), "off");
   assert.equal(await ev(`getComputedStyle(document.querySelector(".ghost")).display`), "none");
-  // The marquee is a wrapped static list: no animation, one set, everything inside the window.
-  const marq = await ev(`(()=>{const t=document.querySelector(".marq-track");const s=getComputedStyle(t);const sets=[...document.querySelectorAll(".marq-set")].map(e=>getComputedStyle(e).display);return {anim:s.animationName,wrap:s.flexWrap,w:Math.round(t.getBoundingClientRect().width),win:innerWidth,sets,mask:getComputedStyle(document.querySelector(".marq")).maskImage}})()`);
-  assert.equal(marq.anim, "none");
-  assert.equal(marq.wrap, "wrap");
-  assert.ok(marq.w <= marq.win, `the list is ${marq.w}px wide`);
-  assert.deepEqual(marq.sets, ["flex", "none"], "the duplicate set is hidden");
   // Three steps, scrolled into view: still nothing runs, and every part shows its finished state.
   await ev(`document.querySelector("#how").scrollIntoView({block:"center"})`);
   await sleep(800); // elapsed time is the thing measured: a loop would have started by now
@@ -234,7 +228,7 @@ test("with reduced motion on nothing animates: no cursor, a wrapped static list,
   assert.equal(await ev(`${RUNNING}.length`), 0, "no transition runs after a click");
 });
 
-test("with motion on, only the marquee moves on load, and Three steps plays its 12 second loop only while it is on screen", async () => {
+test("with motion on, nothing moves on load, and Three steps plays its 12 second loop only while it is on screen", async () => {
   await open({ width: 1280, height: 900 });
   // Stop the ghost, so only the page itself is measured.
   await click(".file-head");
@@ -242,7 +236,7 @@ test("with motion on, only the marquee moves on load, and Three steps plays its 
   await ev(`window.scrollTo(0, 0)`);
   await sleep(500);
   const names = await ev(`[...new Set(document.getAnimations().filter(a=>a instanceof CSSAnimation).map(a=>a.animationName))]`);
-  assert.deepEqual(names, ["pl-marq"], "on load only the marquee moves");
+  assert.deepEqual(names, [], "on load nothing moves");
   assert.equal(await ev(`document.querySelector("#how").dataset.play`), "false", "Three steps rests while off screen");
   await ev(`document.querySelector("#how").scrollIntoView({block:"center"})`);
   await waitFor(`document.querySelector("#how").dataset.play === "true"`, { label: "Three steps to play" });
@@ -253,11 +247,6 @@ test("with motion on, only the marquee moves on load, and Three steps plays its 
   await ev(`window.scrollTo(0, 0)`);
   await waitFor(`document.querySelector("#how").dataset.play === "false"`, { label: "Three steps to stop off screen" });
   assert.equal(await ev(`document.getAnimations().filter(a=>a instanceof CSSAnimation&&/^pl-(hop|fill|typing)$/.test(a.animationName)).length`), 0, "the loop stops off screen");
-  // Pause on hover.
-  const p = await ev(centerOf(".marq"));
-  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
-  await settle();
-  assert.equal(await ev(`getComputedStyle(document.querySelector(".marq-track")).animationPlayState`), "paused", "the marquee pauses on hover");
 });
 
 test("Three steps follows the visitor's real color scale", async () => {
@@ -282,15 +271,15 @@ test("the feedback link and the footer are exact", async () => {
   await open({ reduced: true });
   assert.equal(await ev(`document.querySelector("footer a").getAttribute("href")`), "mailto:kiranjinde19@gmail.com?subject=Plinth%20feedback");
   assert.equal(await ev(`document.querySelector("footer a").textContent`), "Send feedback");
-  assert.equal(await ev(`document.querySelector("footer span").textContent`), "Made by Kiran B. Free to use.");
+  assert.equal(await ev(`document.querySelector("footer span").textContent`), "Made by Kiran B. Free to use. Nothing leaves your browser: no cookies, no tracking.");
 });
 
 test("the name, wordmark, favicon and share image are Plinth", async () => {
   await open({ reduced: true });
   const head = await ev(`(()=>{const m=(s)=>document.querySelector(s)?.getAttribute("content");return {title:document.title,description:m('meta[name=description]'),ogTitle:m('meta[property="og:title"]'),ogImage:m('meta[property="og:image"]'),twitter:m('meta[name="twitter:card"]'),twImage:m('meta[name="twitter:image"]'),icons:[...document.querySelectorAll('link[rel~=icon]')].map(l=>l.getAttribute("type")),apple:!!document.querySelector('link[rel=apple-touch-icon]')}})()`);
-  assert.equal(head.title, "Plinth");
+  assert.equal(head.title, "Plinth: your brand design system as one SKILL.md file");
   assert.equal(head.description, "Plinth builds your brand design system and turns it into one SKILL.md or AGENTS.md file for Claude Code, Codex and ChatGPT. Free, no login.");
-  assert.equal(head.ogTitle, "Plinth");
+  assert.equal(head.ogTitle, "Plinth: your brand design system as one SKILL.md file");
   assert.match(head.ogImage, /\/brand\/plinth-share\.png$/);
   assert.match(head.twImage, /\/brand\/plinth-share\.png$/);
   assert.equal(head.twitter, "summary_large_image");
@@ -400,8 +389,8 @@ test("the text has no dashes or hyphens in the page copy", async () => {
 
 test("the sections come in the asked order, with the exact copy", async () => {
   await open({ reduced: true });
-  const order = await ev(`[...document.querySelectorAll(".pl header, .pl .hero, .pl #stage, .pl .facts, .pl .marq, .pl section, .pl footer")].map(e=>e.tagName==="SECTION"?(e.querySelector("h2")?.textContent||""):e.tagName==="HEADER"?"header":e.tagName==="FOOTER"?"footer":e.className)`);
-  assert.deepEqual(order, ["header", "hero", "stage", "facts", "marq", "Not a list of colors. A rulebook your AI follows.", "Three steps, about ten minutes.", "Why I built this", "The same page, before and after", "Questions", "Lay the first stone.", "footer"]);
+  const order = await ev(`[...document.querySelectorAll(".pl header, .pl .hero, .pl #stage, .pl .facts, .pl section, .pl footer")].map(e=>e.tagName==="SECTION"?(e.querySelector("h2")?.textContent||""):e.tagName==="HEADER"?"header":e.tagName==="FOOTER"?"footer":e.className)`);
+  assert.deepEqual(order, ["header", "hero", "stage", "facts", "Not a list of colors. A rulebook your AI follows.", "Three steps, about ten minutes.", "Why I built this", "The same page, before and after", "Questions", "Lay the first stone.", "footer"]);
   const copy = await ev(`document.querySelector(".pl").innerText`);
   for (const line of [
     "Are you building a solid app?",
@@ -415,8 +404,7 @@ test("the sections come in the asked order, with the exact copy", async () => {
     "Reading SKILL.md first.",
   ]) assert.ok(copy.replace(/\s+/g, " ").includes(line), `missing: ${line}`);
   assert.deepEqual(await ev(`[...document.querySelectorAll(".icard h3")].map(e=>e.textContent)`), ["Tokens", "Component recipes", "Signature details", "Tone of voice", "Accessibility", "Final checklist"]);
-  assert.deepEqual(await ev(`[...document.querySelectorAll(".chip")].slice(0,16).map(e=>e.textContent)`), ["Buttons", "Inputs", "Selection controls", "Tables", "Cards", "Forms", "Tabs", "Dialogs and toasts", "Pricing pages", "Settings pages", "Dashboards", "Charts", "Empty states", "Focus rings", "Tone of voice", "Do and don't rules"]);
-  assert.equal(await ev(`document.querySelectorAll("details").length`), 4);
+  assert.equal(await ev(`document.querySelectorAll("details").length`), 8);
 });
 
 test("the first load stays light: the engine loads after the page, fonts come from next/font", async () => {
@@ -472,4 +460,33 @@ test("no theme flash: the saved choice is applied before the first paint, even w
     }
   }
   await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "no-preference" }, { name: "prefers-color-scheme", value: "light" }] });
+});
+
+test("skip link is the first tab stop and works, the demo sample has no heading of its own, and the FAQ has eight questions", async () => {
+  await navigate(state.baseUrl + "/", LANDING_READY);
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  assert.equal(await ev(`document.activeElement.textContent.trim()`), "Skip to main content", "the skip link comes first");
+  assert.ok((await ev(`document.activeElement.getBoundingClientRect().top`)) >= 0, "and it shows when focused");
+  assert.equal(await ev(`document.querySelector(".skip").getAttribute("href")`), "#top");
+  assert.equal(await ev(`!!document.querySelector("main#top")`), true, "the target exists");
+  assert.deepEqual(await ev(`[...document.querySelectorAll("h1,h2,h3")].map(h=>h.tagName).slice(0,3)`), ["H1", "H2", "H3"], "heading order has no jump");
+  assert.equal(await ev(`document.querySelectorAll("details").length`), 8);
+});
+
+test("each What is inside card shows a real excerpt from the generated file", async () => {
+  await navigate(state.baseUrl + "/", LANDING_READY);
+  const cards = await ev(`[...document.querySelectorAll(".icard")].map(c=>({title:c.querySelector("h3").textContent,from:c.querySelector(".excerpt figcaption").textContent,lines:[...c.querySelectorAll(".excerpt pre code")].map(s=>s.textContent),notes:[...c.querySelectorAll(".excerpt pre em")].map(s=>s.textContent)}))`);
+  assert.equal(cards.length, 6);
+  for (const c of cards) {
+    assert.equal(c.lines.length, 3, `${c.title} shows three real lines`);
+    assert.equal(c.notes.length, 3, `${c.title} explains each line`);
+    assert.ok(c.notes.every((n) => n.length > 10 && !/[-‐-―−]/.test(n)), `${c.title} notes are plain words without dashes`);
+  }
+  assert.match(cards[0].lines[0], /^--color-brand-50:#[0-9A-F]{6}$/i, "Tokens shows real token lines");
+  assert.match(cards[1].lines.join(" "), /primary: "bg-primary/, "Component recipes shows the real button classes");
+  assert.match(cards[4].lines.join(" "), /primary-foreground on primary [\d.]+:1/, "Accessibility shows measured ratios");
+  // The lines come from the real file: the first token line is in the Next.js AGENTS.md the generator writes.
+  const hero = await ev(`document.querySelector(".hero").getBoundingClientRect().height`);
+  assert.ok(hero < 380, `the hero is short (${Math.round(hero)}px)`);
 });

@@ -65,7 +65,10 @@ test("the font picker, the pairing gallery and a font change load only this site
   await fresh("/app", { editor: "typography" });
   // Opening the typography editor opens the picker and the pairing gallery.
   await waitFor(`!!document.querySelector("[role=listbox]")`, { label: "the font picker" });
-  await waitFor(`!!document.getElementById("ds-font-names") && !!document.getElementById("ds-gallery-fonts")`, { label: "the name and gallery stylesheets" });
+  await waitFor(`!!document.getElementById("ds-font-names")`, { label: "the name stylesheet" });
+  assert.equal(await ev(`!!document.getElementById("ds-gallery-fonts")`), false, "the pairing samples load only when their window opens");
+  assert.equal(await click(`[...document.querySelectorAll("button")].find(b=>b.textContent.trim()==="See samples and details")`), true);
+  await waitFor(`!!document.getElementById("ds-gallery-fonts")`, { label: "the gallery stylesheet" });
   await sleep(1200);
   const opened = fontFiles(inPhase("picker"));
   assert.ok(opened.some((p) => p.startsWith("/fonts/names/")), `the picker loaded its name previews (${opened.length} files)`);

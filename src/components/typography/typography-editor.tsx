@@ -11,6 +11,7 @@ import {
   recommendBodyFonts,
   useDesignSystem,
 } from "@/lib/design-system";
+import { RangeInput } from "@/components/controls/controls";
 import { Section } from "@/components/controls/section";
 import { nameFamily } from "./hosted-fonts";
 import { FontPicker } from "./font-picker";
@@ -32,7 +33,7 @@ export function TypographyEditor() {
     <div className="space-y-10">
       <Section
         title="Font pairings"
-        description="Eight starting points. One click applies the whole pairing: fonts, weights, tracking and an optional mono accent."
+        description="Eight starting points. One click applies the whole pairing. Open the samples to compare them."
       >
         <PairingGallery onApply={() => setHeadingPicked(false)} />
       </Section>
@@ -76,9 +77,7 @@ export function TypographyEditor() {
                   <span className="font-normal">default for {headingName}</span>
                 )}
               </div>
-              <input
-                type="range"
-                className="w-full accent-primary"
+              <RangeInput
                 min={-0.04}
                 max={0.02}
                 step={0.005}

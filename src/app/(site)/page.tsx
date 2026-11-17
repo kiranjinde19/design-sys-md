@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { PlinthWordmark } from "@/components/brand/plinth-wordmark";
 import { Demo } from "@/components/landing/demo";
-import { computeDemo, computeFacts } from "@/components/landing/demo-engine";
+import { computeDemo, computeFacts, computeInsideExcerpts } from "@/components/landing/demo-engine";
 import { DEMO_DEFAULT } from "@/components/landing/demo-constants";
 import { HowSteps } from "@/components/landing/how-steps";
 import { LandingShell } from "@/components/landing/landing-shell";
@@ -11,26 +11,7 @@ import { baseMetadata } from "@/lib/site";
 import type { Metadata } from "next";
 import "@/components/landing/landing.css";
 
-export const metadata: Metadata = baseMetadata("Plinth", { path: "/" });
-
-const MARQUEE = [
-  "Buttons",
-  "Inputs",
-  "Selection controls",
-  "Tables",
-  "Cards",
-  "Forms",
-  "Tabs",
-  "Dialogs and toasts",
-  "Pricing pages",
-  "Settings pages",
-  "Dashboards",
-  "Charts",
-  "Empty states",
-  "Focus rings",
-  "Tone of voice",
-  "Do and don't rules",
-];
+export const metadata: Metadata = baseMetadata("Plinth: your brand design system as one SKILL.md file", { path: "/" });
 
 const INSIDE = [
   {
@@ -77,10 +58,24 @@ const INSIDE = [
   },
 ];
 
+/** What each real line means, in plain words. One note per line of the excerpt, in the same order. */
+const NOTES: Record<string, string[]> = {
+  Tokens: ["The lightest tint. Used for soft backgrounds.", "The middle of the scale. Your main button uses step 600.", "The darkest step. Used for text on tints."],
+  "Component recipes": ["The one main action on a screen.", "Supporting actions next to it.", "Low emphasis actions, like Cancel."],
+  "Signature details": ["Every card starts from this one rule.", "Every card lifts 2px on hover.", "The recommended plan gets a crisp 2px border."],
+  "Tone of voice": ["How it sounds: like a helpful colleague.", "What it never does: hype and exclamation marks.", "How long it is: short, with one next step."],
+  Accessibility: ["Button text on your brand color, measured.", "Secondary text on soft fills, measured.", "Button text on the error color, measured."],
+  "Final checklist": ["Catches hardcoded colors and sizes.", "Checks every rule in the file.", "Catches the wrong border on a control."],
+};
+
 const QUESTIONS = [
   { q: "Is it really free?", a: "Yes. There is no login and no paid tier. You build your file in the browser and download it." },
   { q: "Where does my work go?", a: "Your choices stay in your browser and save automatically. You can download the file and import it later to carry on where you stopped." },
   { q: "Which AI tools can use the file?", a: "Claude Code reads it as SKILL.md. Codex and ChatGPT read it as AGENTS.md. It is the same content in both." },
+  { q: "Do I need to know how to code?", a: "No. You use sliders, pickers and drag and drop. Your AI tool reads the file, so you never have to edit it by hand." },
+  { q: "Can I change my file later?", a: "Yes. Import the file you downloaded, change what you want and download it again. Everything you did not touch stays the same." },
+  { q: "What if I clear my browser data?", a: "Your saved work lives in this browser, so clearing site data removes it. Download your file first. You can import it any time to carry on." },
+  { q: "How big is the file?", a: "About 28 to 32 KiB, depending on your stack. Codex reads up to 32 KiB of instructions, so Plinth keeps a normal file under that line and warns you on the Export screen if one goes over." },
   { q: "What if my brand color is hard to read?", a: "Plinth checks contrast for you. By default it keeps your exact color and picks dark or light text, whichever passes. If neither passes, it tells you and offers a small adjustment." },
 ];
 
@@ -88,9 +83,13 @@ const QUESTIONS = [
 export default function Home() {
   const initial = computeDemo(DEMO_DEFAULT);
   const facts = computeFacts();
+  const excerpts = computeInsideExcerpts();
   return (
     <LandingShell initial={initial}>
       <div className="wrap">
+        <a className="skip" href="#top">
+          Skip to main content
+        </a>
         <header className="top">
           <Link className="mark" href="/" aria-label="Plinth home">
             <PlinthWordmark height={24} />
@@ -141,25 +140,6 @@ export default function Home() {
               <span>Next.js, React and plain HTML</span>
             </div>
           </div>
-
-          <div className="marq" aria-label="Parts of your design system that the file covers">
-            <div className="marq-track">
-              <div className="marq-set">
-                {MARQUEE.map((name) => (
-                  <span className="chip" key={name}>
-                    {name}
-                  </span>
-                ))}
-              </div>
-              <div className="marq-set" aria-hidden="true">
-                {MARQUEE.map((name) => (
-                  <span className="chip" key={name}>
-                    {name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
         </main>
 
         <section aria-labelledby="in-t">
@@ -179,6 +159,17 @@ export default function Home() {
                 </span>
                 <h3>{card.title}</h3>
                 <p>{card.text}</p>
+                <figure className="excerpt" data-excerpt>
+                  <figcaption>From the file: {excerpts[card.title].from}</figcaption>
+                  <pre>
+                    {excerpts[card.title].lines.map((line, i) => (
+                      <span key={i} className="ex-line">
+                        <code>{line}</code>
+                        <em>{NOTES[card.title][i]}</em>
+                      </span>
+                    ))}
+                  </pre>
+                </figure>
               </div>
             ))}
           </div>
@@ -254,7 +245,7 @@ export default function Home() {
         </section>
 
         <footer>
-          <span>Made by Kiran B. Free to use.</span>
+          <span>Made by Kiran B. Free to use. Nothing leaves your browser: no cookies, no tracking.</span>
           <span>
             <a href="mailto:kiranjinde19@gmail.com?subject=Plinth%20feedback">Send feedback</a>
           </span>

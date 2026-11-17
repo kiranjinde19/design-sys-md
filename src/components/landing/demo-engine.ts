@@ -110,3 +110,41 @@ export function computeFacts(): DemoFacts {
   const { tokens } = createDesignSystem(demoSettings(DEMO_DEFAULT));
   return { scaleSteps: Object.keys(tokens.colors.brand).length, aa: WCAG_AA, grid: tokens.spacing.base, stacks: STACK_IDS.length };
 }
+
+/** One real excerpt per "What is inside" card: a few lines read from the generated AGENTS.md (Next.js stack), never typed by hand. */
+export interface InsideExcerpt {
+  /** The section of the file the lines come from. */
+  from: string;
+  lines: string[];
+}
+
+export function computeInsideExcerpts(): Record<string, InsideExcerpt> {
+  const file = generateSkillFile(createDesignSystem(demoSettings(DEMO_DEFAULT)), { presetId: "saas-clean" }).agents.split("\n");
+  const section = (heading: string) => {
+    const start = file.findIndex((line) => line === heading);
+    if (start === -1) return [];
+    // The section runs to the next heading of the same or a higher level (## Tokens holds its ### parts).
+    const level = heading.match(/^#+/)![0].length;
+    const end = file.findIndex((line, i) => i > start && new RegExp(`^#{1,${level}} `).test(line));
+    return file.slice(start + 1, end === -1 ? undefined : end).filter((line) => line.trim() !== "");
+  };
+  const starting = (lines: string[], prefixes: string[]) => prefixes.map((prefix) => lines.find((line) => line.startsWith(prefix))).filter((line): line is string => Boolean(line));
+  const clip = (line: string) => line.replace(/\s+/g, " ").trim();
+
+  const tokens = section("## Tokens");
+  // The brand scale is written across a few lines of the @theme block: join them, then pick steps 50, 500 and 900.
+  const brandVars = tokens.filter((line) => line.startsWith("--color-brand-")).join(";").split(";").filter((v) => v.startsWith("--color-brand-"));
+  const tokenLines = [0, 5, 9].map((i) => brandVars[i]).filter(Boolean);
+
+  const tone = section("## Tone of voice");
+  const access = section("## Accessibility");
+  const check = section("## Final checklist");
+  return {
+    Tokens: { from: "## Tokens", lines: tokenLines.map(clip) },
+    "Component recipes": { from: "### Buttons", lines: section("### Buttons").filter((line) => /^\s*(primary|secondary|tertiary): "/.test(line)).map(clip) },
+    "Signature details": { from: "## Signature details", lines: starting(section("## Signature details"), [".card{", ".card-hover:hover", ".card-featured{"]).map(clip) },
+    "Tone of voice": { from: "## Tone of voice", lines: tone.filter((line) => /^[123]\. /.test(line)).map(clip) },
+    Accessibility: { from: "## Accessibility", lines: starting(access, ["| primary-foreground", "| muted-foreground", "| destructive-foreground"]).map((line) => clip(line.replace(/^\||\|$/g, "").replace(/\|/g, " "))) },
+    "Final checklist": { from: "## Final checklist", lines: check.filter((line) => line.startsWith("- [ ]")).slice(0, 3).map(clip) },
+  };
+}

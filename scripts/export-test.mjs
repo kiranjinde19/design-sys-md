@@ -11,13 +11,13 @@ import assert from "node:assert/strict";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ev, fresh as freshPage, importFile, navigate, send, settle, setWidth, start, state, stop, waitFor } from "./lib/cdp.mjs";
+import { ev, fresh as freshPage, importFile, navigate, onEvent, send, settle, setWidth, start, state, stop, waitFor } from "./lib/cdp.mjs";
 
 const work = mkdtempSync(join(tmpdir(), "export-test-"));
 const downloads = join(work, "downloads");
 const baseUrl = () => state.baseUrl;
 /** Clean browser state, theme chosen, then the page. */
-const fresh = (path = "/app/export", theme = "light") => freshPage(path, { theme });
+const fresh = (path = "/app/export", theme = "light", editor = null) => freshPage(path, { theme, editor });
 /** Loads a page again (a reload keeps the saved work). */
 const open = (path) => navigate(baseUrl() + path);
 
@@ -235,7 +235,7 @@ test("the starter prompt appears after a download, names the right file and fold
   await click(byText("button", "Copy prompt"));
   assert.equal(await ev(`navigator.clipboard.readText()`), await ev(`document.querySelector("[data-prompt-text]").textContent`));
   assert.equal(await ev(`${byText("button", "Copied")}?.textContent.trim()`), "Copied");
-  assert.match(await ev(`document.querySelector("[data-starter-prompt] [role=status]").textContent`), /Copied the starter prompt/);
+  assert.match(await ev(`document.querySelector("[data-prompt-status]").textContent`), /Copied the starter prompt/);
 });
 
 test("tokens.css and tokens.json download next to the file, with the same values as the file", async () => {
@@ -577,4 +577,296 @@ test("the tool's own chrome colors stay identical across five brands, light and 
       assert.equal(await read(), baseline, `${theme}: the chrome is identical with ${brand}`);
     }
   }
+});
+
+// ---------------------------------------------------------------------------------------------- phone fixes
+
+/** Types like a person: one character group at a time into the focused field (no select all). */
+async function typeMore(text) {
+  await send("Input.insertText", { text });
+  await settle();
+}
+
+test("Product name and line keep spaces while typing, and the file holds the trimmed text", async () => {
+  await fresh();
+  await click("#product-name");
+  await ev(`document.querySelector("#product-name").select()`);
+  await typeMore("Acme");
+  await typeMore(" ");
+  assert.equal(await ev(`document.querySelector("#product-name").value`), "Acme ", "a trailing space stays while typing");
+  await typeMore("Billing");
+  assert.equal(await ev(`document.querySelector("#product-name").value`), "Acme Billing", "a space between words stays");
+  await typeMore("  Co ");
+  assert.equal(await ev(`document.querySelector("#product-name").value`), "Acme Billing  Co ", "the field shows exactly what was typed while focused");
+  // Same for the line.
+  await click("#product-line");
+  await ev(`document.querySelector("#product-line").select()`);
+  await typeMore("Billing for");
+  await typeMore(" small teams. ");
+  assert.equal(await ev(`document.querySelector("#product-line").value`), "Billing for small teams. ");
+  // Leaving the field shows the cleaned value, and the exported file has the trimmed text.
+  await click("#product-name");
+  await click("h1");
+  assert.equal(await ev(`document.querySelector("#product-name").value`), "Acme Billing Co");
+  assert.equal(await ev(`document.querySelector("#product-line").value`), "Billing for small teams.");
+  const raw = await rawText();
+  assert.match(raw, /"name":"Acme Billing Co"/);
+  assert.match(raw, /Billing for small teams\./);
+  assert.ok(!/Billing for small teams\. /.test(raw.split("\n").slice(0, 8).join("\n")), "no trailing space in the header text");
+});
+
+test("Copy prompt: the clipboard API, then the older way, then a selectable prompt with Press and hold to copy", async () => {
+  await fresh();
+  await download("html-css", "skill");
+  await waitFor(`!!document.querySelector("[data-starter-prompt]")`, { label: "the starter prompt" });
+  const promptText = () => ev(`document.querySelector("[data-prompt-text]").textContent`);
+  // 1. The Clipboard API is missing: the hidden textarea way copies for real.
+  await ev(`Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true }); window.__legacy = 0; const o = document.execCommand.bind(document); document.execCommand = (c) => { window.__legacy++; return o(c); };`);
+  await click(byText("button", "Copy prompt"));
+  assert.equal(await ev(`window.__legacy`), 1, "the older copy was used");
+  assert.equal(await ev(`!!${byText("button", "Copied")}`), true, "Copied is shown after a real copy");
+  assert.equal(await ev(`document.querySelector("[data-starter-prompt] [role=status]").textContent`), "Copied");
+  assert.equal(await ev(`document.querySelectorAll("textarea").length`), 0, "the hidden textarea is removed");
+  // 2. Both fail: no false Copied, the prompt is selected, and the words tell what to do.
+  await ev(`document.execCommand = () => false`);
+  await click(`document.querySelector("[data-starter-prompt] button")`);
+  assert.equal(await ev(`!!${byText("button", "Copied")}`), false, "no Copied when the copy failed");
+  assert.equal(await ev(`document.querySelector("[data-prompt-status]").textContent`), "Press and hold to copy");
+  assert.equal(await ev(`getSelection().toString()`), await promptText(), "the whole prompt is selected");
+  assert.match(await ev(`document.querySelector("[data-starter-prompt] [role=status]").textContent`), /Copy failed/);
+  assert.equal(await ev(`document.querySelector("[data-starter-prompt] [role=status]").getAttribute("aria-live")`), "polite");
+});
+
+test("Import file works from the desktop bar and the phone More menu, and restores what was exported", async () => {
+  await fresh();
+  await type("#product-name", "Acme Billing");
+  await type("#product-line", "Billing software for small teams.");
+  await chooseStack("react-tailwind");
+  const exported = await download("react-tailwind", "skill");
+  await send("Page.setInterceptFileChooserDialog", { enabled: true });
+  let opened = 0;
+  const stopListening = onEvent((method) => {
+    if (method === "Page.fileChooserOpened") opened++;
+  });
+  try {
+    // Desktop: the bar button opens the chooser.
+    await fresh("/app");
+    await click(byText("header button", "Import file"));
+    await waitFor(() => opened === 1, { label: "the file chooser from the desktop button" });
+    // Phone: More, then Import file, opens the chooser too.
+    await setWidth(390, 844);
+    await click(byText("header button", "More"));
+    await click(byText("[role=menuitem]", "Import file"));
+    await waitFor(() => opened === 2, { label: "the file chooser from the More menu" });
+    // No file type filter, so no phone picker greys the file out; the file is checked after it is read.
+    assert.equal(await ev(`document.querySelector("input[type=file]").accept`), "");
+    // Choosing the exported file restores it: a new export is identical, and the banner says so.
+    await importPath(tmpFile("SKILL.md", exported.content));
+    assert.match(await statusText(), /Restored SaaS Clean/);
+    await open("/app/export");
+    await setWidth(1440, 1000);
+    const again = await download("react-tailwind", "skill");
+    assert.equal(again.content, exported.content, "the imported file exports identically");
+    assert.equal(await ev(`document.querySelector("#product-name").value`), "Acme Billing");
+    // An invalid file says what is wrong.
+    await importPath(tmpFile("notes.md", "# Just notes\n"));
+    assert.match(await statusText(), /No data block found/);
+  } finally {
+    stopListening();
+    await send("Page.setInterceptFileChooserDialog", { enabled: false });
+  }
+});
+
+test("Back to board appears once in every step, the edited row sits under the step list, and Previous and Next stay", async () => {
+  const steps = ["colors", "typography", "radius", "spacing", "borders", "shadows", "buttons", "signature", "voice"];
+  for (const width of [1440, 390]) {
+    await setWidth(width, 900);
+    await fresh("/app", "light", "colors");
+    await waitFor(`!!document.querySelector("input[aria-label='Brand color hex code']")`, { label: "the Colors editor" });
+    // Make an edit so the edited row shows.
+    await ev(`(()=>{const i=document.querySelector("input[aria-label='Brand color hex code']");const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;set.call(i,"#0D9488");i.dispatchEvent(new Event("input",{bubbles:true}))})()`);
+    await settle();
+    for (let n = 0; n < steps.length; n++) {
+      const count = await ev(`[...document.querySelectorAll("button")].filter(b=>b.textContent.trim()==="Back to board").length`);
+      assert.equal(count, 1, `one Back to board in step ${n + 1} at ${width}px`);
+      const footer = await ev(`[...document.querySelectorAll("section[aria-labelledby=editor-title] footer button")].map(b=>b.textContent.trim().split(":")[0])`);
+      assert.deepEqual(footer, n === 0 ? ["Next"] : n === steps.length - 1 ? ["Previous", "Finish"] : ["Previous", "Next"], `footer buttons in step ${n + 1} at ${width}px`);
+      if (n < steps.length - 1) await click(byText("section[aria-labelledby=editor-title] footer button", "Next"));
+    }
+    // The edited row: its own row, outside the scrolling strip, left aligned with the step cards on desktop.
+    const g = await ev(`(()=>{const nav=document.querySelector("nav[aria-label='Design systems']");const row=document.querySelector("[data-edited-row]");const btn=row.querySelector("button");const label=row.querySelector("span");const r=(e)=>e.getBoundingClientRect();return {inNav:nav.contains(row),rowTop:r(row).top,navBottom:r(nav).bottom,navLeft:r(nav.querySelector("button")).left,labelLeft:r(label).left,btnLeft:r(btn).left,btnH:r(btn).height,rowW:r(row).width,navW:r(nav).width,sx:document.documentElement.scrollWidth-document.documentElement.clientWidth}})()`);
+    assert.equal(g.inNav, false, `the edited row is not inside the scrolling strip at ${width}px`);
+    assert.ok(g.rowTop >= g.navBottom - 1, `the edited row sits below the step list at ${width}px`);
+    assert.ok(g.btnH >= 44 || width > 768, "the Reset button is 44px high on phones");
+    assert.equal(g.sx, 0, "no sideways page scroll");
+    if (width === 1440) {
+      assert.ok(Math.abs(g.labelLeft - g.navLeft) <= 1 && g.btnLeft > g.labelLeft, `the status lines up with the first option and Reset follows it (${g.labelLeft}, ${g.btnLeft}, ${g.navLeft})`);
+    } else {
+      assert.ok(g.rowW >= g.navW - 40, "the row is full width on a phone");
+      assert.ok(await ev(`document.querySelector("nav[aria-label='Design systems']").scrollWidth > document.querySelector("nav[aria-label='Design systems']").clientWidth`), "the tab strip still scrolls sideways");
+    }
+  }
+  await setWidth(1440, 1000);
+});
+
+// ---------------------------------------------------------------------------------------------- editor layout and typography
+
+test("open editor: the options sit in one row above, and the editor and the preview sit side by side", async () => {
+  await setWidth(1440, 1000);
+  await fresh("/app", "light", "colors");
+  await waitFor(`!!document.getElementById("editor-title")`, { label: "the editor" });
+  const g = await ev(`(()=>{const r=(e)=>e.getBoundingClientRect();const nav=document.querySelector("nav[aria-label='Design systems']");const panel=document.querySelector("section[aria-labelledby=editor-title]");const preview=document.querySelector("[aria-label='Live preview'], section.tool-panel:not([aria-labelledby])")||[...document.querySelectorAll("section")].find(s=>s!==panel&&r(s).left>r(panel).right-2);const tops=[...nav.querySelectorAll("button")].map(b=>Math.round(r(b).top));return {n:tops.length,sameRow:new Set(tops).size===1,navBottom:r(nav).bottom,panelTop:r(panel).top,panelRight:r(panel).right,previewLeft:preview?r(preview).left:null,previewTop:preview?r(preview).top:null,sx:document.documentElement.scrollWidth-document.documentElement.clientWidth}})()`);
+  assert.equal(g.n, 9);
+  assert.equal(g.sameRow, true, "all nine options are in one row");
+  assert.ok(g.navBottom <= g.panelTop + 1, "the options are above the editor");
+  assert.ok(g.previewLeft !== null && g.previewLeft >= g.panelRight, "the preview sits to the right of the editor");
+  assert.ok(Math.abs(g.previewTop - g.panelTop) <= 1, "and starts at the same height");
+  assert.equal(g.sx, 0);
+  // Phones: stacked, the options still one scrolling row.
+  await setWidth(390, 844);
+  const m = await ev(`(()=>{const nav=document.querySelector("nav[aria-label='Design systems']");const tops=[...nav.querySelectorAll("button")].map(b=>Math.round(b.getBoundingClientRect().top));return {sameRow:new Set(tops).size===1,sx:document.documentElement.scrollWidth-document.documentElement.clientWidth}})()`);
+  assert.equal(m.sameRow, true);
+  assert.equal(m.sx, 0);
+  await setWidth(1440, 1000);
+});
+
+test("typography: the pairings are small buttons, Customize is in view without scrolling, and the samples open in a window", async () => {
+  await setWidth(1440, 1000);
+  await fresh("/app", "light", "typography");
+  await waitFor(`!!document.querySelector("[aria-label='Font pairings']")`, { label: "the pairings" });
+  const v = await ev(`(()=>{const r=(e)=>e.getBoundingClientRect();const panel=document.querySelector("section[aria-labelledby=editor-title]");const h=[...document.querySelectorAll("h2")].find(e=>e.textContent.trim()==="Customize");const btns=[...document.querySelectorAll("[aria-label='Font pairings'] button")];return {count:btns.length,minH:Math.min(...btns.map(b=>r(b).height)),customizeTop:r(h).top,panelBottom:r(panel).bottom,note:document.querySelector("[data-pairing-note]").textContent}})()`);
+  assert.equal(v.count, 8);
+  assert.ok(v.minH >= 44, "each pairing button is at least 44px high");
+  assert.ok(v.customizeTop < v.panelBottom - 200, `Customize is in view without scrolling (${Math.round(v.customizeTop)} of ${Math.round(v.panelBottom)})`);
+  assert.match(v.note, /^Modern SaaS: Inter \+ Inter\./, "one line says which pairing is in use");
+  // Choosing a small button applies the pairing.
+  await click(byText("[aria-label='Font pairings'] button", "Editorial"));
+  assert.equal(await ev(`document.querySelector("[aria-label='Font pairings'] button[aria-pressed=true]").textContent.trim()`), "Editorial");
+  assert.match(await ev(`document.querySelector("[data-pairing-note]").textContent`), /^Editorial: Fraunces \+ Inter\./);
+  // The window: eight full cards, Escape closes it and focus returns to the button.
+  assert.equal(await ev(`document.querySelector("dialog").open`), false);
+  await click(byText("button", "See samples and details"));
+  await waitFor(`document.querySelector("dialog").open && document.querySelectorAll("dialog button[aria-pressed]").length === 8`, { label: "the window with eight cards" });
+  assert.match(await ev(`document.querySelector("dialog").textContent`), /Stop shipping random blues/, "the cards show the sample line");
+  await key("Escape");
+  await waitFor(`!document.querySelector("dialog").open`, { label: "the window to close" });
+  assert.equal(await ev(`document.activeElement.textContent.trim()`), "See samples and details", "focus returns to the button");
+  // Choosing a card in the window applies it and closes the window.
+  await click(byText("button", "See samples and details"));
+  await waitFor(`document.querySelectorAll("dialog button[aria-pressed]").length === 8`, { label: "the cards" });
+  await click(`[...document.querySelectorAll("dialog button[aria-pressed]")].find(b=>b.textContent.includes("Developer tools"))`);
+  await waitFor(`!document.querySelector("dialog").open`, { label: "the window to close after a choice" });
+  assert.match(await ev(`document.querySelector("[data-pairing-note]").textContent`), /^Developer tools:/);
+  // On a phone the window fits the screen.
+  await setWidth(390, 844);
+  await click(byText("button", "See samples and details"));
+  await waitFor(`document.querySelector("dialog").open`, { label: "the window" });
+  const d = await ev(`(()=>{const r=document.querySelector("dialog").getBoundingClientRect();return {l:r.left,rt:r.right,w:innerWidth,sx:document.documentElement.scrollWidth-innerWidth}})()`);
+  assert.ok(d.l >= 0 && d.rt <= d.w, "the window is inside the screen");
+  await key("Escape");
+  await setWidth(1440, 1000);
+});
+
+// ---------------------------------------------------------------------------------------------- tabs, signature pictures, sliders
+
+const selectedTab = () => ev(`document.querySelector("[role=tab][aria-selected=true]").textContent.trim()`);
+
+test("opening a step shows the preview tab where its changes are visible, and other tabs stay free to open", async () => {
+  await setWidth(1440, 1000);
+  const expected = { colors: "Pricing", typography: "Forms", radius: "Buttons and states", spacing: "Tables", borders: "Forms", shadows: "Pricing", buttons: "Buttons and states", signature: "Pricing", voice: "Voice" };
+  for (const [id, tab] of Object.entries(expected)) {
+    await fresh("/app", "light", id);
+    await waitFor(`!!document.getElementById("editor-title")`, { label: `the ${id} editor` });
+    await waitFor(`document.querySelector("[role=tab][aria-selected=true]")?.textContent.trim() === ${JSON.stringify(tab)}`, { label: `the ${tab} tab for ${id}` });
+  }
+  // Moving on with Next switches the tab; opening another tab by hand sticks while the step stays.
+  await fresh("/app", "light", "colors");
+  await waitFor(`!!document.getElementById("editor-title")`);
+  await click(byText("[role=tab]", "Tables"));
+  assert.equal(await selectedTab(), "Tables", "a hand picked tab stays");
+  await ev(`(()=>{const i=document.querySelector("input[aria-label='Brand color hex code']");const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;set.call(i,"#0D9488");i.dispatchEvent(new Event("input",{bubbles:true}))})()`);
+  await settle();
+  assert.equal(await selectedTab(), "Tables", "editing does not take the tab away");
+  await click(byText("section[aria-labelledby=editor-title] footer button", "Next"));
+  await waitFor(`document.getElementById("editor-title").textContent === "Typography"`);
+  assert.equal(await selectedTab(), "Forms", "Next opens the tab for the next step");
+});
+
+test("Signature details: every option is a small picture with a name on hover, and choosing one shows where it can be seen", async () => {
+  await setWidth(1440, 1000);
+  await fresh("/app", "light", "signature");
+  await waitFor(`document.querySelectorAll("[data-signature]").length === 7`, { label: "seven categories" });
+  const counts = await ev(`[...document.querySelectorAll("[data-signature]")].map(f=>f.querySelectorAll("button[aria-pressed]").length)`);
+  assert.deepEqual(counts, [4, 4, 4, 4, 4, 3, 4]);
+  // Every option is a drawing with its name written below it, always visible (no hover needed).
+  const tile = await ev(`(()=>{const b=document.querySelector("[data-signature=primaryCta] button");const r=b.getBoundingClientRect();const draw=b.querySelector("span.flex").getBoundingClientRect();const label=b.querySelector("span.text-center").getBoundingClientRect();return {h:r.height,w:r.width,label:b.querySelector("span.text-center").textContent,labelBelow:label.top>=draw.bottom-1,labelVisible:getComputedStyle(b.querySelector("span.text-center")).visibility==="visible"&&label.height>0,tips:document.querySelectorAll(".sig-tip,[role=tooltip]").length}})()`);
+  assert.ok(tile.h >= 44 && tile.w >= 44, "tiles are big enough");
+  assert.equal(tile.label, "Solid");
+  assert.equal(tile.labelBelow, true, "the name sits below the drawing");
+  assert.equal(tile.labelVisible, true);
+  assert.equal(tile.tips, 0, "there are no hover labels");
+  const names = await ev(`[...document.querySelectorAll("[data-signature=primaryCta] button")].map(b=>b.querySelector("span.text-center").textContent)`);
+  assert.deepEqual(names, ["Solid", "Border beam", "Gradient fill", "Underline sweep"]);
+  // The border beam picture really moves.
+  assert.equal(await ev(`getComputedStyle(document.querySelector(".sig-beam"), "::before").animationName`), "sig-spin");
+  // Choosing one: pressed, named, and the Pricing tab shows it.
+  await click(byText("[role=tab]", "Forms"));
+  await click(`document.querySelector("[data-signature=primaryCta] button[data-option=gradient-fill]")`);
+  assert.equal(await ev(`document.querySelector("[data-signature=primaryCta] button[data-option=gradient-fill]").getAttribute("aria-pressed")`), "true");
+  assert.equal(await selectedTab(), "Pricing", "choosing a call to action opens the Pricing tab");
+  // The focus ring shows on Buttons and states.
+  await click(`document.querySelector("[data-signature=focusRing] button[data-option=thick-outline]")`);
+  assert.equal(await selectedTab(), "Buttons and states", "choosing a focus ring opens Buttons and states");
+  // Keyboard: a tile can be reached and pressed, and the name shows on focus.
+  await ev(`document.querySelector("[data-signature=divider] button[data-option=dotted]").focus()`);
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", modifiers: 8, windowsVirtualKeyCode: 9 });
+  await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", modifiers: 8, windowsVirtualKeyCode: 9 });
+  await settle();
+  assert.equal(await ev(`document.activeElement.getAttribute("data-option")`), "dotted");
+});
+
+test("sliders are the modern slider: filled track, round thumb, 44px touch area, keyboard works", async () => {
+  await setWidth(1440, 1000);
+  await fresh("/app", "light", "radius");
+  await waitFor(`!!document.querySelector("input.tool-range")`, { label: "a slider" });
+  const s = await ev(`(()=>{const i=document.querySelector("input.tool-range");const c=getComputedStyle(i);return {h:Math.round(i.getBoundingClientRect().height),touch:c.touchAction,pct:i.style.getPropertyValue("--pct"),value:i.value,min:i.min,max:i.max}})()`);
+  assert.equal(s.h, 44);
+  assert.equal(s.touch, "pan-y");
+  assert.match(s.pct, /^\d+(\.\d+)?%$/, "the filled part is set from the value");
+  await ev(`document.querySelector("input.tool-range").focus()`);
+  const before = await ev(`document.querySelector("input.tool-range").value`);
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
+  await send("Input.dispatchKeyEvent", { type: "keyUp", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
+  await settle();
+  assert.notEqual(await ev(`document.querySelector("input.tool-range").value`), before, "the arrow key moves it");
+  const after = await ev(`document.querySelector("input.tool-range").style.getPropertyValue("--pct")`);
+  assert.notEqual(after, s.pct, "and the fill follows");
+  // The same slider is used for tone of voice and tracking.
+  await fresh("/app", "light", "voice");
+  await waitFor(`document.querySelectorAll("input.tool-range").length === 3`, { label: "three tone sliders" });
+  await fresh("/app", "light", "typography");
+  await waitFor(`!!document.querySelector("input.tool-range[aria-label='Heading tracking']")`, { label: "the tracking slider" });
+});
+
+test("Tone of voice: the five sample lines live in the Voice tab of the preview and follow the sliders", async () => {
+  await setWidth(1440, 1000);
+  await fresh("/app", "light", "voice");
+  await waitFor(`document.querySelectorAll("input.tool-range").length === 3`, { label: "the tone sliders" });
+  await waitFor(`document.querySelector("[role=tab][aria-selected=true]")?.textContent.trim() === "Voice"`, { label: "the Voice tab" });
+  assert.ok(!(await ev(`document.querySelector("section[aria-labelledby=editor-title]").innerText`)).includes("Live preview"), "the live preview block is no longer under the sliders");
+  const lines = () => ev(`[...document.querySelectorAll("[data-voice]")].filter(e=>e.dataset.voice!=="messages").map(e=>e.dataset.voice+": "+e.querySelector("strong, button")?.textContent.trim())`);
+  const before = await lines();
+  assert.equal(before.length, 5);
+  assert.deepEqual(before.map((l) => l.split(":")[0]), ["button", "empty", "error", "success", "pricing"]);
+  // Move the formal to casual slider to the formal end: the sample lines change in the preview at once.
+  await ev(`(()=>{const i=document.querySelector("input.tool-range");const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;set.call(i,"1");i.dispatchEvent(new Event("input",{bubbles:true}))})()`);
+  await settle();
+  assert.notDeepEqual(await lines(), before, "the sample lines follow the slider");
+  // It is a normal tab: another tab can be opened and the Voice tab comes back.
+  await click(byText("[role=tab]", "Pricing"));
+  assert.equal(await selectedTab(), "Pricing");
+  await click(byText("[role=tab]", "Voice"));
+  assert.equal(await selectedTab(), "Voice");
 });

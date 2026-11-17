@@ -84,7 +84,7 @@ after(stop);
 test("no horizontal page scroll on the board, with every preview tab, at all six widths", async () => {
   await fresh("/app");
   const tabs = await ev(`[...document.querySelectorAll('[aria-label="Preview pages"] [role=tab]')].map(t=>t.textContent.trim())`);
-  assert.equal(tabs.length, 6);
+  assert.equal(tabs.length, 7);
   for (const width of WIDTHS) {
     await setWidth(width);
     for (let i = 0; i < tabs.length; i++) {
@@ -263,8 +263,9 @@ test("1280 and wider keeps two columns; below 1280 the board, editor and Export 
     await setWidth(width);
     const [nav, panel, preview] = await boxes(EDIT);
     if (width >= 1280) {
-      assert.ok(Math.abs(nav.width - 224) < 2 && Math.abs(panel.width - 400) < 2, `${width}: list 224px and panel 400px (${nav.width}, ${panel.width})`);
-      assert.ok(panel.left >= nav.right - 1 && preview.left >= panel.right - 1, `${width}: list, panel and preview in a row`);
+      assert.ok(Math.abs(panel.width - 400) < 2, `${width}: the panel is 400px (${panel.width})`);
+      assert.ok(panel.top >= nav.bottom - 1, `${width}: the options are above the panel`);
+      assert.ok(preview.left >= panel.right - 1 && Math.abs(preview.top - panel.top) <= 1, `${width}: the panel and the preview sit side by side`);
     } else {
       assert.ok(panel.top >= nav.bottom - 1 && preview.top >= panel.bottom - 1, `${width}: list, then panel, then preview`);
       assert.ok(panel.width > (width - 80) * 0.95, `${width}: the editor panel is full width (${panel.width})`);
@@ -623,12 +624,12 @@ test("the preview label shows the real scale at every width, for Pricing, Dashbo
   assert.equal(await scaleLabel(), 65);
   await setWidth(390);
   assert.equal(await scaleLabel(), 60);
-  // Open editor at 1280: the preview frame is narrow, so it scales lower and says so.
+  // Open editor at 1280: the label always shows the real scale.
   await fresh("/app", { editor: "colors" });
   await setWidth(1280, 900);
   await click(previewTab("Pricing"));
   const label = await scaleLabel();
-  assert.ok(label < 65 && label >= 45, `with an editor open at 1280 the label says ${label}%`);
+  assert.ok(label <= 65 && label >= 45, `with an editor open at 1280 the label says ${label}%`);
   assert.equal(label, Math.round((await ev(stageScale)) * 100));
   // Tabs that are not scaled show no number.
   await click(previewTab("Forms"));
@@ -801,7 +802,7 @@ test("the preview tab bar on a phone: only sideways, fixed height, no scrollbar,
     assert.equal(m.snap, "none", `${width}: no scroll snap to fight the finger`);
     assert.equal(m.bar, "none", `${width}: no scrollbar is drawn`);
     assert.ok(m.sw > m.cw + 40, `${width}: the tabs need to scroll (${m.sw} in ${m.cw})`);
-    assert.ok(m.tabs.length === 6 && m.tabs.every((h) => h >= 44), `${width}: every tab is at least 44px high (${m.tabs.join(", ")})`);
+    assert.ok(m.tabs.length === 7 && m.tabs.every((h) => h >= 44), `${width}: every tab is at least 44px high (${m.tabs.join(", ")})`);
     // The height is the same at every scroll position, and it keeps its position when the page re-renders.
     const heights = [];
     for (const left of [0, 80, 400]) {
@@ -894,7 +895,7 @@ test("every preview tab is free of sideways overflow at 360 and 390", async () =
   await fresh("/app");
   for (const width of [360, 390]) {
     await setWidth(width, 844);
-    for (const tab of ["Pricing", "Buttons and states", "Forms", "Tables", "Dashboard", "Charts"]) {
+    for (const tab of ["Pricing", "Buttons and states", "Forms", "Tables", "Dashboard", "Charts", "Voice"]) {
       await click(previewTab(tab));
       await assertNoSidewaysScroll(`${width} ${tab}`);
     }
