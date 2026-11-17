@@ -208,16 +208,10 @@ test("a touch in the stage stops the ghost too", async () => {
 
 const RUNNING = `document.getAnimations().filter(a=>a.playState==="running")`;
 
-test("with reduced motion on nothing animates: no cursor, a wrapped static list, Three steps at rest in its finished state", async () => {
+test("with reduced motion on nothing animates: no cursor, Three steps at rest in its finished state", async () => {
   await open({ reduced: true });
   assert.equal(await stageState(), "off");
   assert.equal(await ev(`getComputedStyle(document.querySelector(".ghost")).display`), "none");
-  // The marquee is a wrapped static list: no animation, one set, everything inside the window.
-  const marq = await ev(`(()=>{const t=document.querySelector(".marq-track");const s=getComputedStyle(t);const sets=[...document.querySelectorAll(".marq-set")].map(e=>getComputedStyle(e).display);return {anim:s.animationName,wrap:s.flexWrap,w:Math.round(t.getBoundingClientRect().width),win:innerWidth,sets,mask:getComputedStyle(document.querySelector(".marq")).maskImage}})()`);
-  assert.equal(marq.anim, "none");
-  assert.equal(marq.wrap, "wrap");
-  assert.ok(marq.w <= marq.win, `the list is ${marq.w}px wide`);
-  assert.deepEqual(marq.sets, ["flex", "none"], "the duplicate set is hidden");
   // Three steps, scrolled into view: still nothing runs, and every part shows its finished state.
   await ev(`document.querySelector("#how").scrollIntoView({block:"center"})`);
   await sleep(800); // elapsed time is the thing measured: a loop would have started by now
@@ -234,7 +228,7 @@ test("with reduced motion on nothing animates: no cursor, a wrapped static list,
   assert.equal(await ev(`${RUNNING}.length`), 0, "no transition runs after a click");
 });
 
-test("with motion on, only the marquee moves on load, and Three steps plays its 12 second loop only while it is on screen", async () => {
+test("with motion on, nothing moves on load, and Three steps plays its 12 second loop only while it is on screen", async () => {
   await open({ width: 1280, height: 900 });
   // Stop the ghost, so only the page itself is measured.
   await click(".file-head");
@@ -242,7 +236,7 @@ test("with motion on, only the marquee moves on load, and Three steps plays its 
   await ev(`window.scrollTo(0, 0)`);
   await sleep(500);
   const names = await ev(`[...new Set(document.getAnimations().filter(a=>a instanceof CSSAnimation).map(a=>a.animationName))]`);
-  assert.deepEqual(names, ["pl-marq"], "on load only the marquee moves");
+  assert.deepEqual(names, [], "on load nothing moves");
   assert.equal(await ev(`document.querySelector("#how").dataset.play`), "false", "Three steps rests while off screen");
   await ev(`document.querySelector("#how").scrollIntoView({block:"center"})`);
   await waitFor(`document.querySelector("#how").dataset.play === "true"`, { label: "Three steps to play" });
@@ -253,11 +247,6 @@ test("with motion on, only the marquee moves on load, and Three steps plays its 
   await ev(`window.scrollTo(0, 0)`);
   await waitFor(`document.querySelector("#how").dataset.play === "false"`, { label: "Three steps to stop off screen" });
   assert.equal(await ev(`document.getAnimations().filter(a=>a instanceof CSSAnimation&&/^pl-(hop|fill|typing)$/.test(a.animationName)).length`), 0, "the loop stops off screen");
-  // Pause on hover.
-  const p = await ev(centerOf(".marq"));
-  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
-  await settle();
-  assert.equal(await ev(`getComputedStyle(document.querySelector(".marq-track")).animationPlayState`), "paused", "the marquee pauses on hover");
 });
 
 test("Three steps follows the visitor's real color scale", async () => {
@@ -400,8 +389,8 @@ test("the text has no dashes or hyphens in the page copy", async () => {
 
 test("the sections come in the asked order, with the exact copy", async () => {
   await open({ reduced: true });
-  const order = await ev(`[...document.querySelectorAll(".pl header, .pl .hero, .pl #stage, .pl .facts, .pl .marq, .pl section, .pl footer")].map(e=>e.tagName==="SECTION"?(e.querySelector("h2")?.textContent||""):e.tagName==="HEADER"?"header":e.tagName==="FOOTER"?"footer":e.className)`);
-  assert.deepEqual(order, ["header", "hero", "stage", "facts", "marq", "Not a list of colors. A rulebook your AI follows.", "Three steps, about ten minutes.", "Why I built this", "The same page, before and after", "Questions", "Lay the first stone.", "footer"]);
+  const order = await ev(`[...document.querySelectorAll(".pl header, .pl .hero, .pl #stage, .pl .facts, .pl section, .pl footer")].map(e=>e.tagName==="SECTION"?(e.querySelector("h2")?.textContent||""):e.tagName==="HEADER"?"header":e.tagName==="FOOTER"?"footer":e.className)`);
+  assert.deepEqual(order, ["header", "hero", "stage", "facts", "Not a list of colors. A rulebook your AI follows.", "Three steps, about ten minutes.", "Why I built this", "The same page, before and after", "Questions", "Lay the first stone.", "footer"]);
   const copy = await ev(`document.querySelector(".pl").innerText`);
   for (const line of [
     "Are you building a solid app?",
@@ -415,7 +404,6 @@ test("the sections come in the asked order, with the exact copy", async () => {
     "Reading SKILL.md first.",
   ]) assert.ok(copy.replace(/\s+/g, " ").includes(line), `missing: ${line}`);
   assert.deepEqual(await ev(`[...document.querySelectorAll(".icard h3")].map(e=>e.textContent)`), ["Tokens", "Component recipes", "Signature details", "Tone of voice", "Accessibility", "Final checklist"]);
-  assert.deepEqual(await ev(`[...document.querySelectorAll(".chip")].slice(0,16).map(e=>e.textContent)`), ["Buttons", "Inputs", "Selection controls", "Tables", "Cards", "Forms", "Tabs", "Dialogs and toasts", "Pricing pages", "Settings pages", "Dashboards", "Charts", "Empty states", "Focus rings", "Tone of voice", "Do and don't rules"]);
   assert.equal(await ev(`document.querySelectorAll("details").length`), 8);
 });
 
@@ -484,4 +472,17 @@ test("skip link is the first tab stop and works, the demo sample has no heading 
   assert.equal(await ev(`!!document.querySelector("main#top")`), true, "the target exists");
   assert.deepEqual(await ev(`[...document.querySelectorAll("h1,h2,h3")].map(h=>h.tagName).slice(0,3)`), ["H1", "H2", "H3"], "heading order has no jump");
   assert.equal(await ev(`document.querySelectorAll("details").length`), 8);
+});
+
+test("each What is inside card shows a real excerpt from the generated file", async () => {
+  await navigate(state.baseUrl + "/", LANDING_READY);
+  const cards = await ev(`[...document.querySelectorAll(".icard")].map(c=>({title:c.querySelector("h3").textContent,from:c.querySelector(".excerpt figcaption").textContent,lines:[...c.querySelectorAll(".excerpt pre span")].map(s=>s.textContent)}))`);
+  assert.equal(cards.length, 6);
+  for (const c of cards) assert.ok(c.lines.length >= 3, `${c.title} shows at least 3 lines (${c.lines.length})`);
+  assert.match(cards[0].lines[0], /^--color-brand-50:#[0-9A-F]{6}$/i, "Tokens shows real token lines");
+  assert.match(cards[1].lines.join(" "), /primary: "bg-primary/, "Component recipes shows the real button classes");
+  assert.match(cards[4].lines.join(" "), /primary-foreground on primary [\d.]+:1/, "Accessibility shows measured ratios");
+  // The lines come from the real file: the first token line is in the Next.js AGENTS.md the generator writes.
+  const hero = await ev(`document.querySelector(".hero").getBoundingClientRect().height`);
+  assert.ok(hero < 380, `the hero is short (${Math.round(hero)}px)`);
 });

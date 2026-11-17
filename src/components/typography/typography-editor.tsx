@@ -32,7 +32,7 @@ export function TypographyEditor() {
     <div className="space-y-10">
       <Section
         title="Font pairings"
-        description="Eight starting points. One click applies the whole pairing: fonts, weights, tracking and an optional mono accent."
+        description="Eight starting points. One click applies the whole pairing. Open the samples to compare them."
       >
         <PairingGallery onApply={() => setHeadingPicked(false)} />
       </Section>

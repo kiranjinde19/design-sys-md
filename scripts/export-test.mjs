@@ -700,11 +700,69 @@ test("Back to board appears once in every step, the edited row sits under the st
     assert.ok(g.btnH >= 44 || width > 768, "the Reset button is 44px high on phones");
     assert.equal(g.sx, 0, "no sideways page scroll");
     if (width === 1440) {
-      assert.ok(Math.abs(g.labelLeft - g.navLeft) <= 1 && Math.abs(g.btnLeft - g.navLeft) <= 1, `the status and Reset line up with the step cards (${g.labelLeft}, ${g.btnLeft}, ${g.navLeft})`);
+      assert.ok(Math.abs(g.labelLeft - g.navLeft) <= 1 && g.btnLeft > g.labelLeft, `the status lines up with the first option and Reset follows it (${g.labelLeft}, ${g.btnLeft}, ${g.navLeft})`);
     } else {
       assert.ok(g.rowW >= g.navW - 40, "the row is full width on a phone");
       assert.ok(await ev(`document.querySelector("nav[aria-label='Design systems']").scrollWidth > document.querySelector("nav[aria-label='Design systems']").clientWidth`), "the tab strip still scrolls sideways");
     }
   }
+  await setWidth(1440, 1000);
+});
+
+// ---------------------------------------------------------------------------------------------- editor layout and typography
+
+test("open editor: the options sit in one row above, and the editor and the preview sit side by side", async () => {
+  await setWidth(1440, 1000);
+  await fresh("/app", "light", "colors");
+  await waitFor(`!!document.getElementById("editor-title")`, { label: "the editor" });
+  const g = await ev(`(()=>{const r=(e)=>e.getBoundingClientRect();const nav=document.querySelector("nav[aria-label='Design systems']");const panel=document.querySelector("section[aria-labelledby=editor-title]");const preview=document.querySelector("[aria-label='Live preview'], section.tool-panel:not([aria-labelledby])")||[...document.querySelectorAll("section")].find(s=>s!==panel&&r(s).left>r(panel).right-2);const tops=[...nav.querySelectorAll("button")].map(b=>Math.round(r(b).top));return {n:tops.length,sameRow:new Set(tops).size===1,navBottom:r(nav).bottom,panelTop:r(panel).top,panelRight:r(panel).right,previewLeft:preview?r(preview).left:null,previewTop:preview?r(preview).top:null,sx:document.documentElement.scrollWidth-document.documentElement.clientWidth}})()`);
+  assert.equal(g.n, 9);
+  assert.equal(g.sameRow, true, "all nine options are in one row");
+  assert.ok(g.navBottom <= g.panelTop + 1, "the options are above the editor");
+  assert.ok(g.previewLeft !== null && g.previewLeft >= g.panelRight, "the preview sits to the right of the editor");
+  assert.ok(Math.abs(g.previewTop - g.panelTop) <= 1, "and starts at the same height");
+  assert.equal(g.sx, 0);
+  // Phones: stacked, the options still one scrolling row.
+  await setWidth(390, 844);
+  const m = await ev(`(()=>{const nav=document.querySelector("nav[aria-label='Design systems']");const tops=[...nav.querySelectorAll("button")].map(b=>Math.round(b.getBoundingClientRect().top));return {sameRow:new Set(tops).size===1,sx:document.documentElement.scrollWidth-document.documentElement.clientWidth}})()`);
+  assert.equal(m.sameRow, true);
+  assert.equal(m.sx, 0);
+  await setWidth(1440, 1000);
+});
+
+test("typography: the pairings are small buttons, Customize is in view without scrolling, and the samples open in a window", async () => {
+  await setWidth(1440, 1000);
+  await fresh("/app", "light", "typography");
+  await waitFor(`!!document.querySelector("[aria-label='Font pairings']")`, { label: "the pairings" });
+  const v = await ev(`(()=>{const r=(e)=>e.getBoundingClientRect();const panel=document.querySelector("section[aria-labelledby=editor-title]");const h=[...document.querySelectorAll("h2")].find(e=>e.textContent.trim()==="Customize");const btns=[...document.querySelectorAll("[aria-label='Font pairings'] button")];return {count:btns.length,minH:Math.min(...btns.map(b=>r(b).height)),customizeTop:r(h).top,panelBottom:r(panel).bottom,note:document.querySelector("[data-pairing-note]").textContent}})()`);
+  assert.equal(v.count, 8);
+  assert.ok(v.minH >= 44, "each pairing button is at least 44px high");
+  assert.ok(v.customizeTop < v.panelBottom - 200, `Customize is in view without scrolling (${Math.round(v.customizeTop)} of ${Math.round(v.panelBottom)})`);
+  assert.match(v.note, /^Modern SaaS: Inter \+ Inter\./, "one line says which pairing is in use");
+  // Choosing a small button applies the pairing.
+  await click(byText("[aria-label='Font pairings'] button", "Editorial"));
+  assert.equal(await ev(`document.querySelector("[aria-label='Font pairings'] button[aria-pressed=true]").textContent.trim()`), "Editorial");
+  assert.match(await ev(`document.querySelector("[data-pairing-note]").textContent`), /^Editorial: Fraunces \+ Inter\./);
+  // The window: eight full cards, Escape closes it and focus returns to the button.
+  assert.equal(await ev(`document.querySelector("dialog").open`), false);
+  await click(byText("button", "See samples and details"));
+  await waitFor(`document.querySelector("dialog").open && document.querySelectorAll("dialog button[aria-pressed]").length === 8`, { label: "the window with eight cards" });
+  assert.match(await ev(`document.querySelector("dialog").textContent`), /Stop shipping random blues/, "the cards show the sample line");
+  await key("Escape");
+  await waitFor(`!document.querySelector("dialog").open`, { label: "the window to close" });
+  assert.equal(await ev(`document.activeElement.textContent.trim()`), "See samples and details", "focus returns to the button");
+  // Choosing a card in the window applies it and closes the window.
+  await click(byText("button", "See samples and details"));
+  await waitFor(`document.querySelectorAll("dialog button[aria-pressed]").length === 8`, { label: "the cards" });
+  await click(`[...document.querySelectorAll("dialog button[aria-pressed]")].find(b=>b.textContent.includes("Developer tools"))`);
+  await waitFor(`!document.querySelector("dialog").open`, { label: "the window to close after a choice" });
+  assert.match(await ev(`document.querySelector("[data-pairing-note]").textContent`), /^Developer tools:/);
+  // On a phone the window fits the screen.
+  await setWidth(390, 844);
+  await click(byText("button", "See samples and details"));
+  await waitFor(`document.querySelector("dialog").open`, { label: "the window" });
+  const d = await ev(`(()=>{const r=document.querySelector("dialog").getBoundingClientRect();return {l:r.left,rt:r.right,w:innerWidth,sx:document.documentElement.scrollWidth-innerWidth}})()`);
+  assert.ok(d.l >= 0 && d.rt <= d.w, "the window is inside the screen");
+  await key("Escape");
   await setWidth(1440, 1000);
 });

@@ -50,10 +50,14 @@ export function ToolScreen() {
         )}
 
         {ready ? (
-          <div className="flex flex-col items-stretch gap-6 xl:flex-row">
-            {openId ? <Editor openId={openId} onOpen={setOpenId} onClose={() => setOpenId(null)} /> : <Board onOpen={setOpenId} />}
-            <Preview height={openId ? 810 : 648} />
-          </div>
+          openId ? (
+            <Editor openId={openId} onOpen={setOpenId} onClose={() => setOpenId(null)} preview={<Preview height={810} />} />
+          ) : (
+            <div className="flex flex-col items-stretch gap-6 xl:flex-row">
+              <Board onOpen={setOpenId} />
+              <Preview height={648} />
+            </div>
+          )
         ) : (
           <p className="text-sm text-muted-foreground">Loading your saved work…</p>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Check, ChevronRight } from "lucide-react";
 import { PRESETS, SYSTEMS, sentenceCase, swatchGroups, useDesignSystem, type SystemId } from "@/lib/design-system";
 import {
@@ -90,8 +90,8 @@ function EditorBody({ id }: { id: SystemId }) {
     case "typography":
       return (
         <div className="space-y-6">
-          <TypeScaleControls />
           <TypographyEditor />
+          <TypeScaleControls />
         </div>
       );
     case "radius":
@@ -111,8 +111,8 @@ function EditorBody({ id }: { id: SystemId }) {
   }
 }
 
-/** Left area in the open state: a Back to board link and the system list (224px), then the editor panel (400px). */
-export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: (id: SystemId) => void; onClose: () => void }) {
+/** The open state: the options in one row on top, then the editor panel (400px) and the live preview side by side. */
+export function Editor({ openId, onOpen, onClose, preview }: { openId: SystemId; onOpen: (id: SystemId) => void; onClose: () => void; preview: ReactNode }) {
   const { reviewed, markReviewed, presetId, isModified, reset } = useDesignSystem();
   const index = SYSTEMS.findIndex((system) => system.id === openId);
   const system = SYSTEMS[index];
@@ -134,34 +134,37 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
   };
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-4 xl:h-[810px] xl:w-auto xl:flex-[0_0_auto] xl:flex-row xl:gap-6">
-      <div className="flex min-w-0 shrink-0 flex-col gap-2 xl:w-56">
-      <nav ref={list} aria-label="Design systems" className="tool-tabs relative -mx-1 flex shrink-0 gap-2 overflow-x-auto px-1 py-2 xl:mx-0 xl:w-full xl:flex-col xl:overflow-visible xl:p-0">
-        {SYSTEMS.map((item, itemIndex) => {
-          const done = reviewed.includes(item.id);
-          return (
-            <button key={item.id} type="button" aria-current={item.id === openId} onClick={() => onOpen(item.id)} className="tool-item flex shrink-0 items-center gap-2 text-left text-sm font-medium leading-5 whitespace-nowrap max-xl:min-w-max">
-              <span className="tool-num" aria-hidden>
-                {itemIndex + 1}
-              </span>
-              <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              {done ? <Check aria-label="Reviewed" className="size-4 shrink-0 text-foreground" strokeWidth={1.5} /> : null}
+    <div className="flex w-full min-w-0 flex-col gap-4">
+      {/* The options sit above, in one horizontal row (it scrolls sideways when it does not fit). */}
+      <div className="flex min-w-0 flex-col gap-1">
+        <nav ref={list} aria-label="Design systems" className="tool-tabs relative -mx-1 flex shrink-0 gap-2 overflow-x-auto px-1 py-2 xl:flex-wrap xl:overflow-visible">
+          {SYSTEMS.map((item, itemIndex) => {
+            const done = reviewed.includes(item.id);
+            return (
+              <button key={item.id} type="button" aria-current={item.id === openId} onClick={() => onOpen(item.id)} className="tool-item flex min-w-max shrink-0 items-center gap-2 text-left text-sm font-medium leading-5 whitespace-nowrap">
+                <span className="tool-num" aria-hidden>
+                  {itemIndex + 1}
+                </span>
+                <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                {done ? <Check aria-label="Reviewed" className="size-4 shrink-0 text-foreground" strokeWidth={1.5} /> : null}
+              </button>
+            );
+          })}
+        </nav>
+        {isModified ? (
+          // Its own row under the options (never inside the scrolling strip): status on the left, Reset after it.
+          <div data-edited-row className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 xl:min-h-8">
+            <span className="text-xs leading-4 text-muted-foreground">{PRESETS[presetId].name}, edited</span>
+            <button type="button" onClick={reset} className="tool-link inline-flex h-11 items-center rounded-[10px] px-3 text-sm leading-5 xl:h-8">
+              Reset to {PRESETS[presetId].name}
             </button>
-          );
-        })}
-      </nav>
-      {isModified ? (
-        // Its own row under the step list (never inside the scrolling strip): status on the left, Reset after it.
-        <div data-edited-row className="flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-1 xl:min-h-0 xl:flex-col xl:items-start xl:justify-start xl:gap-1">
-          <span className="text-xs leading-4 text-muted-foreground">{PRESETS[presetId].name}, edited</span>
-          <button type="button" onClick={reset} className="tool-link inline-flex h-11 items-center rounded-[10px] px-3 text-sm leading-5 xl:h-8 xl:px-0">
-            Reset to {PRESETS[presetId].name}
-          </button>
-        </div>
-      ) : null}
+          </div>
+        ) : null}
       </div>
 
-      <section aria-labelledby="editor-title" className="tool-panel flex h-[min(810px,85vh)] min-h-[520px] w-full shrink-0 flex-col gap-4 p-4 max-md:h-auto max-md:min-h-0 md:p-6 xl:h-auto xl:min-h-0 xl:w-[400px]">
+      {/* Below the options: the selected editor and the live preview, side by side from 1280px. */}
+      <div className="flex w-full min-w-0 flex-col items-stretch gap-6 xl:h-[810px] xl:flex-row">
+      <section aria-labelledby="editor-title" className="tool-panel flex h-[min(810px,85vh)] min-h-[520px] w-full shrink-0 flex-col gap-4 p-4 max-md:h-auto max-md:min-h-0 md:p-6 xl:h-auto xl:min-h-0 xl:w-[400px] xl:shrink-0">
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 id="editor-title" className="text-2xl font-semibold leading-8 tracking-[-0.01em]">
@@ -196,6 +199,8 @@ export function Editor({ openId, onOpen, onClose }: { openId: SystemId; onOpen: 
           </div>
         </footer>
       </section>
+        {preview}
+      </div>
     </div>
   );
 }

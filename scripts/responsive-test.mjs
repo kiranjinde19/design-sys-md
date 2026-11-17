@@ -263,8 +263,9 @@ test("1280 and wider keeps two columns; below 1280 the board, editor and Export 
     await setWidth(width);
     const [nav, panel, preview] = await boxes(EDIT);
     if (width >= 1280) {
-      assert.ok(Math.abs(nav.width - 224) < 2 && Math.abs(panel.width - 400) < 2, `${width}: list 224px and panel 400px (${nav.width}, ${panel.width})`);
-      assert.ok(panel.left >= nav.right - 1 && preview.left >= panel.right - 1, `${width}: list, panel and preview in a row`);
+      assert.ok(Math.abs(panel.width - 400) < 2, `${width}: the panel is 400px (${panel.width})`);
+      assert.ok(panel.top >= nav.bottom - 1, `${width}: the options are above the panel`);
+      assert.ok(preview.left >= panel.right - 1 && Math.abs(preview.top - panel.top) <= 1, `${width}: the panel and the preview sit side by side`);
     } else {
       assert.ok(panel.top >= nav.bottom - 1 && preview.top >= panel.bottom - 1, `${width}: list, then panel, then preview`);
       assert.ok(panel.width > (width - 80) * 0.95, `${width}: the editor panel is full width (${panel.width})`);
@@ -623,12 +624,12 @@ test("the preview label shows the real scale at every width, for Pricing, Dashbo
   assert.equal(await scaleLabel(), 65);
   await setWidth(390);
   assert.equal(await scaleLabel(), 60);
-  // Open editor at 1280: the preview frame is narrow, so it scales lower and says so.
+  // Open editor at 1280: the label always shows the real scale.
   await fresh("/app", { editor: "colors" });
   await setWidth(1280, 900);
   await click(previewTab("Pricing"));
   const label = await scaleLabel();
-  assert.ok(label < 65 && label >= 45, `with an editor open at 1280 the label says ${label}%`);
+  assert.ok(label <= 65 && label >= 45, `with an editor open at 1280 the label says ${label}%`);
   assert.equal(label, Math.round((await ev(stageScale)) * 100));
   // Tabs that are not scaled show no number.
   await click(previewTab("Forms"));
