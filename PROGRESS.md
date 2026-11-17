@@ -62,8 +62,8 @@ Measured 2026-11-14, after the plain HTML recipe fixes. Normal = 30 character na
 | Stage 3: Skill file generator | 10 | 10 |
 | Stage 4: The tool's own screen (shell) | 7 | 7 |
 | Stage 5: Live preview and editors | 26 | 26 |
-| Stage 6: Landing page and final polish | 2 | 4 |
-| **Overall** | **61** | **63** |
+| Stage 6: Landing page and final polish | 3 | 4 |
+| **Overall** | **62** | **63** |
 
 ## Checklist by stage
 
@@ -140,7 +140,10 @@ Measured 2026-11-14, after the plain HTML recipe fixes. Normal = 30 character na
 - [x] Landing page at `/` (Plinth landing page, 2026-11-16; see the Latest entry)
 - [x] Layout below 1280px (columns stack)
 - [ ] Final deploy check on Vercel
-- [ ] Final visual match against the mockups
+- [x] Final visual match against the mockups (2026-11-17: compared at 1440px; the owner accepted the remaining differences, listed below)
+
+### Visual match, accepted differences (2026-11-17)
+Deliberate: the Plinth wordmark, the options row above the editor, the Voice tab, the preview footer chips, the "Sample content" chip, the Signature drawings, the default preview tab per step. Accepted as they are: board title "Your design system"; the Colors, Typography, Borders, Shadows, Buttons, Signature and Tone tile samples and captions; the Colors editor subtitle, field order and the missing hue slider; the preview's sample content wording.
 
 ## Open decisions
 - None at the moment. The brand color engine decision was made (exact or adjusted, tinted destructive near red).
