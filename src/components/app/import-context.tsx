@@ -87,7 +87,6 @@ export function ImportProvider({ children }: { children: ReactNode }) {
         ref={input}
         type="file"
         aria-label="Import a previous file"
-        accept="text/markdown,text/plain,.md,.markdown,.txt"
         className="sr-only"
         tabIndex={-1}
         data-imports={finished}

@@ -658,10 +658,8 @@ test("Import file works from the desktop bar and the phone More menu, and restor
     await click(byText("header button", "More"));
     await click(byText("[role=menuitem]", "Import file"));
     await waitFor(() => opened === 2, { label: "the file chooser from the More menu" });
-    // The input accepts markdown by type and by extension.
-    const accept = await ev(`document.querySelector("input[type=file]").accept`);
-    assert.match(accept, /text\/markdown/);
-    assert.match(accept, /\.md/);
+    // No file type filter, so no phone picker greys the file out; the file is checked after it is read.
+    assert.equal(await ev(`document.querySelector("input[type=file]").accept`), "");
     // Choosing the exported file restores it: a new export is identical, and the banner says so.
     await importPath(tmpFile("SKILL.md", exported.content));
     assert.match(await statusText(), /Restored SaaS Clean/);
