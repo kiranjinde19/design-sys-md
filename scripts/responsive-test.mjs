@@ -84,7 +84,7 @@ after(stop);
 test("no horizontal page scroll on the board, with every preview tab, at all six widths", async () => {
   await fresh("/app");
   const tabs = await ev(`[...document.querySelectorAll('[aria-label="Preview pages"] [role=tab]')].map(t=>t.textContent.trim())`);
-  assert.equal(tabs.length, 6);
+  assert.equal(tabs.length, 7);
   for (const width of WIDTHS) {
     await setWidth(width);
     for (let i = 0; i < tabs.length; i++) {
@@ -802,7 +802,7 @@ test("the preview tab bar on a phone: only sideways, fixed height, no scrollbar,
     assert.equal(m.snap, "none", `${width}: no scroll snap to fight the finger`);
     assert.equal(m.bar, "none", `${width}: no scrollbar is drawn`);
     assert.ok(m.sw > m.cw + 40, `${width}: the tabs need to scroll (${m.sw} in ${m.cw})`);
-    assert.ok(m.tabs.length === 6 && m.tabs.every((h) => h >= 44), `${width}: every tab is at least 44px high (${m.tabs.join(", ")})`);
+    assert.ok(m.tabs.length === 7 && m.tabs.every((h) => h >= 44), `${width}: every tab is at least 44px high (${m.tabs.join(", ")})`);
     // The height is the same at every scroll position, and it keeps its position when the page re-renders.
     const heights = [];
     for (const left of [0, 80, 400]) {
@@ -895,7 +895,7 @@ test("every preview tab is free of sideways overflow at 360 and 390", async () =
   await fresh("/app");
   for (const width of [360, 390]) {
     await setWidth(width, 844);
-    for (const tab of ["Pricing", "Buttons and states", "Forms", "Tables", "Dashboard", "Charts"]) {
+    for (const tab of ["Pricing", "Buttons and states", "Forms", "Tables", "Dashboard", "Charts", "Voice"]) {
       await click(previewTab(tab));
       await assertNoSidewaysScroll(`${width} ${tab}`);
     }

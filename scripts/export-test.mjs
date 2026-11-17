@@ -773,7 +773,7 @@ const selectedTab = () => ev(`document.querySelector("[role=tab][aria-selected=t
 
 test("opening a step shows the preview tab where its changes are visible, and other tabs stay free to open", async () => {
   await setWidth(1440, 1000);
-  const expected = { colors: "Pricing", typography: "Forms", radius: "Buttons and states", spacing: "Tables", borders: "Forms", shadows: "Pricing", buttons: "Buttons and states", signature: "Pricing", voice: "Pricing" };
+  const expected = { colors: "Pricing", typography: "Forms", radius: "Buttons and states", spacing: "Tables", borders: "Forms", shadows: "Pricing", buttons: "Buttons and states", signature: "Pricing", voice: "Voice" };
   for (const [id, tab] of Object.entries(expected)) {
     await fresh("/app", "light", id);
     await waitFor(`!!document.getElementById("editor-title")`, { label: `the ${id} editor` });
@@ -798,22 +798,21 @@ test("Signature details: every option is a small picture with a name on hover, a
   await waitFor(`document.querySelectorAll("[data-signature]").length === 7`, { label: "seven categories" });
   const counts = await ev(`[...document.querySelectorAll("[data-signature]")].map(f=>f.querySelectorAll("button[aria-pressed]").length)`);
   assert.deepEqual(counts, [4, 4, 4, 4, 4, 3, 4]);
-  const tile = await ev(`(()=>{const b=document.querySelector("[data-signature=primaryCta] button");const r=b.getBoundingClientRect();return {h:r.height,w:r.width,svgOrBox:b.querySelector("div,svg")!==null,label:b.getAttribute("aria-label")}})()`);
-  assert.ok(tile.h >= 44 && tile.w >= 44 && tile.svgOrBox, "tiles are big enough and hold a drawing");
+  // Every option is a drawing with its name written below it, always visible (no hover needed).
+  const tile = await ev(`(()=>{const b=document.querySelector("[data-signature=primaryCta] button");const r=b.getBoundingClientRect();const draw=b.querySelector("span.flex").getBoundingClientRect();const label=b.querySelector("span.text-center").getBoundingClientRect();return {h:r.height,w:r.width,label:b.querySelector("span.text-center").textContent,labelBelow:label.top>=draw.bottom-1,labelVisible:getComputedStyle(b.querySelector("span.text-center")).visibility==="visible"&&label.height>0,tips:document.querySelectorAll(".sig-tip,[role=tooltip]").length}})()`);
+  assert.ok(tile.h >= 44 && tile.w >= 44, "tiles are big enough");
   assert.equal(tile.label, "Solid");
-  // The name appears on hover (and the chosen name is written beside the title for touch).
-  const p = await ev(rectOf(`[data-signature=primaryCta] button[data-option=border-beam]`));
-  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
-  await waitFor(`getComputedStyle(document.querySelector("[data-signature=primaryCta] button[data-option=border-beam] .sig-tip")).opacity === "1"`, { label: "the name on hover" });
-  assert.match(await ev(`document.querySelector("[data-signature=primaryCta] button[data-option=border-beam] .sig-tip").textContent`), /^Border beam/);
-  assert.equal(await ev(`getComputedStyle(document.querySelector("[data-signature=primaryCta] button[data-option=solid] .sig-tip")).opacity`), "0", "other names stay hidden");
+  assert.equal(tile.labelBelow, true, "the name sits below the drawing");
+  assert.equal(tile.labelVisible, true);
+  assert.equal(tile.tips, 0, "there are no hover labels");
+  const names = await ev(`[...document.querySelectorAll("[data-signature=primaryCta] button")].map(b=>b.querySelector("span.text-center").textContent)`);
+  assert.deepEqual(names, ["Solid", "Border beam", "Gradient fill", "Underline sweep"]);
   // The border beam picture really moves.
   assert.equal(await ev(`getComputedStyle(document.querySelector(".sig-beam"), "::before").animationName`), "sig-spin");
   // Choosing one: pressed, named, and the Pricing tab shows it.
   await click(byText("[role=tab]", "Forms"));
   await click(`document.querySelector("[data-signature=primaryCta] button[data-option=gradient-fill]")`);
   assert.equal(await ev(`document.querySelector("[data-signature=primaryCta] button[data-option=gradient-fill]").getAttribute("aria-pressed")`), "true");
-  assert.equal(await ev(`document.querySelector("[data-signature=primaryCta] [data-chosen]").textContent`), "Gradient fill");
   assert.equal(await selectedTab(), "Pricing", "choosing a call to action opens the Pricing tab");
   // The focus ring shows on Buttons and states.
   await click(`document.querySelector("[data-signature=focusRing] button[data-option=thick-outline]")`);
@@ -849,4 +848,25 @@ test("sliders are the modern slider: filled track, round thumb, 44px touch area,
   await waitFor(`document.querySelectorAll("input.tool-range").length === 3`, { label: "three tone sliders" });
   await fresh("/app", "light", "typography");
   await waitFor(`!!document.querySelector("input.tool-range[aria-label='Heading tracking']")`, { label: "the tracking slider" });
+});
+
+test("Tone of voice: the five sample lines live in the Voice tab of the preview and follow the sliders", async () => {
+  await setWidth(1440, 1000);
+  await fresh("/app", "light", "voice");
+  await waitFor(`document.querySelectorAll("input.tool-range").length === 3`, { label: "the tone sliders" });
+  await waitFor(`document.querySelector("[role=tab][aria-selected=true]")?.textContent.trim() === "Voice"`, { label: "the Voice tab" });
+  assert.ok(!(await ev(`document.querySelector("section[aria-labelledby=editor-title]").innerText`)).includes("Live preview"), "the live preview block is no longer under the sliders");
+  const lines = () => ev(`[...document.querySelectorAll("[data-voice]")].filter(e=>e.dataset.voice!=="messages").map(e=>e.dataset.voice+": "+e.querySelector("strong, button")?.textContent.trim())`);
+  const before = await lines();
+  assert.equal(before.length, 5);
+  assert.deepEqual(before.map((l) => l.split(":")[0]), ["button", "empty", "error", "success", "pricing"]);
+  // Move the formal to casual slider to the formal end: the sample lines change in the preview at once.
+  await ev(`(()=>{const i=document.querySelector("input.tool-range");const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;set.call(i,"1");i.dispatchEvent(new Event("input",{bubbles:true}))})()`);
+  await settle();
+  assert.notDeepEqual(await lines(), before, "the sample lines follow the slider");
+  // It is a normal tab: another tab can be opened and the Voice tab comes back.
+  await click(byText("[role=tab]", "Pricing"));
+  assert.equal(await selectedTab(), "Pricing");
+  await click(byText("[role=tab]", "Voice"));
+  assert.equal(await selectedTab(), "Voice");
 });

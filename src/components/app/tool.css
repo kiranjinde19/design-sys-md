@@ -437,15 +437,7 @@ body.tool-dragging {
   }
 }
 
-/* Signature details pickers: the hover label, and the two small animated samples. */
-.sig-tip {
-  opacity: 0;
-  transition: opacity 120ms;
-}
-.sig-tile:hover .sig-tip,
-.sig-tile:focus-visible .sig-tip {
-  opacity: 1;
-}
+/* Signature details pickers: the two small animated samples. */
 .sig-beam {
   position: relative;
   width: 50px;
@@ -493,8 +485,7 @@ body.tool-dragging {
     animation: none;
     background: var(--sw-ring);
   }
-  .sig-sweep > i,
-  .sig-tip {
+  .sig-sweep > i {
     transition: none;
   }
 }

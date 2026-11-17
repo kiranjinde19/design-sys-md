@@ -134,8 +134,8 @@ function Divider({ top }: { top: ReactNode }) {
 }
 
 /**
- * Every Signature details category as a row of small drawings. The name shows on hover and keyboard focus (and the chosen
- * one is named beside the category title, for touch). Choosing one also opens the preview tab where it can be seen.
+ * Every Signature details category as a row of small drawings, each with its name written below it (no hover needed, so it
+ * works on a phone too). Choosing one also opens the preview tab where it can be seen.
  */
 export function SignaturePicker() {
   const { settings, update } = useDesignSystem();
@@ -145,40 +145,32 @@ export function SignaturePicker() {
         const category = SIGNATURE_CATALOG[key];
         const options = category.options as { id: string; label: string; description: string }[];
         const value = settings.signature[key] as string;
-        const chosen = options.find((option) => option.id === value);
         return (
           <fieldset key={key} className="m-0 min-w-0 space-y-2 border-0 p-0" data-signature={key}>
-            <legend className="mb-2 flex w-full flex-wrap items-baseline gap-x-2 p-0 text-sm leading-5">
-              <span className="font-medium">{category.label}</span>
-              <span className="text-xs text-muted-foreground" data-chosen>
-                {chosen?.label}
-              </span>
-            </legend>
-            <div className="grid grid-cols-4 gap-2">
-              {options.map((option, index) => {
+            <legend className="mb-2 p-0 text-sm font-medium leading-5">{category.label}</legend>
+            <div className="grid grid-cols-4 items-stretch gap-2">
+              {options.map((option) => {
                 const selected = option.id === value;
-                const edge = index === 0 ? "left-0" : index === options.length - 1 || index === 3 ? "right-0" : "left-1/2 -translate-x-1/2";
                 return (
                   <button
                     key={option.id}
                     type="button"
                     aria-pressed={selected}
-                    aria-label={option.label}
                     data-option={option.id}
+                    title={option.description}
                     onClick={() => {
                       update({ signature: { [key]: option.id } as Partial<SignatureSettings> });
                       setPreviewTab(TAB_FOR_SIGNATURE[key] ?? "Pricing");
                     }}
                     className={cn(
-                      "sig-tile group relative flex h-16 min-w-0 items-center justify-center rounded-[10px] border bg-card transition-colors hover:border-foreground",
-                      selected ? "border-2 border-foreground" : "border-border",
+                      "sig-tile flex min-h-[84px] min-w-0 flex-col items-center justify-start gap-2 rounded-[10px] border bg-card px-1 pb-2 pt-3 transition-colors hover:border-foreground",
+                      selected ? "border-2 border-foreground px-[3px] pb-[7px] pt-[11px]" : "border-border",
                     )}
                   >
-                    <Visual category={key} id={option.id} />
-                    <span role="tooltip" aria-hidden className={cn("sig-tip pointer-events-none absolute bottom-full z-20 mb-2 w-max max-w-[200px] rounded-[10px] bg-foreground px-3 py-2 text-left text-xs leading-4 text-background", edge)}>
-                      <span className="block font-medium">{option.label}</span>
-                      <span className="block opacity-80">{option.description}</span>
+                    <span className="flex h-10 items-center justify-center">
+                      <Visual category={key} id={option.id} />
                     </span>
+                    <span className={cn("text-center text-xs leading-4", selected ? "font-medium text-foreground" : "text-muted-foreground")}>{option.label}</span>
                   </button>
                 );
               })}

@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import type { SystemId } from "@/lib/design-system";
 
 /** The live preview's tabs. The selected one is shared between the preview and the editors, and remembered between visits. */
-export const PREVIEW_TABS = ["Pricing", "Buttons and states", "Forms", "Tables", "Dashboard", "Charts"] as const;
+export const PREVIEW_TABS = ["Pricing", "Buttons and states", "Forms", "Tables", "Dashboard", "Charts", "Voice"] as const;
 export type PreviewTab = (typeof PREVIEW_TABS)[number];
 
 const TAB_KEY = "design-sys-md:preview-tab";
@@ -56,7 +56,7 @@ export const TAB_FOR_SYSTEM: Record<SystemId, PreviewTab> = {
   shadows: "Pricing",
   buttons: "Buttons and states",
   signature: "Pricing",
-  voice: "Pricing",
+  voice: "Voice",
 };
 
 /** Signature details: the focus ring shows on Buttons and states; every other category shows on the Pricing cards. */

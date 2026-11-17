@@ -10,6 +10,7 @@ import { SkillScope } from "./skill-preview/skill-scope";
 import { TablesTab } from "./skill-preview/tables-tab";
 import { DashboardTab } from "./skill-preview/dashboard-tab";
 import { ChartsTab } from "./skill-preview/charts-tab";
+import { VoiceTab } from "./skill-preview/voice-tab";
 import { cn } from "@/lib/utils";
 import { useDesignSystem } from "@/lib/design-system";
 import { PricingPreview } from "./pricing-preview";
@@ -50,13 +51,14 @@ export function Preview({ height }: { height: number }) {
     Tables: "Team table, sample content",
     Dashboard: "App overview, sample content",
     Charts: "Every chart type, sample content",
+    Voice: "Five sample lines in the tone you set, sample content",
   };
   const page =
     tab === "Pricing" ? (
       <PricingPreview />
     ) : (
       <SkillScope>
-        {tab === "Buttons and states" ? <ButtonsTab /> : tab === "Forms" ? <FormsTab /> : tab === "Tables" ? <TablesTab /> : tab === "Dashboard" ? <DashboardTab /> : <ChartsTab />}
+        {tab === "Buttons and states" ? <ButtonsTab /> : tab === "Forms" ? <FormsTab /> : tab === "Tables" ? <TablesTab /> : tab === "Dashboard" ? <DashboardTab /> : tab === "Charts" ? <ChartsTab /> : <VoiceTab />}
       </SkillScope>
     );
 
