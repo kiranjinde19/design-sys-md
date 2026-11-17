@@ -139,11 +139,11 @@ test("the demo controls change the SKILL.md excerpt and the verdict, and the num
   m = await demoState();
   assert.equal(m.heading, "Newsreader");
   assert.equal(m.body, "Geist");
-  assert.match(await ev(`getComputedStyle(document.querySelector(".sample h3")).fontFamily`), /newsreader/i);
+  assert.match(await ev(`getComputedStyle(document.querySelector(".sample .s-title")).fontFamily`), /newsreader/i);
   await click(`#fonts button:nth-child(3)`);
   m = await demoState();
   assert.equal(m.heading, "IBM Plex Sans");
-  assert.match(await ev(`getComputedStyle(document.querySelector(".sample h3")).fontFamily`), /plex/i);
+  assert.match(await ev(`getComputedStyle(document.querySelector(".sample .s-title")).fontFamily`), /plex/i);
   // The custom picker.
   await ev(`(()=>{const i=document.querySelector('.pl input[type=color]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(i,"#e11d48");i.dispatchEvent(new Event("input",{bubbles:true}))})()`);
   await settle();
@@ -282,15 +282,15 @@ test("the feedback link and the footer are exact", async () => {
   await open({ reduced: true });
   assert.equal(await ev(`document.querySelector("footer a").getAttribute("href")`), "mailto:kiranjinde19@gmail.com?subject=Plinth%20feedback");
   assert.equal(await ev(`document.querySelector("footer a").textContent`), "Send feedback");
-  assert.equal(await ev(`document.querySelector("footer span").textContent`), "Made by Kiran B. Free to use.");
+  assert.equal(await ev(`document.querySelector("footer span").textContent`), "Made by Kiran B. Free to use. Nothing leaves your browser: no cookies, no tracking.");
 });
 
 test("the name, wordmark, favicon and share image are Plinth", async () => {
   await open({ reduced: true });
   const head = await ev(`(()=>{const m=(s)=>document.querySelector(s)?.getAttribute("content");return {title:document.title,description:m('meta[name=description]'),ogTitle:m('meta[property="og:title"]'),ogImage:m('meta[property="og:image"]'),twitter:m('meta[name="twitter:card"]'),twImage:m('meta[name="twitter:image"]'),icons:[...document.querySelectorAll('link[rel~=icon]')].map(l=>l.getAttribute("type")),apple:!!document.querySelector('link[rel=apple-touch-icon]')}})()`);
-  assert.equal(head.title, "Plinth");
+  assert.equal(head.title, "Plinth: your brand design system as one SKILL.md file");
   assert.equal(head.description, "Plinth builds your brand design system and turns it into one SKILL.md or AGENTS.md file for Claude Code, Codex and ChatGPT. Free, no login.");
-  assert.equal(head.ogTitle, "Plinth");
+  assert.equal(head.ogTitle, "Plinth: your brand design system as one SKILL.md file");
   assert.match(head.ogImage, /\/brand\/plinth-share\.png$/);
   assert.match(head.twImage, /\/brand\/plinth-share\.png$/);
   assert.equal(head.twitter, "summary_large_image");
@@ -416,7 +416,7 @@ test("the sections come in the asked order, with the exact copy", async () => {
   ]) assert.ok(copy.replace(/\s+/g, " ").includes(line), `missing: ${line}`);
   assert.deepEqual(await ev(`[...document.querySelectorAll(".icard h3")].map(e=>e.textContent)`), ["Tokens", "Component recipes", "Signature details", "Tone of voice", "Accessibility", "Final checklist"]);
   assert.deepEqual(await ev(`[...document.querySelectorAll(".chip")].slice(0,16).map(e=>e.textContent)`), ["Buttons", "Inputs", "Selection controls", "Tables", "Cards", "Forms", "Tabs", "Dialogs and toasts", "Pricing pages", "Settings pages", "Dashboards", "Charts", "Empty states", "Focus rings", "Tone of voice", "Do and don't rules"]);
-  assert.equal(await ev(`document.querySelectorAll("details").length`), 4);
+  assert.equal(await ev(`document.querySelectorAll("details").length`), 8);
 });
 
 test("the first load stays light: the engine loads after the page, fonts come from next/font", async () => {
@@ -472,4 +472,16 @@ test("no theme flash: the saved choice is applied before the first paint, even w
     }
   }
   await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "no-preference" }, { name: "prefers-color-scheme", value: "light" }] });
+});
+
+test("skip link is the first tab stop and works, the demo sample has no heading of its own, and the FAQ has eight questions", async () => {
+  await navigate(state.baseUrl + "/", LANDING_READY);
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  assert.equal(await ev(`document.activeElement.textContent.trim()`), "Skip to main content", "the skip link comes first");
+  assert.ok((await ev(`document.activeElement.getBoundingClientRect().top`)) >= 0, "and it shows when focused");
+  assert.equal(await ev(`document.querySelector(".skip").getAttribute("href")`), "#top");
+  assert.equal(await ev(`!!document.querySelector("main#top")`), true, "the target exists");
+  assert.deepEqual(await ev(`[...document.querySelectorAll("h1,h2,h3")].map(h=>h.tagName).slice(0,3)`), ["H1", "H2", "H3"], "heading order has no jump");
+  assert.equal(await ev(`document.querySelectorAll("details").length`), 8);
 });

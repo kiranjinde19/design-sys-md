@@ -11,7 +11,7 @@ import { baseMetadata } from "@/lib/site";
 import type { Metadata } from "next";
 import "@/components/landing/landing.css";
 
-export const metadata: Metadata = baseMetadata("Plinth", { path: "/" });
+export const metadata: Metadata = baseMetadata("Plinth: your brand design system as one SKILL.md file", { path: "/" });
 
 const MARQUEE = [
   "Buttons",
@@ -81,6 +81,10 @@ const QUESTIONS = [
   { q: "Is it really free?", a: "Yes. There is no login and no paid tier. You build your file in the browser and download it." },
   { q: "Where does my work go?", a: "Your choices stay in your browser and save automatically. You can download the file and import it later to carry on where you stopped." },
   { q: "Which AI tools can use the file?", a: "Claude Code reads it as SKILL.md. Codex and ChatGPT read it as AGENTS.md. It is the same content in both." },
+  { q: "Do I need to know how to code?", a: "No. You use sliders, pickers and drag and drop. Your AI tool reads the file, so you never have to edit it by hand." },
+  { q: "Can I change my file later?", a: "Yes. Import the file you downloaded, change what you want and download it again. Everything you did not touch stays the same." },
+  { q: "What if I clear my browser data?", a: "Your saved work lives in this browser, so clearing site data removes it. Download your file first. You can import it any time to carry on." },
+  { q: "How big is the file?", a: "About 28 to 32 KiB, depending on your stack. Codex reads up to 32 KiB of instructions, so Plinth keeps a normal file under that line and warns you on the Export screen if one goes over." },
   { q: "What if my brand color is hard to read?", a: "Plinth checks contrast for you. By default it keeps your exact color and picks dark or light text, whichever passes. If neither passes, it tells you and offers a small adjustment." },
 ];
 
@@ -91,6 +95,9 @@ export default function Home() {
   return (
     <LandingShell initial={initial}>
       <div className="wrap">
+        <a className="skip" href="#top">
+          Skip to main content
+        </a>
         <header className="top">
           <Link className="mark" href="/" aria-label="Plinth home">
             <PlinthWordmark height={24} />
@@ -254,7 +261,7 @@ export default function Home() {
         </section>
 
         <footer>
-          <span>Made by Kiran B. Free to use.</span>
+          <span>Made by Kiran B. Free to use. Nothing leaves your browser: no cookies, no tracking.</span>
           <span>
             <a href="mailto:kiranjinde19@gmail.com?subject=Plinth%20feedback">Send feedback</a>
           </span>

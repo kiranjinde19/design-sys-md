@@ -118,7 +118,7 @@ test("SEO: canonical links, titles and descriptions, robots.txt and sitemap.xml,
   const exportPage = await get("/app/export");
   assert.match(tag(home, /<link rel="canonical" href="([^"]+)"/), /^https?:\/\/[^/]+\/?$/);
   assert.match(tag(app, /<link rel="canonical" href="([^"]+)"/), /^https?:\/\/[^/]+\/app$/);
-  assert.equal(tag(home, /<title>([^<]*)</), "Plinth");
+  assert.equal(tag(home, /<title>([^<]*)</), "Plinth: your brand design system as one SKILL.md file");
   assert.equal(tag(app, /<title>([^<]*)</), "Plinth: build your design system");
   assert.match(tag(app, /<meta name="description" content="([^"]+)"/), /^Build your brand design system with sliders, pickers and drag and drop/);
   assert.notEqual(tag(app, /<meta name="description" content="([^"]+)"/), tag(home, /<meta name="description" content="([^"]+)"/), "the tool has its own description");
