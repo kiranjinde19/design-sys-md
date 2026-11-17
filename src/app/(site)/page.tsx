@@ -58,6 +58,16 @@ const INSIDE = [
   },
 ];
 
+/** What each real line means, in plain words. One note per line of the excerpt, in the same order. */
+const NOTES: Record<string, string[]> = {
+  Tokens: ["The lightest tint. Used for soft backgrounds.", "The middle of the scale. Your main button uses step 600.", "The darkest step. Used for text on tints."],
+  "Component recipes": ["The one main action on a screen.", "Supporting actions next to it.", "Low emphasis actions, like Cancel."],
+  "Signature details": ["Every card starts from this one rule.", "Every card lifts 2px on hover.", "The recommended plan gets a crisp 2px border."],
+  "Tone of voice": ["How it sounds: like a helpful colleague.", "What it never does: hype and exclamation marks.", "How long it is: short, with one next step."],
+  Accessibility: ["Button text on your brand color, measured.", "Secondary text on soft fills, measured.", "Button text on the error color, measured."],
+  "Final checklist": ["Catches hardcoded colors and sizes.", "Checks every rule in the file.", "Catches the wrong border on a control."],
+};
+
 const QUESTIONS = [
   { q: "Is it really free?", a: "Yes. There is no login and no paid tier. You build your file in the browser and download it." },
   { q: "Where does my work go?", a: "Your choices stay in your browser and save automatically. You can download the file and import it later to carry on where you stopped." },
@@ -153,7 +163,10 @@ export default function Home() {
                   <figcaption>From the file: {excerpts[card.title].from}</figcaption>
                   <pre>
                     {excerpts[card.title].lines.map((line, i) => (
-                      <span key={i}>{line}</span>
+                      <span key={i} className="ex-line">
+                        <code>{line}</code>
+                        <em>{NOTES[card.title][i]}</em>
+                      </span>
                     ))}
                   </pre>
                 </figure>

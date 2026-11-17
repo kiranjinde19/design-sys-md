@@ -476,9 +476,13 @@ test("skip link is the first tab stop and works, the demo sample has no heading 
 
 test("each What is inside card shows a real excerpt from the generated file", async () => {
   await navigate(state.baseUrl + "/", LANDING_READY);
-  const cards = await ev(`[...document.querySelectorAll(".icard")].map(c=>({title:c.querySelector("h3").textContent,from:c.querySelector(".excerpt figcaption").textContent,lines:[...c.querySelectorAll(".excerpt pre span")].map(s=>s.textContent)}))`);
+  const cards = await ev(`[...document.querySelectorAll(".icard")].map(c=>({title:c.querySelector("h3").textContent,from:c.querySelector(".excerpt figcaption").textContent,lines:[...c.querySelectorAll(".excerpt pre code")].map(s=>s.textContent),notes:[...c.querySelectorAll(".excerpt pre em")].map(s=>s.textContent)}))`);
   assert.equal(cards.length, 6);
-  for (const c of cards) assert.ok(c.lines.length >= 3, `${c.title} shows at least 3 lines (${c.lines.length})`);
+  for (const c of cards) {
+    assert.equal(c.lines.length, 3, `${c.title} shows three real lines`);
+    assert.equal(c.notes.length, 3, `${c.title} explains each line`);
+    assert.ok(c.notes.every((n) => n.length > 10 && !/[-‐-―−]/.test(n)), `${c.title} notes are plain words without dashes`);
+  }
   assert.match(cards[0].lines[0], /^--color-brand-50:#[0-9A-F]{6}$/i, "Tokens shows real token lines");
   assert.match(cards[1].lines.join(" "), /primary: "bg-primary/, "Component recipes shows the real button classes");
   assert.match(cards[4].lines.join(" "), /primary-foreground on primary [\d.]+:1/, "Accessibility shows measured ratios");

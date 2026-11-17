@@ -790,11 +790,40 @@
   line-height: 20px;
   color: var(--ink);
 }
-.pl .excerpt pre span {
+.pl .excerpt pre .ex-line {
+  display: block;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed var(--line);
+}
+.pl .excerpt pre .ex-line:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+.pl .excerpt pre code {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: inherit;
+}
+.pl .excerpt pre em {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  margin-top: 2px;
+  font-family: var(--body);
+  font-style: normal;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--muted);
+  white-space: normal;
+}
+.pl .excerpt pre em::before {
+  content: "\21B3";
+  flex: none;
+  color: var(--ink);
 }
 .pl .inside-note {
   margin: 28px 0 0;

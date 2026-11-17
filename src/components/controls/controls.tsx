@@ -5,7 +5,7 @@
  * Used by the tool screen at /app and the Export screen, so a control is written once.
  */
 
-import { useState, type ReactNode } from "react";
+import { useState, type InputHTMLAttributes, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { normalizeHex } from "@/lib/design-system";
@@ -28,6 +28,18 @@ export function Field({ label, children }: { label: string; children: ReactNode 
   );
 }
 
+/**
+ * The slider every editor uses: a 6px rounded track filled up to the thumb, a 20px round thumb that grows a little on
+ * hover and press, a visible focus ring, and a 44px tall touch area. It is still a real range input, so arrow keys,
+ * Home, End and touch all work.
+ */
+export function RangeInput({ className, style, value, min, max, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
+  const low = Number(min ?? 0);
+  const high = Number(max ?? 100);
+  const pct = high === low ? 0 : ((Number(value) - low) / (high - low)) * 100;
+  return <input {...rest} type="range" value={value} min={min} max={max} className={cn("tool-range", className)} style={{ ...style, ["--pct" as string]: `${Math.min(100, Math.max(0, pct))}%` }} />;
+}
+
 export function Range({
   label,
   value,
@@ -45,9 +57,7 @@ export function Range({
 }) {
   return (
     <Field label={`${label}: ${value}`}>
-      <input
-        type="range"
-        className="w-full accent-primary"
+      <RangeInput
         value={value}
         min={min}
         max={max}

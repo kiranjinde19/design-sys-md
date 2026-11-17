@@ -766,3 +766,87 @@ test("typography: the pairings are small buttons, Customize is in view without s
   await key("Escape");
   await setWidth(1440, 1000);
 });
+
+// ---------------------------------------------------------------------------------------------- tabs, signature pictures, sliders
+
+const selectedTab = () => ev(`document.querySelector("[role=tab][aria-selected=true]").textContent.trim()`);
+
+test("opening a step shows the preview tab where its changes are visible, and other tabs stay free to open", async () => {
+  await setWidth(1440, 1000);
+  const expected = { colors: "Pricing", typography: "Forms", radius: "Buttons and states", spacing: "Tables", borders: "Forms", shadows: "Pricing", buttons: "Buttons and states", signature: "Pricing", voice: "Pricing" };
+  for (const [id, tab] of Object.entries(expected)) {
+    await fresh("/app", "light", id);
+    await waitFor(`!!document.getElementById("editor-title")`, { label: `the ${id} editor` });
+    await waitFor(`document.querySelector("[role=tab][aria-selected=true]")?.textContent.trim() === ${JSON.stringify(tab)}`, { label: `the ${tab} tab for ${id}` });
+  }
+  // Moving on with Next switches the tab; opening another tab by hand sticks while the step stays.
+  await fresh("/app", "light", "colors");
+  await waitFor(`!!document.getElementById("editor-title")`);
+  await click(byText("[role=tab]", "Tables"));
+  assert.equal(await selectedTab(), "Tables", "a hand picked tab stays");
+  await ev(`(()=>{const i=document.querySelector("input[aria-label='Brand color hex code']");const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set;set.call(i,"#0D9488");i.dispatchEvent(new Event("input",{bubbles:true}))})()`);
+  await settle();
+  assert.equal(await selectedTab(), "Tables", "editing does not take the tab away");
+  await click(byText("section[aria-labelledby=editor-title] footer button", "Next"));
+  await waitFor(`document.getElementById("editor-title").textContent === "Typography"`);
+  assert.equal(await selectedTab(), "Forms", "Next opens the tab for the next step");
+});
+
+test("Signature details: every option is a small picture with a name on hover, and choosing one shows where it can be seen", async () => {
+  await setWidth(1440, 1000);
+  await fresh("/app", "light", "signature");
+  await waitFor(`document.querySelectorAll("[data-signature]").length === 7`, { label: "seven categories" });
+  const counts = await ev(`[...document.querySelectorAll("[data-signature]")].map(f=>f.querySelectorAll("button[aria-pressed]").length)`);
+  assert.deepEqual(counts, [4, 4, 4, 4, 4, 3, 4]);
+  const tile = await ev(`(()=>{const b=document.querySelector("[data-signature=primaryCta] button");const r=b.getBoundingClientRect();return {h:r.height,w:r.width,svgOrBox:b.querySelector("div,svg")!==null,label:b.getAttribute("aria-label")}})()`);
+  assert.ok(tile.h >= 44 && tile.w >= 44 && tile.svgOrBox, "tiles are big enough and hold a drawing");
+  assert.equal(tile.label, "Solid");
+  // The name appears on hover (and the chosen name is written beside the title for touch).
+  const p = await ev(rectOf(`[data-signature=primaryCta] button[data-option=border-beam]`));
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: p.x, y: p.y });
+  await waitFor(`getComputedStyle(document.querySelector("[data-signature=primaryCta] button[data-option=border-beam] .sig-tip")).opacity === "1"`, { label: "the name on hover" });
+  assert.match(await ev(`document.querySelector("[data-signature=primaryCta] button[data-option=border-beam] .sig-tip").textContent`), /^Border beam/);
+  assert.equal(await ev(`getComputedStyle(document.querySelector("[data-signature=primaryCta] button[data-option=solid] .sig-tip")).opacity`), "0", "other names stay hidden");
+  // The border beam picture really moves.
+  assert.equal(await ev(`getComputedStyle(document.querySelector(".sig-beam"), "::before").animationName`), "sig-spin");
+  // Choosing one: pressed, named, and the Pricing tab shows it.
+  await click(byText("[role=tab]", "Forms"));
+  await click(`document.querySelector("[data-signature=primaryCta] button[data-option=gradient-fill]")`);
+  assert.equal(await ev(`document.querySelector("[data-signature=primaryCta] button[data-option=gradient-fill]").getAttribute("aria-pressed")`), "true");
+  assert.equal(await ev(`document.querySelector("[data-signature=primaryCta] [data-chosen]").textContent`), "Gradient fill");
+  assert.equal(await selectedTab(), "Pricing", "choosing a call to action opens the Pricing tab");
+  // The focus ring shows on Buttons and states.
+  await click(`document.querySelector("[data-signature=focusRing] button[data-option=thick-outline]")`);
+  assert.equal(await selectedTab(), "Buttons and states", "choosing a focus ring opens Buttons and states");
+  // Keyboard: a tile can be reached and pressed, and the name shows on focus.
+  await ev(`document.querySelector("[data-signature=divider] button[data-option=dotted]").focus()`);
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", modifiers: 8, windowsVirtualKeyCode: 9 });
+  await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", modifiers: 8, windowsVirtualKeyCode: 9 });
+  await settle();
+  assert.equal(await ev(`document.activeElement.getAttribute("data-option")`), "dotted");
+});
+
+test("sliders are the modern slider: filled track, round thumb, 44px touch area, keyboard works", async () => {
+  await setWidth(1440, 1000);
+  await fresh("/app", "light", "radius");
+  await waitFor(`!!document.querySelector("input.tool-range")`, { label: "a slider" });
+  const s = await ev(`(()=>{const i=document.querySelector("input.tool-range");const c=getComputedStyle(i);return {h:Math.round(i.getBoundingClientRect().height),touch:c.touchAction,pct:i.style.getPropertyValue("--pct"),value:i.value,min:i.min,max:i.max}})()`);
+  assert.equal(s.h, 44);
+  assert.equal(s.touch, "pan-y");
+  assert.match(s.pct, /^\d+(\.\d+)?%$/, "the filled part is set from the value");
+  await ev(`document.querySelector("input.tool-range").focus()`);
+  const before = await ev(`document.querySelector("input.tool-range").value`);
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
+  await send("Input.dispatchKeyEvent", { type: "keyUp", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
+  await settle();
+  assert.notEqual(await ev(`document.querySelector("input.tool-range").value`), before, "the arrow key moves it");
+  const after = await ev(`document.querySelector("input.tool-range").style.getPropertyValue("--pct")`);
+  assert.notEqual(after, s.pct, "and the fill follows");
+  // The same slider is used for tone of voice and tracking.
+  await fresh("/app", "light", "voice");
+  await waitFor(`document.querySelectorAll("input.tool-range").length === 3`, { label: "three tone sliders" });
+  await fresh("/app", "light", "typography");
+  await waitFor(`!!document.querySelector("input.tool-range[aria-label='Heading tracking']")`, { label: "the tracking slider" });
+});

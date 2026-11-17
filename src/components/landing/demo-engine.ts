@@ -132,9 +132,9 @@ export function computeInsideExcerpts(): Record<string, InsideExcerpt> {
   const clip = (line: string) => line.replace(/\s+/g, " ").trim();
 
   const tokens = section("## Tokens");
-  // The brand scale is written across a few lines of the @theme block: join them, then pick steps 50, 100, 500 and 900.
+  // The brand scale is written across a few lines of the @theme block: join them, then pick steps 50, 500 and 900.
   const brandVars = tokens.filter((line) => line.startsWith("--color-brand-")).join(";").split(";").filter((v) => v.startsWith("--color-brand-"));
-  const tokenLines = [0, 1, 5, 9].map((i) => brandVars[i]).filter(Boolean);
+  const tokenLines = [0, 5, 9].map((i) => brandVars[i]).filter(Boolean);
 
   const tone = section("## Tone of voice");
   const access = section("## Accessibility");
@@ -142,7 +142,7 @@ export function computeInsideExcerpts(): Record<string, InsideExcerpt> {
   return {
     Tokens: { from: "## Tokens", lines: tokenLines.map(clip) },
     "Component recipes": { from: "### Buttons", lines: section("### Buttons").filter((line) => /^\s*(primary|secondary|tertiary): "/.test(line)).map(clip) },
-    "Signature details": { from: "## Signature details", lines: starting(section("## Signature details"), ["/* Hover", ".card-hover:hover", "/* Featured", ".card-featured{"]).map(clip) },
+    "Signature details": { from: "## Signature details", lines: starting(section("## Signature details"), [".card{", ".card-hover:hover", ".card-featured{"]).map(clip) },
     "Tone of voice": { from: "## Tone of voice", lines: tone.filter((line) => /^[123]\. /.test(line)).map(clip) },
     Accessibility: { from: "## Accessibility", lines: starting(access, ["| primary-foreground", "| muted-foreground", "| destructive-foreground"]).map((line) => clip(line.replace(/^\||\|$/g, "").replace(/\|/g, " "))) },
     "Final checklist": { from: "## Final checklist", lines: check.filter((line) => line.startsWith("- [ ]")).slice(0, 3).map(clip) },

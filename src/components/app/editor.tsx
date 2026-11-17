@@ -15,6 +15,7 @@ import {
 } from "@/components/controls/system-controls";
 import { BrandNotice } from "./brand-notice";
 import { BrandScale } from "./brand-scale";
+import { TAB_FOR_SYSTEM, setPreviewTab } from "./preview-tab";
 import { RolesDnd, useRolesDnd } from "./roles-dnd";
 import { RolesSection } from "./roles-section";
 import { TypographyEditor } from "@/components/typography/typography-editor";
@@ -125,6 +126,11 @@ export function Editor({ openId, onOpen, onClose, preview }: { openId: SystemId;
     const row = list.current;
     const current = row?.querySelector<HTMLElement>('[aria-current="true"]');
     if (row && current) row.scrollLeft = Math.max(0, current.offsetLeft - (row.clientWidth - current.offsetWidth) / 2);
+  }, [openId]);
+
+  // Opening a step shows the preview tab where its changes are visible. The person can open any other tab afterwards.
+  useEffect(() => {
+    setPreviewTab(TAB_FOR_SYSTEM[openId]);
   }, [openId]);
 
   const goNext = () => {

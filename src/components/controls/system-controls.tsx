@@ -8,16 +8,15 @@
 
 import type { ReactNode } from "react";
 import {
-  SIGNATURE_CATALOG,
   suggestSecondaryColors,
   useDesignSystem,
   type ColorSettings,
   type Density,
   type ElevationStyle,
   type NeutralTone,
-  type SignatureSettings,
 } from "@/lib/design-system";
 import { Choice, ChoiceButton, Field, HexColorField, Range } from "./controls";
+import { SignaturePicker } from "./signature-picker";
 
 /** The secondary color is optional: off by default, and removed again with one click. */
 function SecondaryColor({ onRemoved }: { onRemoved?: (info: { secondary: string; overrides: NonNullable<ColorSettings["roleOverrides"]> } | null) => void }) {
@@ -146,26 +145,7 @@ export function ButtonControls() {
   );
 }
 
-/** One row of options per signature category, straight from the catalog. */
+/** One row of small drawings per signature category, straight from the catalog (see signature-picker.tsx). */
 export function SignatureControls() {
-  const { settings, update } = useDesignSystem();
-  return (
-    <div className="space-y-4">
-      {(Object.keys(SIGNATURE_CATALOG) as (keyof SignatureSettings)[]).map((key) => {
-        const category = SIGNATURE_CATALOG[key];
-        const ids = category.options.map((option) => option.id as string);
-        return (
-          <Choice<string>
-            key={key}
-            label={category.label}
-            value={settings.signature[key] as string}
-            options={ids}
-            labelFor={(id) => category.options.find((option) => option.id === id)?.label ?? id}
-            segmented={false}
-            onChange={(id) => update({ signature: { [key]: id } as Partial<SignatureSettings> })}
-          />
-        );
-      })}
-    </div>
-  );
+  return <SignaturePicker />;
 }

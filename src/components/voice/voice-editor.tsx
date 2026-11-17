@@ -9,6 +9,7 @@ import {
   type VoiceAxis,
   type VoiceSample,
 } from "@/lib/design-system";
+import { RangeInput } from "@/components/controls/controls";
 import { Section } from "@/components/controls/section";
 import { usePreviewStage } from "@/components/preview/preview-stage";
 
@@ -21,9 +22,7 @@ function Slider({ axis }: { axis: (typeof VOICE_AXES)[number] }) {
         <h3 className="text-sm font-semibold">{axis.title}</h3>
         <span className="text-xs text-muted-foreground">{voiceLevelLabel(axis.key, value)}</span>
       </div>
-      <input
-        type="range"
-        className="w-full accent-primary"
+      <RangeInput
         min={1}
         max={5}
         step={1}
